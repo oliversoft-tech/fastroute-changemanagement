@@ -5,6 +5,7 @@ Orquestração central da governança de qualidade e release do ecossistema Fast
 ## Workflow principal
 
 - `/.github/workflows/governance-release.yml`
+- `/.github/workflows/impact-analysis.yml`
 
 ### Modos
 
@@ -13,6 +14,12 @@ Orquestração central da governança de qualidade e release do ecossistema Fast
   - build de artefatos mobile (APK + iOS package via EAS)
   - build/push da imagem Docker da API
   - deploy opcional da API na VPS
+
+## Análise inicial de impacto
+
+- Workflow: `/.github/workflows/impact-analysis.yml`
+- Script: `/scripts/governance/analyze-impact.js`
+- Playbook: `/docs/governance/impact-analysis-playbook.md`
 
 ## Segredos necessários
 
