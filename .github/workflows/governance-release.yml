@@ -1,0 +1,452 @@
+name: Governance Orchestrator (Central)
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain_ref:
+        description: Ref do fastroute-domain (branch, tag ou SHA)
+        required: true
+        default: main
+        type: string
+      api_ref:
+        description: Ref do fastroute-api (branch, tag ou SHA)
+        required: true
+        default: main
+        type: string
+      mobile_ref:
+        description: Ref do fastroute-mobile-hybrid (branch, tag ou SHA)
+        required: true
+        default: main
+        type: string
+      mobile_profile:
+        description: Perfil EAS para build dos apps
+        required: true
+        default: preview
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+      run_release:
+        description: Executar build de artefatos mobile + imagem API
+        required: true
+        default: false
+        type: boolean
+      deploy_api:
+        description: Executar deploy da API na VPS (requer run_release=true)
+        required: true
+        default: false
+        type: boolean
+
+  repository_dispatch:
+    types: [governance-ci]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: governance-central-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.client_payload.source_repo }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  DOMAIN_REPO: fastroute-domain
+  API_REPO: fastroute-api
+  MOBILE_REPO: fastroute-mobile-hybrid
+
+jobs:
+  quality-gates-unit:
+    name: Quality Gates (Unit + Integration)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout domain
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: domain
+
+      - name: Checkout API
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.API_REPO) }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.api_ref || (github.event.client_payload.source_repo == 'fastroute-api' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: api
+
+      - name: Checkout mobile
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: mobile
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Domain - lint/test/build
+        run: |
+          cd domain
+          npm ci
+          npm run lint
+          npm run typecheck
+          npm run test
+          npm run build
+          npm pack
+
+      - name: API - lint/typecheck/test/build
+        run: |
+          cd api
+          npm ci
+          npm install --no-save ../domain/*.tgz
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Mobile - typecheck/unit tests
+        run: |
+          cd mobile
+          npm ci
+          npm install --no-save ../domain/*.tgz
+          npm run typecheck
+          node --import tsx --test test/unit/*.test.ts
+
+  quality-gates-mobile-android:
+    name: Quality Gates (Functional UI Android)
+    runs-on: ubuntu-latest
+    needs: [quality-gates-unit]
+
+    steps:
+      - name: Checkout domain
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: domain
+
+      - name: Checkout mobile
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: mobile
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Prepare domain package
+        run: |
+          cd domain
+          npm ci
+          npm run build
+          npm pack
+
+      - name: Build Android debug app
+        env:
+          EXPO_PUBLIC_E2E_BYPASS_LOGIN: "1"
+        run: |
+          cd mobile
+          npm ci
+          npm install --no-save ../domain/*.tgz
+          npx expo prebuild -p android --non-interactive
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Run Maestro flow on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7
+          script: |
+            cd mobile
+            export MAESTRO_FLOW_TARGET=.maestro/flows
+            bash ./scripts/ci/run-maestro-tests.sh android
+
+      - name: Upload Android UI test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-android-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            mobile/.maestro/results/android
+            mobile/.maestro/debug/android-*
+
+  quality-gates-mobile-ios:
+    name: Quality Gates (Functional UI iOS)
+    runs-on: macos-14
+    needs: [quality-gates-unit]
+
+    steps:
+      - name: Checkout domain
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: domain
+
+      - name: Checkout mobile
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: mobile
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Prepare domain package
+        run: |
+          cd domain
+          npm ci
+          npm run build
+          npm pack
+
+      - name: Build iOS simulator app
+        env:
+          EXPO_PUBLIC_E2E_BYPASS_LOGIN: "1"
+        run: |
+          set -euo pipefail
+          cd mobile
+          npm ci
+          npm install --no-save ../domain/*.tgz
+          npx expo prebuild -p ios --non-interactive
+          cd ios
+          pod install
+          cd ..
+
+          SIM_ID=$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')
+          if [ -z "$SIM_ID" ]; then
+            echo "Nenhum simulador iPhone disponível" >&2
+            exit 1
+          fi
+
+          xcrun simctl boot "$SIM_ID" || true
+          xcrun simctl bootstatus "$SIM_ID" -b
+
+          xcodebuild \
+            -workspace ios/FastRoute.xcworkspace \
+            -scheme FastRoute \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "id=$SIM_ID" \
+            -derivedDataPath ios/build \
+            build
+
+          APP_PATH=$(find ios/build/Build/Products -type d -name "FastRoute.app" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "App iOS não encontrada em ios/build/Build/Products" >&2
+            exit 1
+          fi
+
+          xcrun simctl install booted "$APP_PATH"
+
+      - name: Run Maestro flow on iOS simulator
+        run: |
+          cd mobile
+          export MAESTRO_FLOW_TARGET=.maestro/flows
+          bash ./scripts/ci/run-maestro-tests.sh ios
+
+      - name: Upload iOS UI test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-ios-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            mobile/.maestro/results/ios
+            mobile/.maestro/debug/ios-*
+
+  build-mobile-artifacts:
+    name: Build APK + iOS package (internal)
+    runs-on: ubuntu-latest
+    needs: [quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release }}
+
+    outputs:
+      android_url: ${{ steps.urls.outputs.android_url }}
+      ios_url: ${{ steps.urls.outputs.ios_url }}
+
+    steps:
+      - name: Checkout mobile
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          ref: ${{ inputs.mobile_ref }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: mobile
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd mobile
+          npm ci
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Build Android artifact
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          cd mobile
+          eas build --platform android --profile "${{ inputs.mobile_profile }}" --non-interactive --wait --json > ../android-build.json
+
+      - name: Build iOS artifact
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          cd mobile
+          eas build --platform ios --profile "${{ inputs.mobile_profile }}" --non-interactive --wait --json > ../ios-build.json
+
+      - name: Capture artifact URLs
+        id: urls
+        run: |
+          ANDROID_URL=$(node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('android-build.json','utf8')); const i=Array.isArray(r)?r[0]:r; process.stdout.write(i?.artifacts?.buildUrl || i?.buildUrl || 'N/A');")
+          IOS_URL=$(node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('ios-build.json','utf8')); const i=Array.isArray(r)?r[0]:r; process.stdout.write(i?.artifacts?.buildUrl || i?.buildUrl || 'N/A');")
+          echo "android_url=$ANDROID_URL" >> "$GITHUB_OUTPUT"
+          echo "ios_url=$IOS_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Upload raw EAS responses
+        uses: actions/upload-artifact@v4
+        with:
+          name: eas-build-responses-${{ github.run_id }}
+          path: |
+            android-build.json
+            ios-build.json
+
+  build-api-image:
+    name: Build & Push API Docker image
+    runs-on: ubuntu-latest
+    needs: [quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release }}
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+
+    steps:
+      - name: Checkout API
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.API_REPO) }}
+          ref: ${{ inputs.api_ref }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: api
+
+      - name: Create image tag
+        id: meta
+        run: echo "image_tag=release-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: api
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/fastroute-api:latest
+            ghcr.io/${{ github.repository_owner }}/fastroute-api:${{ steps.meta.outputs.image_tag }}
+
+  deploy-api:
+    name: Deploy API to VPS
+    runs-on: ubuntu-latest
+    needs: [build-api-image]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release && inputs.deploy_api }}
+
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd /home/deploy/fastroute
+
+            IMAGE=ghcr.io/${{ github.repository_owner }}/fastroute-api:${{ needs.build-api-image.outputs.image_tag }}
+            LATEST=ghcr.io/${{ github.repository_owner }}/fastroute-api:latest
+
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            docker pull "$IMAGE"
+            docker tag "$IMAGE" "$LATEST"
+            docker compose up -d --pull never --force-recreate --remove-orphans
+
+            docker logout ghcr.io || true
+            docker image prune -f
+
+  governance-summary:
+    name: Governance Summary
+    runs-on: ubuntu-latest
+    needs: [quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
+    if: ${{ always() }}
+
+    steps:
+      - name: Publish summary
+        run: |
+          {
+            echo "## FastRoute Governance (Central)";
+            echo "- Trigger: ${{ github.event_name }}";
+            echo "- Source repo: ${{ github.event.client_payload.source_repo || 'manual' }}";
+            echo "- Domain ref: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref) || 'main') }}";
+            echo "- API ref: ${{ github.event_name == 'workflow_dispatch' && inputs.api_ref || (github.event.client_payload.source_repo == 'fastroute-api' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref) || 'main') }}";
+            echo "- Mobile ref: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref) || 'main') }}";
+            echo "- Run release: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release || false }}";
+            echo "- Deploy API: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || false }}";
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [build-mobile-artifacts, build-api-image]
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_release }}
+
+    steps:
+      - name: Publish release summary
+        run: |
+          {
+            echo "## FastRoute Release Artifacts";
+            echo "- APK: ${{ needs.build-mobile-artifacts.outputs.android_url }}";
+            echo "- iOS package: ${{ needs.build-mobile-artifacts.outputs.ios_url }}";
+            echo "- API image tag: ${{ needs.build-api-image.outputs.image_tag }}";
+            echo "- Deploy API executado: ${{ inputs.deploy_api }}";
+          } >> "$GITHUB_STEP_SUMMARY"
