@@ -125,26 +125,6 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "boolean": [
-            {
-              "value1": "={{$json.approved}}",
-              "operation": "isTrue"
-            }
-          ]
-        }
-      },
-      "id": "approved-if",
-      "name": "Approved?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        -1190,
-        440
-      ]
-    },
-    {
-      "parameters": {
         "method": "POST",
         "url": "=https://api.github.com/repos/{{$json.owner}}/{{$json.repo}}/dispatches",
         "sendHeaders": true,
@@ -202,32 +182,6 @@
       "position": [
         -670,
         340
-      ]
-    },
-    {
-      "parameters": {
-        "keepOnlySet": true,
-        "values": {
-          "string": [
-            {
-              "name": "status",
-              "value": "rejected"
-            },
-            {
-              "name": "message",
-              "value": "Alteracao rejeitada. Governance Orchestrator nao foi disparado."
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "rejected-response",
-      "name": "Rejected Response",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 2,
-      "position": [
-        -930,
-        560
       ]
     },
     {
@@ -837,24 +791,6 @@
         ]
       ]
     },
-    "Approved?": {
-      "main": [
-        [
-          {
-            "node": "Dispatch Governance",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Rejected Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Dispatch Governance": {
       "main": [
         [
@@ -867,17 +803,6 @@
       ]
     },
     "Approved Response": {
-      "main": [
-        [
-          {
-            "node": "Respond Decision",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Rejected Response": {
       "main": [
         [
           {
@@ -1093,7 +1018,7 @@
       "main": [
         [
           {
-            "node": "Approved?",
+            "node": "Dispatch Governance",
             "type": "main",
             "index": 0
           }
