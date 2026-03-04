@@ -83,7 +83,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const analysisId = Number($json.impact_analysis_id);\n\nconst q = 'analysis_id=' + encodeURIComponent(String(Number.isFinite(analysisId) ? analysisId : ''));\nconst implementUrl = 'http://localhost:5678/webhook/fastroute-impact-decision?' + q;\n\nreturn [{\n  analysis_id: Number.isFinite(analysisId) ? analysisId : null,\n  implement_url: implementUrl,\n  aprovar_url: implementUrl,\n  mensagem: 'Analise registrada. Clique em Implementar changes para disparar o Governance.'\n}];\n"
+        "jsCode": "const analysisId = Number($json.impact_analysis_id);\n\nconst q = 'analysis_id=' + encodeURIComponent(String(Number.isFinite(analysisId) ? analysisId : ''));\nconst implementUrl = 'http://localhost:5678/webhook/fastroute-impact-decision?' + q;\n\nreturn [{\n  analysis_id: Number.isFinite(analysisId) ? analysisId : null,\n  aprovar_url: implementUrl,\n  mensagem: 'Analise registrada. Clique em Implementar changes para disparar o Governance.'\n}];\n"
       },
       "id": "build-links",
       "name": "Build Decision Links",
