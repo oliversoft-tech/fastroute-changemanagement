@@ -273,37 +273,19 @@
         "model": {
           "__rl": true,
           "mode": "list",
-          "value": "gpt-4o-mini"
+          "value": "claude-3-5-sonnet-20241022"
         },
         "options": {
           "temperature": 0.1
         }
       },
       "id": "openai-chat-model",
-      "name": "OpenAI Chat Model",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
       "typeVersion": 1.2,
       "position": [
         -1210,
         260
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "completion",
-        "respondWith": "showText",
-        "responseText": "={{$json.form_html}}",
-        "options": {
-          "formTitle": "FastRoute - Impact Analysis Result"
-        }
-      },
-      "id": "show-analysis-form",
-      "name": "Show Analysis On Form",
-      "type": "n8n-nodes-base.form",
-      "typeVersion": 1,
-      "position": [
-        -420,
-        60
       ]
     },
     {
@@ -577,17 +559,6 @@
         ]
       ]
     },
-    "OpenAI Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Basic LLM Chain (FastRoute Skill)",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Basic LLM Chain (FastRoute Skill)": {
       "main": [
         [
@@ -688,17 +659,6 @@
         [
           {
             "node": "Format Analysis HTML",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Analysis HTML": {
-      "main": [
-        [
-          {
-            "node": "Show Analysis On Form",
             "type": "main",
             "index": 0
           }
@@ -835,6 +795,17 @@
           {
             "node": "Build Decision Links",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain (FastRoute Skill)",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
