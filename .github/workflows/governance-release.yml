@@ -525,18 +525,30 @@ jobs:
           npm install --no-save ../domain/*.tgz
           npx expo prebuild -p android --non-interactive
           cd android
-          ./gradlew assembleDebug
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Reset ADB state before emulator
+        run: |
+          adb kill-server || true
+          pkill -f "qemu-system|emulator.*-avd" || true
+          sleep 2
+          adb start-server
 
       - name: Run Maestro flow on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 33
           arch: x86_64
           target: google_apis
-          profile: pixel_7
+          profile: pixel_6
+          cores: 2
+          ram-size: 3072M
+          heap-size: 1024M
+          disk-size: 6144M
+          disable-linux-hw-accel: auto
           disable-animations: true
-          emulator-options: -no-snapshot -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect
-          emulator-boot-timeout: 900
+          emulator-options: -no-window -noaudio -no-boot-anim -gpu off -no-snapshot-save -camera-back none -camera-front none
+          emulator-boot-timeout: 420
           script: |
             cd mobile
             export MAESTRO_FLOW_TARGET=.maestro/flows
