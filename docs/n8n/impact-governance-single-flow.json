@@ -755,6 +755,19 @@
         },
         "options": {}
       }
+    },
+    {
+      "id": "51c67e62-1208-4d78-b1ab-9cb01befe828",
+      "name": "Ensure Valid Repo Id",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2360,
+        -100
+      ],
+      "parameters": {
+        "jsCode": "const toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^\\uFEFF/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\n\nconst repoId = toSafeNumber($json.repo_id);\nif (!Number.isFinite(repoId)) {\n  return [];\n}\n\nreturn [{\n  json: {\n    ...$json,\n    repo_id: repoId,\n  },\n}];\n"
+      }
     }
   ],
   "connections": {
@@ -912,7 +925,7 @@
       "main": [
         [
           {
-            "node": "Upsert Change In Repo",
+            "node": "Ensure Valid Repo Id",
             "type": "main",
             "index": 0
           }
@@ -1125,6 +1138,17 @@
         [
           {
             "node": "Basic LLM Chain (FastRoute Skill)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure Valid Repo Id": {
+      "main": [
+        [
+          {
+            "node": "Upsert Change In Repo",
             "type": "main",
             "index": 0
           }
