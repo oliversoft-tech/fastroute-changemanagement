@@ -289,19 +289,6 @@
       ]
     },
     {
-      "parameters": {
-        "jsCode": "const a = $json.analysis || {};\nconst rawObj = $json.analysis_raw || {};\nconst rawTxt = String($json.llm_raw_text || '');\nconst implementUrl = $json.implement_url || $json.aprovar_url || '';\n\nconst esc = (v) => String(v ?? '')\n  .replaceAll('&', '&amp;')\n  .replaceAll('<', '&lt;')\n  .replaceAll('>', '&gt;');\n\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst toObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\n\nconst summary = esc(a.resumo || 'Sem resumo');\nconst viability = toObj(a.viabilidade);\nconst viabilityLevel = esc(viability.nivel || viability.level || 'Nao informado');\nconst viabilityReason = esc(viability.justificativa || viability.reason || 'Nao informado');\n\nconst impactSections = Object.entries(toObj(a.impactos)).map(([area, info]) => {\n  const d = toObj(info);\n  const impactFlag = d.impacto === true || d.has_impact === true || d.impact === true ? 'Sim' : 'Nao';\n  const changes = toArray(d.mudancas || d.changes);\n  const risks = toArray(d.riscos || d.risks);\n  const doubts = toArray(d.duvidas || d.doubts);\n\n  const changesHtml = changes.length\n    ? `<ol>${changes.map((ch) => {\n        if (typeof ch === 'string') {\n          return `<li><p><strong>${esc(ch)}</strong></p><p>Sem test_steps informados.</p></li>`;\n        }\n        const c = toObj(ch);\n        const desc = esc(c.descricao || c.desc || c.description || 'Mudanca sem descricao');\n        const tests = toArray(c.testes || c.tests || c.test_steps);\n        const acceptance = toArray(c.criterios_aceite || c.acceptance_criterias || c.acceptance_criteria);\n\n        const testsHtml = tests.length\n          ? `<ul>${tests.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n          : '<p>Sem test_steps.</p>';\n\n        const acceptanceHtml = acceptance.length\n          ? `<ul>${acceptance.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n          : '<p>Sem criterios de aceite.</p>';\n\n        return [\n          '<li>',\n          `<p><strong>${desc}</strong></p>`,\n          '<p><strong>test_steps:</strong></p>',\n          testsHtml,\n          '<p><strong>acceptance_criterias:</strong></p>',\n          acceptanceHtml,\n          '</li>'\n        ].join('');\n      }).join('')}</ol>`\n    : '<p>Sem mudancas detalhadas.</p>';\n\n  const risksHtml = risks.length\n    ? `<ul>${risks.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n    : '<p>Sem riscos listados.</p>';\n\n  const doubtsHtml = doubts.length\n    ? `<ul>${doubts.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n    : '<p>Sem duvidas abertas.</p>';\n\n  return [\n    `<h4>${esc(area)}</h4>`,\n    `<p><strong>Impacto:</strong> ${impactFlag}</p>`,\n    '<p><strong>Mudancas:</strong></p>',\n    changesHtml,\n    '<p><strong>Riscos:</strong></p>',\n    risksHtml,\n    '<p><strong>Duvidas:</strong></p>',\n    doubtsHtml\n  ].join('');\n}).join('');\n\nconst criteria = toArray(a.criterios_aceite_mapeados || a.acceptance_criteria_mapped);\nconst criteriaHtml = criteria.length\n  ? `<ol>${criteria.map((c) => {\n      if (c && typeof c === 'object') {\n        const criterio = esc(c.criterio || c.criterion || 'Criterio sem descricao');\n        const repos = toArray(c.repos || c.repositories).map(esc).join(', ') || 'Nao informado';\n        const teste = esc(c.teste_sugerido || c.suggested_test || 'Nao informado');\n        return `<li><p><strong>${criterio}</strong></p><p>Repos: ${repos}</p><p>Teste sugerido: ${teste}</p></li>`;\n      }\n      return `<li>${esc(c)}</li>`;\n    }).join('')}</ol>`\n  : '<p>Sem criterios mapeados.</p>';\n\nconst risks = toArray(a.riscos || a.risks);\nconst risksHtml = risks.length\n  ? `<ul>${risks.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n  : '<p>Sem riscos globais listados.</p>';\n\nconst questions = toArray(a.duvidas || a.questions || a.open_questions);\nconst questionsHtml = questions.length\n  ? `<ul>${questions.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n  : '<p>Sem duvidas globais abertas.</p>';\n\nconst rawJson = esc(JSON.stringify(rawObj || {}, null, 2));\nconst rawText = esc(rawTxt.slice(0, 8000));\n\nconst formHtml = [\n  '<h2>Analise de Impacto (LLM)</h2>',\n  `<p><strong>Resumo:</strong> ${summary}</p>`,\n  '<h3>Viabilidade</h3>',\n  `<p><strong>Nivel:</strong> ${viabilityLevel}</p>`,\n  `<p><strong>Justificativa:</strong> ${viabilityReason}</p>`,\n  '<h3>Impactos por area</h3>',\n  impactSections || '<p>Sem impactos detalhados.</p>',\n  '<h3>Criterios de aceite mapeados</h3>',\n  criteriaHtml,\n  '<h3>Riscos globais</h3>',\n  risksHtml,\n  '<h3>Duvidas globais</h3>',\n  questionsHtml,\n  '<details><summary>Debug: JSON bruto do LLM</summary>',\n  `<pre>${rawJson}</pre>`,\n  '</details>',\n  '<details><summary>Debug: texto bruto do LLM</summary>',\n  `<pre>${rawText}</pre>`,\n  '</details>',\n  '<hr/>',\n  '<h3>Acao</h3>',\n  implementUrl\n    ? `<p><a href=\"${implementUrl}\" target=\"_blank\" rel=\"noopener noreferrer\">Implementar changes (disparar Governance)</a></p>`\n    : '<p>URL de implementacao nao disponivel.</p>'\n].join('');\n\nreturn [{\n  ...$json,\n  form_html: formHtml\n}];\n"
-      },
-      "id": "format-analysis-html",
-      "name": "Format Analysis HTML",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -520,
-        60
-      ]
-    },
-    {
       "id": "98ffbf4c-e149-4f3c-8298-6c3b594be190",
       "name": "Insert Impact Analysis",
       "type": "n8n-nodes-base.dataTable",
@@ -648,17 +635,6 @@
         [
           {
             "node": "Respond Decision",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Decision Links": {
-      "main": [
-        [
-          {
-            "node": "Format Analysis HTML",
             "type": "main",
             "index": 0
           }
