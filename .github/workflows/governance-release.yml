@@ -39,7 +39,7 @@ on:
         type: boolean
 
   repository_dispatch:
-    types: [governance-ci]
+    types: [governance-ci, governance-release]
 
 permissions:
   contents: read
@@ -54,18 +54,257 @@ env:
   DOMAIN_REPO: fastroute-domain
   API_REPO: fastroute-api
   MOBILE_REPO: fastroute-mobile-hybrid
+  DEFAULT_DOMAIN_REF: main
+  DEFAULT_API_REF: main
+  DEFAULT_MOBILE_REF: main
+  DEFAULT_MOBILE_PROFILE: preview
 
 jobs:
+  prepare-implementation:
+    name: Prepare Impact Implementation
+    runs-on: ubuntu-latest
+
+    outputs:
+      domain_ref: ${{ steps.prepare.outputs.domain_ref }}
+      api_ref: ${{ steps.prepare.outputs.api_ref }}
+      mobile_ref: ${{ steps.prepare.outputs.mobile_ref }}
+      impact_summary: ${{ steps.prepare.outputs.impact_summary }}
+      impact_viability: ${{ steps.prepare.outputs.impact_viability }}
+      implementation_prs: ${{ steps.prepare.outputs.implementation_prs }}
+
+    env:
+      BASE_DOMAIN_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.action == 'governance-release' && (github.event.client_payload.domain_ref || env.DEFAULT_DOMAIN_REF) || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || env.DEFAULT_DOMAIN_REF)) }}
+      BASE_API_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.api_ref || (github.event.action == 'governance-release' && (github.event.client_payload.api_ref || env.DEFAULT_API_REF) || (github.event.client_payload.source_repo == 'fastroute-api' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || env.DEFAULT_API_REF)) }}
+      BASE_MOBILE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.action == 'governance-release' && (github.event.client_payload.mobile_ref || env.DEFAULT_MOBILE_REF) || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || env.DEFAULT_MOBILE_REF)) }}
+
+    steps:
+      - name: Prepare refs and optional auto-implementation
+        id: prepare
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_AUTO_IMPLEMENT: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.auto_implement != false }}
+          IMPACT_JSON: ${{ toJson(github.event.client_payload.impact_analysis) }}
+        run: |
+          set -euo pipefail
+
+          DOMAIN_REF="$BASE_DOMAIN_REF"
+          API_REF="$BASE_API_REF"
+          MOBILE_REF="$BASE_MOBILE_REF"
+
+          IMPACT_SUMMARY="N/A"
+          IMPACT_VIABILITY="N/A"
+          PR_LINES=""
+
+          if [ -n "${IMPACT_JSON:-}" ] && [ "${IMPACT_JSON}" != "null" ] && [ "${IMPACT_JSON}" != "{}" ]; then
+            IMPACT_SUMMARY=$(node - <<'NODE'
+          const impact = JSON.parse(process.env.IMPACT_JSON || '{}');
+          process.stdout.write(String(impact.resumo || impact.summary || 'N/A'));
+          NODE
+            )
+            IMPACT_SUMMARY="$(echo "$IMPACT_SUMMARY" | tr '\n' ' ' | sed 's/[[:space:]]\\+/ /g')"
+            IMPACT_VIABILITY=$(node - <<'NODE'
+          const impact = JSON.parse(process.env.IMPACT_JSON || '{}');
+          const v = impact.viabilidade || impact.viability || {};
+          process.stdout.write(String(v.nivel || v.level || 'N/A'));
+          NODE
+            )
+          fi
+
+          create_repo_branch() {
+            local repo="$1"
+            local repo_key="$2"
+            local base_ref="$3"
+            local out_var="$4"
+
+            local impacted
+            impacted=$(KEY="$repo_key" node - <<'NODE'
+          const impact = JSON.parse(process.env.IMPACT_JSON || '{}');
+          const key = process.env.KEY;
+          const map = { domain: 'fastroute-domain', api: 'fastroute-api', mobile: 'fastroute-mobile-hybrid' };
+          const impacts = impact.impactos || impact.impacts || {};
+          const info = impacts[map[key]] || impacts[key] || {};
+          const yes = info.impacto === true || info.impact === true;
+          process.stdout.write(yes ? 'true' : 'false');
+          NODE
+            )
+
+            if [ "$impacted" != "true" ]; then
+              return 0
+            fi
+
+            local branch="codex/governance-${RUN_ID}-${repo_key}"
+            local workdir
+            workdir="$(mktemp -d)"
+
+            git clone "https://x-access-token:${TOKEN}@github.com/${OWNER}/${repo}.git" "$workdir/repo"
+            cd "$workdir/repo"
+            git checkout "$base_ref" || git checkout "origin/$base_ref"
+
+            git checkout -b "$branch"
+            mkdir -p .governance/auto
+
+            KEY="$repo_key" REPO="$repo" node - <<'NODE' > ".governance/auto/impact-${RUN_ID}.md"
+          const impact = JSON.parse(process.env.IMPACT_JSON || '{}');
+          const key = process.env.KEY;
+          const repo = process.env.REPO;
+          const map = { domain: 'fastroute-domain', api: 'fastroute-api', mobile: 'fastroute-mobile-hybrid' };
+          const impacts = impact.impactos || impact.impacts || {};
+          const info = impacts[map[key]] || impacts[key] || {};
+          const changes = info.mudancas || info.changes || [];
+          const tests = info.testes || info.tests || [];
+          const summary = impact.resumo || impact.summary || 'N/A';
+          const viability = (impact.viabilidade || impact.viability || {}).nivel || (impact.viabilidade || impact.viability || {}).level || 'N/A';
+
+          const lines = [
+            '# Auto Implementation Plan',
+            '',
+            `- Repository: ${repo}`,
+            `- Generated by governance run: ${process.env.RUN_ID || 'N/A'}`,
+            `- Viability: ${viability}`,
+            '',
+            '## Impact Summary',
+            summary,
+            '',
+            '## Proposed Changes'
+          ];
+
+          if (Array.isArray(changes) && changes.length > 0) {
+            for (const c of changes) lines.push(`- ${c}`);
+          } else {
+            lines.push('- No repository-specific change list found in impact payload.');
+          }
+
+          lines.push('', '## Suggested Tests');
+          if (Array.isArray(tests) && tests.length > 0) {
+            for (const t of tests) lines.push(`- ${t}`);
+          } else {
+            lines.push('- No repository-specific test list found in impact payload.');
+          }
+
+          lines.push('', '## Status', '- Branch and PR created automatically by governance orchestrator.');
+          process.stdout.write(lines.join('\n') + '\n');
+          NODE
+
+            KEY="$repo_key" node - <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const impact = JSON.parse(process.env.IMPACT_JSON || '{}');
+          const key = process.env.KEY;
+          const payload = {
+            generatedAt: new Date().toISOString(),
+            runId: process.env.RUN_ID || '',
+            summary: impact.resumo || impact.summary || '',
+            viability: impact.viabilidade || impact.viability || {},
+            impacts: impact.impactos || impact.impacts || {},
+            acceptance: impact.criterios_aceite_mapeados || impact.acceptance_criteria_mapped || [],
+            risks: impact.riscos || impact.risks || [],
+            questions: impact.duvidas || impact.questions || []
+          };
+
+          let filePath = '';
+          let content = '';
+
+          if (key === 'domain') {
+            filePath = path.join('src', 'governance', 'impactPlan.auto.ts');
+            content = `export const governanceImpactPlan = ${JSON.stringify(payload, null, 2)} as const;\n`;
+          } else if (key === 'api') {
+            filePath = path.join('src', 'governance', 'impactPlan.auto.js');
+            content = `'use strict';\n\nconst governanceImpactPlan = ${JSON.stringify(payload, null, 2)};\n\nmodule.exports = { governanceImpactPlan };\n`;
+          } else if (key === 'mobile') {
+            filePath = path.join('src', 'governance', 'impactPlan.auto.ts');
+            content = `export const governanceImpactPlan = ${JSON.stringify(payload, null, 2)} as const;\n`;
+          }
+
+          if (filePath) {
+            fs.mkdirSync(path.dirname(filePath), { recursive: true });
+            fs.writeFileSync(filePath, content, 'utf8');
+          }
+          NODE
+
+            if ! git diff --quiet; then
+              git config user.name "FastRoute Governance Bot"
+              git config user.email "governance-bot@users.noreply.github.com"
+              git add -A
+              git commit -m "chore(governance): auto implementation plan (${repo_key}) run ${RUN_ID}"
+              git push -u origin "$branch"
+
+              local pr_title="Governance Auto Implementation (${repo_key}) - run ${RUN_ID}"
+              local pr_base="$base_ref"
+              if [[ "$pr_base" =~ ^[0-9a-f]{40}$ ]]; then
+                pr_base="main"
+              fi
+              local pr_body="Auto-generated governance branch based on impact analysis payload.\\n\\n- Repo: ${repo}\\n- Base ref: ${base_ref}\\n- PR base: ${pr_base}\\n- Branch: ${branch}"
+
+              local pr_url
+              pr_url=""
+              if command -v gh >/dev/null 2>&1; then
+                pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls" \
+                  -f title="${pr_title}" \
+                  -f head="${branch}" \
+                  -f base="${pr_base}" \
+                  -f body="${pr_body}" \
+                  -q .html_url 2>/dev/null || true)"
+
+                if [ -z "$pr_url" ]; then
+                  pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls?state=open&head=${OWNER}:${branch}" -q '.[0].html_url' 2>/dev/null || true)"
+                fi
+              fi
+
+              if [ -n "$pr_url" ]; then
+                PR_LINES="${PR_LINES}- ${repo}: ${pr_url}\n"
+              fi
+
+              eval "$out_var='$branch'"
+            fi
+          }
+
+          if [ "${RUN_AUTO_IMPLEMENT}" = "true" ] && [ -n "${IMPACT_JSON:-}" ] && [ "${IMPACT_JSON}" != "null" ] && [ "${IMPACT_JSON}" != "{}" ]; then
+            create_repo_branch "$DOMAIN_REPO" "domain" "$DOMAIN_REF" DOMAIN_REF
+            create_repo_branch "$API_REPO" "api" "$API_REF" API_REF
+            create_repo_branch "$MOBILE_REPO" "mobile" "$MOBILE_REF" MOBILE_REF
+          fi
+
+          {
+            echo "domain_ref=$DOMAIN_REF"
+            echo "api_ref=$API_REF"
+            echo "mobile_ref=$MOBILE_REF"
+            echo "impact_summary=$IMPACT_SUMMARY"
+            echo "impact_viability=$IMPACT_VIABILITY"
+            echo "implementation_prs<<EOF"
+            printf "%b" "$PR_LINES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish preparation summary
+        run: |
+          {
+            echo "## Implementation Preparation";
+            echo "- Domain ref: ${{ steps.prepare.outputs.domain_ref }}";
+            echo "- API ref: ${{ steps.prepare.outputs.api_ref }}";
+            echo "- Mobile ref: ${{ steps.prepare.outputs.mobile_ref }}";
+            echo "- Impact summary: ${{ steps.prepare.outputs.impact_summary }}";
+            echo "- Impact viability: ${{ steps.prepare.outputs.impact_viability }}";
+            echo "- Auto-implementation PRs:";
+            if [ -n "${{ steps.prepare.outputs.implementation_prs }}" ]; then
+              printf "%b\n" "${{ steps.prepare.outputs.implementation_prs }}";
+            else
+              echo "  - none";
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
   quality-gates-unit:
     name: Quality Gates (Unit + Integration)
     runs-on: ubuntu-latest
+    needs: [prepare-implementation]
 
     steps:
       - name: Checkout domain
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          ref: ${{ needs.prepare-implementation.outputs.domain_ref }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: domain
 
@@ -73,7 +312,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.API_REPO) }}
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.api_ref || (github.event.client_payload.source_repo == 'fastroute-api' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          ref: ${{ needs.prepare-implementation.outputs.api_ref }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: api
 
@@ -81,7 +320,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          ref: ${{ needs.prepare-implementation.outputs.mobile_ref }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: mobile
 
@@ -116,19 +355,19 @@ jobs:
           npm ci
           npm install --no-save ../domain/*.tgz
           npm run typecheck
-          node --import tsx --test test/unit/*.test.ts
+          npm run test:unit
 
   quality-gates-mobile-android:
     name: Quality Gates (Functional UI Android)
     runs-on: ubuntu-latest
-    needs: [quality-gates-unit]
+    needs: [prepare-implementation, quality-gates-unit]
 
     steps:
       - name: Checkout domain
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          ref: ${{ needs.prepare-implementation.outputs.domain_ref }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: domain
 
@@ -136,7 +375,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          ref: ${{ needs.prepare-implementation.outputs.mobile_ref }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: mobile
 
@@ -150,6 +389,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       - name: Prepare domain package
         run: |
@@ -176,6 +421,9 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_7
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -noaudio -no-boot-anim -gpu swiftshader_indirect
+          emulator-boot-timeout: 900
           script: |
             cd mobile
             export MAESTRO_FLOW_TARGET=.maestro/flows
@@ -194,14 +442,14 @@ jobs:
   quality-gates-mobile-ios:
     name: Quality Gates (Functional UI iOS)
     runs-on: macos-14
-    needs: [quality-gates-unit]
+    needs: [prepare-implementation, quality-gates-unit]
 
     steps:
       - name: Checkout domain
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          ref: ${{ needs.prepare-implementation.outputs.domain_ref }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: domain
 
@@ -209,7 +457,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main') }}
+          ref: ${{ needs.prepare-implementation.outputs.mobile_ref }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: mobile
 
@@ -289,8 +537,11 @@ jobs:
   build-mobile-artifacts:
     name: Build APK + iOS package (internal)
     runs-on: ubuntu-latest
-    needs: [quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release }}
+    needs: [prepare-implementation, quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false) }}
+    env:
+      RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
+      RESOLVED_MOBILE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_profile || github.event.client_payload.mobile_profile || env.DEFAULT_MOBILE_PROFILE }}
 
     outputs:
       android_url: ${{ steps.urls.outputs.android_url }}
@@ -301,7 +552,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
-          ref: ${{ inputs.mobile_ref }}
+          ref: ${{ env.RESOLVED_MOBILE_REF }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: mobile
 
@@ -323,14 +574,14 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           cd mobile
-          eas build --platform android --profile "${{ inputs.mobile_profile }}" --non-interactive --wait --json > ../android-build.json
+          eas build --platform android --profile "${{ env.RESOLVED_MOBILE_PROFILE }}" --non-interactive --wait --json > ../android-build.json
 
       - name: Build iOS artifact
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           cd mobile
-          eas build --platform ios --profile "${{ inputs.mobile_profile }}" --non-interactive --wait --json > ../ios-build.json
+          eas build --platform ios --profile "${{ env.RESOLVED_MOBILE_PROFILE }}" --non-interactive --wait --json > ../ios-build.json
 
       - name: Capture artifact URLs
         id: urls
@@ -351,8 +602,10 @@ jobs:
   build-api-image:
     name: Build & Push API Docker image
     runs-on: ubuntu-latest
-    needs: [quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release }}
+    needs: [prepare-implementation, quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false) }}
+    env:
+      RESOLVED_API_REF: ${{ needs.prepare-implementation.outputs.api_ref }}
 
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
@@ -362,7 +615,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.API_REPO) }}
-          ref: ${{ inputs.api_ref }}
+          ref: ${{ env.RESOLVED_API_REF }}
           token: ${{ secrets.CROSS_REPO_PAT }}
           path: api
 
@@ -390,7 +643,7 @@ jobs:
     name: Deploy API to VPS
     runs-on: ubuntu-latest
     needs: [build-api-image]
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release && inputs.deploy_api }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release && inputs.deploy_api) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false && github.event.client_payload.deploy_api == true) }}
 
     steps:
       - name: SSH deploy
@@ -417,7 +670,7 @@ jobs:
   governance-summary:
     name: Governance Summary
     runs-on: ubuntu-latest
-    needs: [quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
+    needs: [prepare-implementation, quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
     if: ${{ always() }}
 
     steps:
@@ -427,18 +680,26 @@ jobs:
             echo "## FastRoute Governance (Central)";
             echo "- Trigger: ${{ github.event_name }}";
             echo "- Source repo: ${{ github.event.client_payload.source_repo || 'manual' }}";
-            echo "- Domain ref: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref) || 'main') }}";
-            echo "- API ref: ${{ github.event_name == 'workflow_dispatch' && inputs.api_ref || (github.event.client_payload.source_repo == 'fastroute-api' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref) || 'main') }}";
-            echo "- Mobile ref: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref) || 'main') }}";
-            echo "- Run release: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release || false }}";
-            echo "- Deploy API: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || false }}";
+            echo "- Domain ref: ${{ needs.prepare-implementation.outputs.domain_ref }}";
+            echo "- API ref: ${{ needs.prepare-implementation.outputs.api_ref }}";
+            echo "- Mobile ref: ${{ needs.prepare-implementation.outputs.mobile_ref }}";
+            echo "- Run release: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release || (github.event.action == 'governance-release' && (github.event.client_payload.run_release != false) || false) }}";
+            echo "- Deploy API: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || (github.event.action == 'governance-release' && (github.event.client_payload.deploy_api == true) || false) }}";
+            echo "- Impact summary: ${{ needs.prepare-implementation.outputs.impact_summary }}";
+            echo "- Impact viability: ${{ needs.prepare-implementation.outputs.impact_viability }}";
+            echo "- Auto-implementation PRs:";
+            if [ -n "${{ needs.prepare-implementation.outputs.implementation_prs }}" ]; then
+              printf "%b\n" "${{ needs.prepare-implementation.outputs.implementation_prs }}";
+            else
+              echo "  - none";
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
   release-summary:
     name: Release Summary
     runs-on: ubuntu-latest
     needs: [build-mobile-artifacts, build-api-image]
-    if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_release }}
+    if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) }}
 
     steps:
       - name: Publish release summary
@@ -448,5 +709,5 @@ jobs:
             echo "- APK: ${{ needs.build-mobile-artifacts.outputs.android_url }}";
             echo "- iOS package: ${{ needs.build-mobile-artifacts.outputs.ios_url }}";
             echo "- API image tag: ${{ needs.build-api-image.outputs.image_tag }}";
-            echo "- Deploy API executado: ${{ inputs.deploy_api }}";
+            echo "- Deploy API executado: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || (github.event.action == 'governance-release' && (github.event.client_payload.deploy_api == true) || false) }}";
           } >> "$GITHUB_STEP_SUMMARY"

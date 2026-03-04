@@ -1,0 +1,849 @@
+{
+  "name": "FastRoute Impact + Governance (LLM Only) v2",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "FastRoute - Impact Gate",
+        "formDescription": "Executa analise de impacto com LLM e aguarda sua decisao para disparar governanca.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Qual problema ou oportunidade essa alteracao resolve?",
+              "fieldType": "textarea",
+              "placeholder": "reduzir falhas de sync em areas sem sinal"
+            },
+            {
+              "fieldLabel": "Descreva a mudanca como voce espera ver no produto",
+              "fieldType": "textarea",
+              "placeholder": "Quero que o motorista possa concluir waypoint offline com foto e sincronizar automaticamente ao reconectar."
+            },
+            {
+              "fieldLabel": "Quais evidencias comprovam que a entrega esta pronta?",
+              "fieldType": "textarea",
+              "placeholder": "Cenario 1... - Cenario 2... - metricas esperadas..."
+            },
+            {
+              "fieldLabel": "Restricoes: limites de prazo, compliance, integracoes proibidas, etc.",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Deploy API apos aprovacao?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "nao"
+                  },
+                  {
+                    "option": "sim"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {},
+        "responseMode": "lastNode"
+      },
+      "id": "form-trigger",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -1700,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\nconst normalize = (value) =>\n  String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .trim();\n\nconst getByHint = (hints, fallback = '') => {\n  const entries = Object.entries(input);\n  for (const hint of hints) {\n    const h = normalize(hint);\n    const found = entries.find(([k, v]) => normalize(k).includes(h) && v !== undefined && v !== null && String(v).trim() !== '');\n    if (found) return String(found[1]).trim();\n  }\n  return fallback;\n};\n\nconst problem = getByHint(['problema ou oportunidade', 'problema'], 'Nao informado');\nconst expectedChange = getByHint(['mudanca como voce espera ver no produto', 'mudanca esperada', 'espera ver no produto'], 'Nao informado');\nconst evidence = getByHint(['evidencias comprovam que a entrega esta pronta', 'evidencias', 'entrega pronta'], 'Nao informado');\nconst constraints = getByHint(['restricoes', 'compliance', 'integracoes proibidas', 'limites de prazo'], 'Nenhuma restricao informada');\nconst deployChoice = getByHint(['deploy api apos aprovacao'], 'nao').toLowerCase();\n\nconst owner = 'oliversoft-tech';\nconst repo = 'fastroute-changemanagement';\n\nconst githubToken = 'COLE_SEU_GITHUB_TOKEN_AQUI';\nconst llmModel = 'gpt-4o-mini';\n\nconst skillFastRoute = [\n  'SKILL_FASTROUTE',\n  '1) Produto com 3 repositorios: fastroute-domain, fastroute-api, fastroute-mobile-hybrid.',\n  '2) fastroute-domain contem regras de negocio compartilhadas (validacoes, invariantes, FSM).',\n  '3) fastroute-api (Node.js) faz persistencia, autorizacao, reconciliacao e conflito.',\n  '4) fastroute-mobile-hybrid e offline-first e consome API + domain.',\n  '5) Infra atual: VPS + Docker Compose + Nginx + Cloudflare Full Strict + GHCR.',\n  '6) API via Nginx e health /health, porta interna 3002.',\n  '7) N8N + Supabase existem no contexto operacional; clustering depende de lat/long validos.',\n  '8) Mudanca de regra compartilhada tende a impactar domain + api + mobile.',\n  '9) Evitar complexidade desnecessaria; manter arquitetura simples quando possivel.',\n  '10) Sempre propor testes por repositorio e gates de regressao.'\n].join('\\n');\n\nconst systemPrompt = [\n  'Voce e arquiteto de change management do FastRoute.',\n  'Use obrigatoriamente a SKILL_FASTROUTE abaixo para analisar impacto e viabilidade.',\n  '',\n  skillFastRoute,\n  '',\n  'Retorne SOMENTE JSON valido (sem markdown) com este formato:',\n  '{',\n  '  resumo: string,',\n  '  impactos: {',\n  '    fastroute-domain: { impacto: boolean, mudancas: string[], testes: string[] },',\n  '    fastroute-api: { impacto: boolean, mudancas: string[], testes: string[] },',\n  '    fastroute-mobile-hybrid: { impacto: boolean, mudancas: string[], testes: string[] },',\n  '    infra: { impacto: boolean, itens: string[] },',\n  '    integracoes_externas: { impacto: boolean, itens: string[] }',\n  '  },',\n  '  viabilidade: { nivel: Alta|Media|Baixa, justificativa: string },',\n  '  criterios_aceite_mapeados: [{ criterio: string, repos: string[], teste_sugerido: string }],',\n  '  riscos: string[],',\n  '  duvidas: string[]',\n  '}'\n].join('\\n');\n\nconst userPrompt = [\n  'Problema/Oportunidade:',\n  problem,\n  '',\n  'Mudanca esperada no produto:',\n  expectedChange,\n  '',\n  'Evidencias de pronto:',\n  evidence,\n  '',\n  'Restricoes:',\n  constraints\n].join('\\n');\n\nreturn [{\n  owner,\n  repo,\n  github_token: githubToken,\n  llm_model: llmModel,\n  system_prompt: systemPrompt,\n  user_prompt: userPrompt,\n  deploy_api: deployChoice === 'sim',\n  domain_ref: 'main',\n  api_ref: 'main',\n  mobile_ref: 'main',\n  mobile_profile: 'preview'\n}];\n"
+      },
+      "id": "normalize",
+      "name": "Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1450,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $item(0).$node['Normalize'].json;\nconst raw =\n  $json?.text ||\n  $json?.response?.text ||\n  $json?.choices?.[0]?.message?.content ||\n  '';\n\nconst fallbackAnalysis = {\n  resumo: 'LLM nao retornou conteudo estruturado.',\n  viabilidade: { nivel: 'Media', justificativa: 'Resposta vazia do modelo.' },\n  impactos: {},\n  criterios_aceite_mapeados: [],\n  riscos: ['Sem resposta valida do LLM'],\n  duvidas: ['Reexecutar analise']\n};\n\nif (!raw || typeof raw !== 'string') {\n  return [{\n    ...base,\n    analysis: fallbackAnalysis,\n    analysis_raw: {},\n    llm_raw_text: ''\n  }];\n}\n\nlet parsed;\nlet cleaned = raw;\ntry {\n  parsed = JSON.parse(raw);\n} catch (error) {\n  const fence = '```';\n  cleaned = raw\n    .replace(`${fence}json`, '')\n    .replaceAll(fence, '')\n    .trim();\n\n  try {\n    parsed = JSON.parse(cleaned);\n  } catch (_error) {\n    parsed = {\n      resumo: cleaned.slice(0, 6000) || 'Resposta nao-JSON do LLM.',\n      viabilidade: { nivel: 'Media', justificativa: 'Modelo nao retornou JSON valido.' },\n      impactos: {},\n      criterios_aceite_mapeados: [],\n      riscos: ['Falha ao parsear JSON do LLM'],\n      duvidas: ['Ajustar prompt para resposta JSON estrita']\n    };\n  }\n}\n\nconst first = (...values) => values.find((v) => v !== undefined && v !== null);\nconst asArray = (value) => {\n  if (Array.isArray(value)) return value;\n  if (value === undefined || value === null || value === '') return [];\n  return [value];\n};\nconst asObject = (value) => (value && typeof value === 'object' && !Array.isArray(value) ? value : {});\n\nconst normalized = {\n  resumo: first(parsed?.resumo, parsed?.summary, parsed?.executive_summary, parsed?.overview, ''),\n  viabilidade: asObject(first(parsed?.viabilidade, parsed?.viability, parsed?.feasibility, {})),\n  impactos: asObject(first(parsed?.impactos, parsed?.impacts, parsed?.impact, {})),\n  criterios_aceite_mapeados: asArray(\n    first(\n      parsed?.criterios_aceite_mapeados,\n      parsed?.acceptance_criteria_mapped,\n      parsed?.mapped_acceptance_criteria,\n      parsed?.acceptanceCriteriaMapped,\n      []\n    )\n  ),\n  riscos: asArray(first(parsed?.riscos, parsed?.risks, parsed?.main_risks, [])),\n  duvidas: asArray(first(parsed?.duvidas, parsed?.questions, parsed?.open_questions, parsed?.openQuestions, []))\n};\n\nif (!normalized.resumo && Object.keys(asObject(parsed)).length > 0) {\n  normalized.resumo = 'Analise recebida do LLM (estrutura fora do padrao esperado).';\n}\n\nreturn [{\n  ...base,\n  analysis: normalized,\n  analysis_raw: asObject(parsed),\n  llm_raw_text: cleaned\n}];\n"
+      },
+      "id": "parse-llm",
+      "name": "Parse LLM JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -930,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $json.analysis || {};\n\nconst analysisPayload = {\n  resumo: a.resumo || '',\n  viabilidade: a.viabilidade || {},\n  impactos: a.impactos || {},\n  criterios_aceite_mapeados: a.criterios_aceite_mapeados || [],\n  riscos: a.riscos || [],\n  duvidas: a.duvidas || []\n};\n\nconst analysisB64 = Buffer.from(JSON.stringify(analysisPayload), 'utf8').toString('base64');\n\nconst params = {\n  owner: $json.owner,\n  repo: $json.repo,\n  token: $json.github_token,\n  deploy_api: String($json.deploy_api),\n  domain_ref: $json.domain_ref,\n  api_ref: $json.api_ref,\n  mobile_ref: $json.mobile_ref,\n  mobile_profile: $json.mobile_profile,\n  analysis_b64: analysisB64\n};\n\nconst q = Object.entries(params)\n  .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v ?? ''))}`)\n  .join('&');\n\nconst implementUrl = `http://localhost:5678/webhook/fastroute-impact-decision?${q}`;\n\nreturn [{\n  analysis: a,\n  analysis_raw: $json.analysis_raw || {},\n  llm_raw_text: $json.llm_raw_text || '',\n  implement_url: implementUrl,\n  aprovar_url: implementUrl,\n  analysis_b64: analysisB64,\n  mensagem: 'Analise LLM concluida. Clique em Implementar changes para disparar o Governance.'\n}];\n"
+      },
+      "id": "build-links",
+      "name": "Build Decision Links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -670,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "fastroute-impact-decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "decision-webhook",
+      "name": "Decision Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1700,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $json.query || {};\n\nlet impactAnalysis = {};\nif (q.analysis_b64) {\n  try {\n    const decoded = Buffer.from(String(q.analysis_b64), 'base64').toString('utf8');\n    impactAnalysis = JSON.parse(decoded);\n  } catch (_error) {\n    impactAnalysis = {\n      parse_error: true,\n      observacao: 'Falha ao decodificar analysis_b64 no Decision Webhook.'\n    };\n  }\n}\n\nreturn [{\n  approved: true,\n  owner: q.owner || 'oliversoft-tech',\n  repo: q.repo || 'fastroute-changemanagement',\n  github_token: q.token || '',\n  deploy_api: String(q.deploy_api || 'false').toLowerCase() === 'true',\n  domain_ref: q.domain_ref || 'main',\n  api_ref: q.api_ref || 'main',\n  mobile_ref: q.mobile_ref || 'main',\n  mobile_profile: q.mobile_profile || 'preview',\n  impact_analysis: impactAnalysis\n}];\n"
+      },
+      "id": "parse-decision",
+      "name": "Parse Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1450,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.approved}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "id": "approved-if",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1190,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{$json.owner}}/{{$json.repo}}/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$json.github_token}}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"event_type\":\"governance-release\",\"client_payload\":{\"domain_ref\":$json.domain_ref,\"api_ref\":$json.api_ref,\"mobile_ref\":$json.mobile_ref,\"mobile_profile\":$json.mobile_profile,\"run_release\":true,\"deploy_api\":$json.deploy_api,\"impact_analysis\":$json.impact_analysis}}",
+        "options": {}
+      },
+      "id": "dispatch-governance",
+      "name": "Dispatch Governance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -930,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "approved"
+            },
+            {
+              "name": "message",
+              "value": "Governance Orchestrator disparado com sucesso."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "approved-response",
+      "name": "Approved Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -670,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "rejected"
+            },
+            {
+              "name": "message",
+              "value": "Alteracao rejeitada. Governance Orchestrator nao foi disparado."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rejected-response",
+      "name": "Rejected Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -930,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "respond-decision",
+      "name": "Respond Decision",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -410,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.user_prompt}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "={{$json.system_prompt}}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "basic-llm-chain",
+      "name": "Basic LLM Chain (FastRoute Skill)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -1190,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "openai-chat-model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1210,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "={{$json.form_html}}",
+        "options": {
+          "formTitle": "FastRoute - Impact Analysis Result"
+        }
+      },
+      "id": "show-analysis-form",
+      "name": "Show Analysis On Form",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        -420,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $json.analysis || {};\nconst rawObj = $json.analysis_raw || {};\nconst rawTxt = String($json.llm_raw_text || '');\nconst implementUrl = $json.implement_url || $json.aprovar_url || '';\n\nconst esc = (v) => String(v ?? '')\n  .replaceAll('&', '&amp;')\n  .replaceAll('<', '&lt;')\n  .replaceAll('>', '&gt;');\n\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst summary = esc(a.resumo || 'Sem resumo');\nconst viability = a.viabilidade || {};\nconst viabilityLevel = esc(viability.nivel || viability.level || 'Nao informado');\nconst viabilityReason = esc(viability.justificativa || viability.reason || 'Nao informado');\n\nconst impactSections = Object.entries(a.impactos || {}).map(([area, info]) => {\n  const d = info && typeof info === 'object' ? info : {};\n  const impactFlag = d.impacto === true || d.impact === true ? 'Sim' : 'Nao';\n  const changes = toArray(d.mudancas || d.changes || d.itens || d.items);\n  const tests = toArray(d.testes || d.tests);\n\n  const changesHtml = changes.length\n    ? `<ul>${changes.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n    : '<p>Sem mudancas detalhadas.</p>';\n\n  const testsHtml = tests.length\n    ? `<ul>${tests.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n    : '<p>Sem testes sugeridos.</p>';\n\n  return [\n    `<h4>${esc(area)}</h4>`,\n    `<p><strong>Impacto:</strong> ${impactFlag}</p>`,\n    '<p><strong>Mudancas:</strong></p>',\n    changesHtml,\n    '<p><strong>Testes:</strong></p>',\n    testsHtml\n  ].join('');\n}).join('');\n\nconst criteria = toArray(a.criterios_aceite_mapeados || a.acceptance_criteria_mapped);\nconst criteriaHtml = criteria.length\n  ? `<ol>${criteria.map((c) => {\n      if (c && typeof c === 'object') {\n        const criterio = esc(c.criterio || c.criterion || 'Criterio sem descricao');\n        const repos = toArray(c.repos || c.repositories).map(esc).join(', ') || 'Nao informado';\n        const teste = esc(c.teste_sugerido || c.suggested_test || 'Nao informado');\n        return `<li><p><strong>${criterio}</strong></p><p>Repos: ${repos}</p><p>Teste: ${teste}</p></li>`;\n      }\n      return `<li>${esc(c)}</li>`;\n    }).join('')}</ol>`\n  : '<p>Sem criterios mapeados.</p>';\n\nconst risks = toArray(a.riscos || a.risks);\nconst risksHtml = risks.length\n  ? `<ul>${risks.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n  : '<p>Sem riscos listados.</p>';\n\nconst questions = toArray(a.duvidas || a.questions || a.open_questions);\nconst questionsHtml = questions.length\n  ? `<ul>${questions.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`\n  : '<p>Sem duvidas abertas.</p>';\n\nconst rawJson = esc(JSON.stringify(rawObj || {}, null, 2));\nconst rawText = esc(rawTxt.slice(0, 8000));\n\nconst formHtml = [\n  '<h2>Analise de Impacto (LLM)</h2>',\n  `<p><strong>Resumo:</strong> ${summary}</p>`,\n  '<h3>Viabilidade</h3>',\n  `<p><strong>Nivel:</strong> ${viabilityLevel}</p>`,\n  `<p><strong>Justificativa:</strong> ${viabilityReason}</p>`,\n  '<h3>Impactos por area</h3>',\n  impactSections || '<p>Sem impactos detalhados.</p>',\n  '<h3>Criterios de aceite mapeados</h3>',\n  criteriaHtml,\n  '<h3>Riscos</h3>',\n  risksHtml,\n  '<h3>Duvidas</h3>',\n  questionsHtml,\n  '<details><summary>Debug: JSON bruto do LLM</summary>',\n  `<pre>${rawJson}</pre>`,\n  '</details>',\n  '<details><summary>Debug: texto bruto do LLM</summary>',\n  `<pre>${rawText}</pre>`,\n  '</details>',\n  '<hr/>',\n  '<h3>Acao</h3>',\n  implementUrl\n    ? `<p><a href=\"${implementUrl}\" target=\"_blank\" rel=\"noopener noreferrer\">Implementar changes (disparar Governance)</a></p>`\n    : '<p>URL de implementacao nao disponivel.</p>'\n].join('');\n\nreturn [{\n  ...$json,\n  form_html: formHtml\n}];\n"
+      },
+      "id": "format-analysis-html",
+      "name": "Format Analysis HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -520,
+        60
+      ]
+    },
+    {
+      "id": "7d996eb5-9ae8-4b6e-b5de-4884779b66bb",
+      "name": "Insert Impact Analysis",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3400,
+        16
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "impact_analysis"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "change_summary": "={{$json.analysis?.resumo || $json.analysis?.summary || 'Sem resumo'}}",
+            "complexity_level": "={{$json.analysis?.viabilidade?.nivel || $json.analysis?.viability?.level || 'Media'}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "84811296-4746-43fb-8261-f634099dc967",
+      "name": "Load Repos Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3180,
+        16
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "32c561a7-2121-49da-9ebb-b87086c0bb03",
+      "name": "Build Change Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2960,
+        16
+      ],
+      "parameters": {
+        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst impactInsert = $items('Insert Impact Analysis', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\nconst analysisId = impactInsert.id || null;\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase()\n  .replace(/[_s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst isImpacted = (obj) => {\n  const o = asObj(obj);\n  return o.impacto === true || o.impact === true;\n};\n\nconst impactByKey = new Map(\n  Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)])\n);\n\nconst findImpactForRepo = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'fastroute-mobile', 'mobile');\n\n  for (const c of candidates) {\n    const hit = impactByKey.get(normalize(c));\n    if (hit) return hit;\n  }\n\n  return {};\n};\n\nconst repos = $input.all().map((i) => i.json).filter((r) => r && r.id !== undefined && r.name);\nconst out = [];\n\nfor (const repo of repos) {\n  const impactInfo = findImpactForRepo(repo.name);\n  if (!isImpacted(impactInfo)) continue;\n\n  const changes = toArray(impactInfo.mudancas || impactInfo.changes || impactInfo.itens || impactInfo.items)\n    .map((x) => String(x || '').trim())\n    .filter(Boolean);\n\n  const tests = toArray(impactInfo.testes || impactInfo.tests)\n    .map((x) => String(x || '').trim())\n    .filter(Boolean);\n\n  const normalizedChanges = changes.length > 0\n    ? changes\n    : [\n        analysisId\n          ? '[impact:' + analysisId + '] Mudanca sem detalhamento fornecido pelo LLM'\n          : 'Mudanca sem detalhamento fornecido pelo LLM',\n      ];\n\n  for (const changeSummary of normalizedChanges) {\n    const summaryWithTrace = analysisId\n      ? '[impact:' + analysisId + '] ' + changeSummary\n      : changeSummary;\n\n    out.push({\n      repo_id: Number(repo.id),\n      repo_name: repo.name,\n      change_summary: summaryWithTrace,\n      repo_tests: tests,\n      impact_analysis_id: analysisId,\n    });\n  }\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_repo_persistence: true } }];\n}\n\nreturn out.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "4bace7a6-1a64-4322-9f7e-734f0069c5d8",
+      "name": "Has Repo Changes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2740,
+        16
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.skip_repo_persistence === true}}",
+              "operation": "isFalse"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b0658e5d-98dd-4d6b-a2ae-09b510604c37",
+      "name": "Upsert Change In Repo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -2520,
+        -100
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "changes_in_repo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "repo_id",
+              "condition": "eq",
+              "keyValue": "={{String($json.repo_id)}}"
+            },
+            {
+              "keyName": "change_summary",
+              "condition": "eq",
+              "keyValue": "={{$json.change_summary}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "repo_id": "={{Number($json.repo_id)}}",
+            "change_summary": "={{$json.change_summary}}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d9ef9f10-0673-4403-8886-c7939c4c2329",
+      "name": "Build Test Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2300,
+        -100
+      ],
+      "parameters": {
+        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\nconst repoRows = $items('Load Repos Table', 0, 0).map((i) => i.json);\nconst changeRows = $input.all().map((i) => i.json).filter((r) => r && r.id !== undefined && r.repo_id !== undefined);\n\nif (changeRows.length === 0) {\n  return [{ json: { skip_test_persistence: true } }];\n}\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase()\n  .replace(/[_s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst impactByKey = new Map(\n  Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)])\n);\n\nconst testsForRepoName = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'mobile');\n\n  for (const c of candidates) {\n    const info = impactByKey.get(normalize(c));\n    if (info) {\n      return toArray(info.testes || info.tests)\n        .map((x) => String(x || '').trim())\n        .filter(Boolean);\n    }\n  }\n\n  return [];\n};\n\nconst repoNameById = new Map(repoRows.map((r) => [String(r.id), r.name]));\nconst out = [];\n\nfor (const change of changeRows) {\n  const repoName = repoNameById.get(String(change.repo_id));\n  const tests = testsForRepoName(repoName || '');\n\n  for (const testDescription of tests) {\n    out.push({\n      change_id: Number(change.id),\n      test_description: testDescription,\n    });\n  }\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_test_persistence: true } }];\n}\n\nreturn out.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "c42465fd-7ee4-4d24-9439-da3de7884bf8",
+      "name": "Has Tests?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2080,
+        -100
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.skip_test_persistence === true}}",
+              "operation": "isFalse"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ea56a6ff-347d-4615-8b0e-db3eaed5f4ed",
+      "name": "Insert Tests For Change",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1860,
+        -220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "tests_for_change"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "change_id": "={{Number($json.change_id)}}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "09d3d670-0670-4702-bec0-d117f5e74fe6",
+      "name": "Build Step Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1640,
+        -220
+      ],
+      "parameters": {
+        "jsCode": "const testRows = $input.all().map((i) => i.json).filter((r) => r && r.id !== undefined);\nif (testRows.length === 0) {\n  return [];\n}\n\nconst base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\n\nconst repoRows = $items('Load Repos Table', 0, 0).map((i) => i.json);\nconst changeRows = $items('Upsert Change In Repo', 0, 0).map((i) => i.json);\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase()\n  .replace(/[_s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst impactByKey = new Map(Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)]));\n\nconst testsForRepoName = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'mobile');\n\n  for (const c of candidates) {\n    const info = impactByKey.get(normalize(c));\n    if (info) {\n      return toArray(info.testes || info.tests)\n        .map((x) => String(x || '').trim())\n        .filter(Boolean);\n    }\n  }\n  return [];\n};\n\nconst repoNameById = new Map(repoRows.map((r) => [String(r.id), r.name]));\nconst repoIdByChangeId = new Map(changeRows.map((r) => [String(r.id), String(r.repo_id)]));\nconst counterByChange = new Map();\n\nconst out = [];\nfor (const row of testRows) {\n  const changeId = String(row.change_id);\n  const repoId = repoIdByChangeId.get(changeId);\n  const repoName = repoNameById.get(String(repoId || '')) || '';\n  const tests = testsForRepoName(repoName);\n\n  const idx = counterByChange.get(changeId) || 0;\n  const description = tests[idx] || ('Teste relacionado ao change_id ' + changeId);\n  counterByChange.set(changeId, idx + 1);\n\n  out.push({\n    test_id: Number(row.id),\n    description,\n  });\n}\n\nreturn out.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "8c7c80bc-762e-4951-9085-1f7abd776797",
+      "name": "Insert Steps For Test",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1420,
+        -220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "steps_for_test"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "test_id": "={{Number($json.test_id)}}",
+            "description": "={{$json.description}}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "708b7e91-b0ef-4bb8-8c52-7b21240b7c6b",
+      "name": "Finalize Analysis Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        16
+      ],
+      "parameters": {
+        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst impactInsert = $items('Insert Impact Analysis', 0, 0)?.[0]?.json || {};\n\nreturn [{\n  json: {\n    ...base,\n    impact_analysis_id: impactInsert.id || null,\n    persisted_at: new Date().toISOString(),\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (FastRoute Skill)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain (FastRoute Skill)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (FastRoute Skill)": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM JSON": {
+      "main": [
+        [
+          {
+            "node": "Insert Impact Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Decision": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Governance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rejected Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dispatch Governance": {
+      "main": [
+        [
+          {
+            "node": "Approved Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rejected Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Decision Links": {
+      "main": [
+        [
+          {
+            "node": "Format Analysis HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Analysis HTML": {
+      "main": [
+        [
+          {
+            "node": "Show Analysis On Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Impact Analysis": {
+      "main": [
+        [
+          {
+            "node": "Load Repos Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table": {
+      "main": [
+        [
+          {
+            "node": "Build Change Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Change Rows": {
+      "main": [
+        [
+          {
+            "node": "Has Repo Changes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Repo Changes?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Change In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Change In Repo": {
+      "main": [
+        [
+          {
+            "node": "Build Test Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Test Rows": {
+      "main": [
+        [
+          {
+            "node": "Has Tests?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Tests?": {
+      "main": [
+        [
+          {
+            "node": "Insert Tests For Change",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Tests For Change": {
+      "main": [
+        [
+          {
+            "node": "Build Step Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Step Rows": {
+      "main": [
+        [
+          {
+            "node": "Insert Steps For Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Steps For Test": {
+      "main": [
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Analysis Context": {
+      "main": [
+        [
+          {
+            "node": "Build Decision Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "versionId": "llm-only-v2"
+}
