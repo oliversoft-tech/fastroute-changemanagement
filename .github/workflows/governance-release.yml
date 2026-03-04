@@ -73,9 +73,9 @@ jobs:
       implementation_prs: ${{ steps.prepare.outputs.implementation_prs }}
 
     env:
-      BASE_DOMAIN_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.action == 'governance-release' && (github.event.client_payload.domain_ref || env.DEFAULT_DOMAIN_REF) || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || env.DEFAULT_DOMAIN_REF)) }}
-      BASE_API_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.api_ref || (github.event.action == 'governance-release' && (github.event.client_payload.api_ref || env.DEFAULT_API_REF) || (github.event.client_payload.source_repo == 'fastroute-api' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || env.DEFAULT_API_REF)) }}
-      BASE_MOBILE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.action == 'governance-release' && (github.event.client_payload.mobile_ref || env.DEFAULT_MOBILE_REF) || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || env.DEFAULT_MOBILE_REF)) }}
+      BASE_DOMAIN_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.domain_ref || (github.event.action == 'governance-release' && (github.event.client_payload.domain_ref || 'main') || (github.event.client_payload.source_repo == 'fastroute-domain' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main')) }}
+      BASE_API_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.api_ref || (github.event.action == 'governance-release' && (github.event.client_payload.api_ref || 'main') || (github.event.client_payload.source_repo == 'fastroute-api' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main')) }}
+      BASE_MOBILE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_ref || (github.event.action == 'governance-release' && (github.event.client_payload.mobile_ref || 'main') || (github.event.client_payload.source_repo == 'fastroute-mobile-hybrid' && (github.event.client_payload.head_ref || github.event.client_payload.source_ref || github.event.client_payload.head_sha || github.event.client_payload.source_sha) || 'main')) }}
 
     steps:
       - name: Prepare refs and optional auto-implementation
@@ -541,7 +541,7 @@ jobs:
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false) }}
     env:
       RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
-      RESOLVED_MOBILE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_profile || github.event.client_payload.mobile_profile || env.DEFAULT_MOBILE_PROFILE }}
+      RESOLVED_MOBILE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_profile || github.event.client_payload.mobile_profile || 'preview' }}
 
     outputs:
       android_url: ${{ steps.urls.outputs.android_url }}
