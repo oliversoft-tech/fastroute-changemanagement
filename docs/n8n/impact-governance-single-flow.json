@@ -318,6 +318,240 @@
         -520,
         60
       ]
+    },
+    {
+      "id": "98ffbf4c-e149-4f3c-8298-6c3b594be190",
+      "name": "Insert Impact Analysis",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3400,
+        16
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "impact_analysis"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "change_summary": "={{$json.analysis?.resumo || $json.analysis?.summary || 'Sem resumo'}}",
+            "complexity_level": "={{$json.analysis?.viabilidade?.nivel || $json.analysis?.viability?.level || 'Media'}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "da807d30-c2a0-4ab6-9d74-8acfb68cf7fb",
+      "name": "Load Repos Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3180,
+        16
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "1fde8a70-9efb-42bd-84b1-670bc73c1689",
+      "name": "Build Change Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2960,
+        16
+      ],
+      "parameters": {
+        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst impactInsert = $items('Insert Impact Analysis', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\nconst analysisId = impactInsert.id || null;\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase()\n  .replace(/[_s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst isImpacted = (obj) => {\n  const o = asObj(obj);\n  return o.impacto === true || o.impact === true;\n};\n\nconst impactByKey = new Map(\n  Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)])\n);\n\nconst findImpactForRepo = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'fastroute-mobile', 'mobile');\n\n  for (const c of candidates) {\n    const hit = impactByKey.get(normalize(c));\n    if (hit) return hit;\n  }\n\n  return {};\n};\n\nconst repos = $input.all().map((i) => i.json).filter((r) => r && r.id !== undefined && r.name);\nconst out = [];\n\nfor (const repo of repos) {\n  const impactInfo = findImpactForRepo(repo.name);\n  if (!isImpacted(impactInfo)) continue;\n\n  const changes = toArray(impactInfo.mudancas || impactInfo.changes || impactInfo.itens || impactInfo.items)\n    .map((x) => String(x || '').trim())\n    .filter(Boolean);\n\n  const tests = toArray(impactInfo.testes || impactInfo.tests)\n    .map((x) => String(x || '').trim())\n    .filter(Boolean);\n\n  const normalizedChanges = changes.length > 0\n    ? changes\n    : [\n        analysisId\n          ? '[impact:' + analysisId + '] Mudanca sem detalhamento fornecido pelo LLM'\n          : 'Mudanca sem detalhamento fornecido pelo LLM',\n      ];\n\n  for (const changeSummary of normalizedChanges) {\n    const summaryWithTrace = analysisId\n      ? '[impact:' + analysisId + '] ' + changeSummary\n      : changeSummary;\n\n    out.push({\n      repo_id: Number(repo.id),\n      repo_name: repo.name,\n      change_summary: summaryWithTrace,\n      repo_tests: tests,\n      impact_analysis_id: analysisId,\n    });\n  }\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_repo_persistence: true } }];\n}\n\nreturn out.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "e2e44c45-ca90-460d-a10d-25c9c973add2",
+      "name": "Has Repo Changes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2740,
+        16
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.skip_repo_persistence === true}}",
+              "operation": "isFalse"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b55c471c-2ad8-471e-989e-5d3991e279a7",
+      "name": "Upsert Change In Repo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -2520,
+        -100
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "changes_in_repo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "repo_id",
+              "condition": "eq",
+              "keyValue": "={{String($json.repo_id)}}"
+            },
+            {
+              "keyName": "change_summary",
+              "condition": "eq",
+              "keyValue": "={{$json.change_summary}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "repo_id": "={{Number($json.repo_id)}}",
+            "change_summary": "={{$json.change_summary}}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e0f024df-1ba3-4436-b4ee-bef9a25972a4",
+      "name": "Build Test Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2300,
+        -100
+      ],
+      "parameters": {
+        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\nconst repoRows = $items('Load Repos Table', 0, 0).map((i) => i.json);\nconst changeRows = $input.all().map((i) => i.json).filter((r) => r && r.id !== undefined && r.repo_id !== undefined);\n\nif (changeRows.length === 0) {\n  return [{ json: { skip_test_persistence: true } }];\n}\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase()\n  .replace(/[_s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst impactByKey = new Map(\n  Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)])\n);\n\nconst testsForRepoName = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'mobile');\n\n  for (const c of candidates) {\n    const info = impactByKey.get(normalize(c));\n    if (info) {\n      return toArray(info.testes || info.tests)\n        .map((x) => String(x || '').trim())\n        .filter(Boolean);\n    }\n  }\n\n  return [];\n};\n\nconst repoNameById = new Map(repoRows.map((r) => [String(r.id), r.name]));\nconst out = [];\n\nfor (const change of changeRows) {\n  const repoName = repoNameById.get(String(change.repo_id));\n  const tests = testsForRepoName(repoName || '');\n\n  for (const testDescription of tests) {\n    out.push({\n      change_id: Number(change.id),\n      test_description: testDescription,\n    });\n  }\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_test_persistence: true } }];\n}\n\nreturn out.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "79e94bce-6bff-4d22-b68c-abe94201a517",
+      "name": "Has Tests?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2080,
+        -100
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.skip_test_persistence === true}}",
+              "operation": "isFalse"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a976b749-0c24-453e-94c1-c71a3f150b27",
+      "name": "Insert Tests For Change",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1860,
+        -220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "tests_for_change"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "change_id": "={{Number($json.change_id)}}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "97612b7e-7c10-4e32-bcf9-6e315ae0ace2",
+      "name": "Build Step Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1640,
+        -220
+      ],
+      "parameters": {
+        "jsCode": "const testRows = $input.all().map((i) => i.json).filter((r) => r && r.id !== undefined);\nif (testRows.length === 0) {\n  return [];\n}\n\nconst base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\n\nconst repoRows = $items('Load Repos Table', 0, 0).map((i) => i.json);\nconst changeRows = $items('Upsert Change In Repo', 0, 0).map((i) => i.json);\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase()\n  .replace(/[_s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst impactByKey = new Map(Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)]));\n\nconst testsForRepoName = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'mobile');\n\n  for (const c of candidates) {\n    const info = impactByKey.get(normalize(c));\n    if (info) {\n      return toArray(info.testes || info.tests)\n        .map((x) => String(x || '').trim())\n        .filter(Boolean);\n    }\n  }\n  return [];\n};\n\nconst repoNameById = new Map(repoRows.map((r) => [String(r.id), r.name]));\nconst repoIdByChangeId = new Map(changeRows.map((r) => [String(r.id), String(r.repo_id)]));\nconst counterByChange = new Map();\n\nconst out = [];\nfor (const row of testRows) {\n  const changeId = String(row.change_id);\n  const repoId = repoIdByChangeId.get(changeId);\n  const repoName = repoNameById.get(String(repoId || '')) || '';\n  const tests = testsForRepoName(repoName);\n\n  const idx = counterByChange.get(changeId) || 0;\n  const description = tests[idx] || ('Teste relacionado ao change_id ' + changeId);\n  counterByChange.set(changeId, idx + 1);\n\n  out.push({\n    test_id: Number(row.id),\n    description,\n  });\n}\n\nreturn out.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "20bc43f1-8fb9-445a-88f5-ee805f359632",
+      "name": "Insert Steps For Test",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1420,
+        -220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "steps_for_test"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "test_id": "={{Number($json.test_id)}}",
+            "description": "={{$json.description}}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7322f229-0064-49e1-b689-533ec521da74",
+      "name": "Finalize Analysis Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        16
+      ],
+      "parameters": {
+        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst impactInsert = $items('Insert Impact Analysis', 0, 0)?.[0]?.json || {};\n\nreturn [{\n  json: {\n    ...base,\n    impact_analysis_id: impactInsert.id || null,\n    persisted_at: new Date().toISOString(),\n  }\n}];"
+      }
     }
   ],
   "connections": {
@@ -369,7 +603,7 @@
       "main": [
         [
           {
-            "node": "Build Decision Links",
+            "node": "Insert Impact Analysis",
             "type": "main",
             "index": 0
           }
@@ -465,6 +699,141 @@
         [
           {
             "node": "Show Analysis On Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Impact Analysis": {
+      "main": [
+        [
+          {
+            "node": "Load Repos Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table": {
+      "main": [
+        [
+          {
+            "node": "Build Change Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Change Rows": {
+      "main": [
+        [
+          {
+            "node": "Has Repo Changes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Repo Changes?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Change In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Change In Repo": {
+      "main": [
+        [
+          {
+            "node": "Build Test Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Test Rows": {
+      "main": [
+        [
+          {
+            "node": "Has Tests?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Tests?": {
+      "main": [
+        [
+          {
+            "node": "Insert Tests For Change",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Tests For Change": {
+      "main": [
+        [
+          {
+            "node": "Build Step Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Step Rows": {
+      "main": [
+        [
+          {
+            "node": "Insert Steps For Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Steps For Test": {
+      "main": [
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Analysis Context": {
+      "main": [
+        [
+          {
+            "node": "Build Decision Links",
             "type": "main",
             "index": 0
           }
