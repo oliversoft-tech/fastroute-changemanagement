@@ -1,0 +1,728 @@
+{
+  "name": "FastRoute Impact + Governance (Single Flow)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "fastroute-impact-form",
+        "formTitle": "FastRoute - Impact Analysis",
+        "formDescription": "Descreva a mudança para gerar análise de impacto.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Titulo da Mudanca",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Solicitacao",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Solicitante",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Prioridade",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "baixa"
+                  },
+                  {
+                    "option": "media"
+                  },
+                  {
+                    "option": "alta"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Deploy API apos aprovacao?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "nao"
+                  },
+                  {
+                    "option": "sim"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1",
+      "name": "Impact Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        -1160,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\nconst normalize = (value) =>\n  String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .trim();\n\nconst getByExactOrHint = (exactKeys, hints, fallback = '') => {\n  for (const key of exactKeys) {\n    if (input[key] !== undefined && input[key] !== null && String(input[key]).trim() !== '') {\n      return String(input[key]).trim();\n    }\n  }\n\n  const entries = Object.entries(input);\n  for (const hint of hints) {\n    const h = normalize(hint);\n    const found = entries.find(([k, v]) => normalize(k).includes(h) && v !== undefined && v !== null && String(v).trim() !== '');\n    if (found) return String(found[1]).trim();\n  }\n\n  return fallback;\n};\n\nconst problem = getByExactOrHint(\n  [\n    'Qual problema ou oportunidade essa alteração resolve?',\n    'Qual problema ou oportunidade essa alteracao resolve?'\n  ],\n  ['problema ou oportunidade', 'problema'],\n  'Nao informado'\n);\n\nconst expectedChange = getByExactOrHint(\n  ['Descreva a mudança como você espera ver no produto', 'Descreva a mudanca como voce espera ver no produto'],\n  ['mudanca como voce espera ver no produto', 'mudanca esperada', 'como voce espera ver no produto'],\n  'Nao informado'\n);\n\nconst readinessEvidence = getByExactOrHint(\n  ['Quais evidências comprovam que a entrega está pronta?', 'Quais evidencias comprovam que a entrega esta pronta?'],\n  ['evidencias comprovam que a entrega esta pronta', 'evidencias', 'entrega pronta'],\n  'Nao informado'\n);\n\nconst constraints = getByExactOrHint(\n  ['Restrições: Limites de prazo, compliance, integrações proibidas, etc.', 'Restricoes: Limites de prazo, compliance, integracoes proibidas, etc.'],\n  ['restricoes', 'compliance', 'integracoes proibidas', 'limites de prazo'],\n  'Nenhuma restricao informada'\n);\n\nconst owner = 'oliversoft-tech';\nconst repo = 'fastroute-changemanagement';\nconst impactWorkflow = 'impact-analysis.yml';\n\n// Token fixo, como voce pediu\nconst githubToken = 'COLE_SEU_GITHUB_TOKEN_AQUI';\n\nconst request_text = [\n  'Problema/Oportunidade',\n  problem,\n  '',\n  'Mudanca esperada no produto',\n  expectedChange,\n  '',\n  'Evidencias de pronto',\n  readinessEvidence,\n  '',\n  'Restricoes',\n  constraints\n].join('\\n');\n\nconst startedAt = new Date().toISOString();\n\nreturn [{\n  owner,\n  repo,\n  impact_workflow: impactWorkflow,\n  github_token: githubToken,\n  request_text,\n  started_at: startedAt,\n  deploy_api: false,\n  // Defaults fixos para governanca\n  domain_ref: 'main',\n  api_ref: 'main',\n  mobile_ref: 'main',\n  mobile_profile: 'preview'\n}];\n"
+      },
+      "id": "a2",
+      "name": "Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -930,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{$json.owner}}/{{$json.repo}}/actions/workflows/{{$json.impact_workflow}}/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$json.github_token}}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"ref\":\"main\",\"inputs\":{\"request_text\":$json.request_text}}",
+        "options": {}
+      },
+      "id": "a3",
+      "name": "Dispatch Impact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -700,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 12,
+        "unit": "seconds"
+      },
+      "id": "a4",
+      "name": "Wait First Poll",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -470,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/{{$json.owner}}/{{$json.repo}}/actions/workflows/{{$json.impact_workflow}}/runs?event=workflow_dispatch&per_page=30",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$json.github_token}}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a5",
+      "name": "List Impact Runs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -230,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json;\nconst base = $item(0).$node['Normalize'].json;\nconst startedAt = new Date(base.started_at).getTime() - 120000;\nconst runs = Array.isArray(body.workflow_runs) ? body.workflow_runs : [];\nconst candidate = runs\n  .filter(r => new Date(r.created_at).getTime() >= startedAt)\n  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];\n\nif (!candidate) {\n  return [{ ...base, run_found: false }];\n}\n\nreturn [{\n  ...base,\n  run_found: true,\n  impact_run_id: candidate.id,\n  impact_run_url: candidate.html_url\n}];"
+      },
+      "id": "a6",
+      "name": "Pick Impact Run",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.run_found}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "id": "a7",
+      "name": "Run Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        230,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 8,
+        "unit": "seconds"
+      },
+      "id": "a8",
+      "name": "Wait Run Discovery",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        460,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/{{$json.owner}}/{{$json.repo}}/actions/runs/{{$json.impact_run_id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$json.github_token}}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a9",
+      "name": "Get Impact Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $item(0).$node['Pick Impact Run'].json;\nreturn [{\n  ...base,\n  status: $json.status,\n  conclusion: $json.conclusion,\n  impact_run_url: $json.html_url || base.impact_run_url\n}];"
+      },
+      "id": "a10",
+      "name": "Merge Run Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        690,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.status}}",
+              "operation": "equal",
+              "value2": "completed"
+            }
+          ]
+        }
+      },
+      "id": "a11",
+      "name": "Run Completed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        920,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "id": "a12",
+      "name": "Wait Poll",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1150,
+        170
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/{{$json.owner}}/{{$json.repo}}/actions/runs/{{$json.impact_run_id}}/artifacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$json.github_token}}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a13",
+      "name": "List Artifacts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1150,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $item(0).$node['Merge Run Status'].json;\nconst artifacts = Array.isArray($json.artifacts) ? $json.artifacts : [];\nconst report = artifacts.find(a => a.name === 'impact-analysis-report') || artifacts[0];\nconst artifactUrl = report ? report.archive_download_url : '';\n\nconst q = new URLSearchParams({\n  owner: base.owner,\n  repo: base.repo,\n  token: base.github_token,\n  deploy_api: String(base.deploy_api),\n  domain_ref: base.domain_ref,\n  api_ref: base.api_ref,\n  mobile_ref: base.mobile_ref,\n  mobile_profile: base.mobile_profile\n});\n\nconst approveUrl = `https://SEU_N8N/webhook/fastroute-impact-decision?approve=true&${q.toString()}`;\nconst rejectUrl = `https://SEU_N8N/webhook/fastroute-impact-decision?approve=false&${q.toString()}`;\n\nreturn [{\n  ok: base.conclusion === 'success',\n  conclusion: base.conclusion,\n  impact_run_url: base.impact_run_url,\n  artifact_download_url: artifactUrl,\n  mensagem: base.conclusion === 'success'\n    ? 'Analise concluida. Revise o relatorio e escolha Aprovar/Rejeitar.'\n    : 'Analise concluida com falha. Corrija antes de aprovar governanca.',\n  aprovar_url: approveUrl,\n  rejeitar_url: rejectUrl\n}];"
+      },
+      "id": "a14",
+      "name": "Build Decision Links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "fastroute-impact-decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b1",
+      "name": "Decision Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1160,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $json.query || {};\nconst approved = String(q.approve || '').toLowerCase() === 'true';\nreturn [{\n  approved,\n  owner: q.owner || 'oliversoft-tech',\n  repo: q.repo || 'fastroute-changemanagement',\n  github_token: q.token || '',\n  deploy_api: String(q.deploy_api || 'false').toLowerCase() === 'true',\n  domain_ref: q.domain_ref || 'main',\n  api_ref: q.api_ref || 'main',\n  mobile_ref: q.mobile_ref || 'main',\n  mobile_profile: q.mobile_profile || 'preview'\n}];"
+      },
+      "id": "b2",
+      "name": "Parse Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -930,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.approved}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "id": "b3",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{$json.owner}}/{{$json.repo}}/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$json.github_token}}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"event_type\":\"governance-release\",\"client_payload\":{\"domain_ref\":$json.domain_ref,\"api_ref\":$json.api_ref,\"mobile_ref\":$json.mobile_ref,\"mobile_profile\":$json.mobile_profile,\"run_release\":true,\"deploy_api\":$json.deploy_api}}",
+        "options": {}
+      },
+      "id": "b4",
+      "name": "Dispatch Governance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -470,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "approved"
+            },
+            {
+              "name": "message",
+              "value": "Governance Orchestrator disparado com sucesso."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b5",
+      "name": "Approved Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "rejected"
+            },
+            {
+              "name": "message",
+              "value": "Alteracao rejeitada. Governance Orchestrator nao foi disparado."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b6",
+      "name": "Rejected Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -470,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "b7",
+      "name": "Respond Decision",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -10,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "Impact Form": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Impact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dispatch Impact": {
+      "main": [
+        [
+          {
+            "node": "Wait First Poll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait First Poll": {
+      "main": [
+        [
+          {
+            "node": "List Impact Runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Impact Runs": {
+      "main": [
+        [
+          {
+            "node": "Pick Impact Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Impact Run": {
+      "main": [
+        [
+          {
+            "node": "Run Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Found?": {
+      "main": [
+        [
+          {
+            "node": "Get Impact Run",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Run Discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Run Discovery": {
+      "main": [
+        [
+          {
+            "node": "List Impact Runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Impact Run": {
+      "main": [
+        [
+          {
+            "node": "Merge Run Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Run Status": {
+      "main": [
+        [
+          {
+            "node": "Run Completed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Completed?": {
+      "main": [
+        [
+          {
+            "node": "List Artifacts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Poll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Poll": {
+      "main": [
+        [
+          {
+            "node": "Get Impact Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Artifacts": {
+      "main": [
+        [
+          {
+            "node": "Build Decision Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Decision Links": {
+      "main": []
+    },
+    "Decision Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Decision": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Governance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rejected Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dispatch Governance": {
+      "main": [
+        [
+          {
+            "node": "Approved Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rejected Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "versionId": "1"
+}
