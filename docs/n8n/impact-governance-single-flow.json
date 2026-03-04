@@ -639,6 +639,122 @@
       "parameters": {
         "jsCode": "const decision = $items('Parse Decision', 0, 0)?.[0]?.json || {};\n\nconst analysisId = Number(decision.analysis_id);\nif (!Number.isFinite(analysisId)) {\n  return [{\n    approved: false,\n    ...decision,\n    impact_analysis: {\n      parse_error: true,\n      observacao: 'analysis_id invalido ou ausente.'\n    }\n  }];\n}\n\nconst uniqById = (rows) => {\n  const out = new Map();\n  for (const row of rows) {\n    const key = row && row.id !== undefined ? String(row.id) : JSON.stringify(row);\n    if (!out.has(key)) out.set(key, row);\n  }\n  return [...out.values()];\n};\n\nconst impactRows = uniqById($items('Decision Load Impact Analysis', 0, 0).map((i) => i.json || {}));\nconst repoRows = uniqById($items('Decision Load Repos', 0, 0).map((i) => i.json || {}));\nconst changeRows = uniqById($items('Decision Load Changes', 0, 0).map((i) => i.json || {}));\nconst testsuiteRows = uniqById($items('Decision Load Testsuites', 0, 0).map((i) => i.json || {}));\nconst testStepRows = uniqById($items('Decision Load Tests For Testsuite', 0, 0).map((i) => i.json || {}));\n\nconst impactRow = impactRows.find((r) => Number(r.id) === analysisId);\nif (!impactRow) {\n  return [{\n    approved: false,\n    ...decision,\n    impact_analysis: {\n      not_found: true,\n      observacao: 'Nao foi encontrada linha em impact_analysis para o analysis_id informado.'\n    }\n  }];\n}\n\nconst repoNameById = new Map(\n  repoRows\n    .filter((r) => r && r.id !== undefined && r.name)\n    .map((r) => [Number(r.id), String(r.name)])\n);\n\nconst prefix = '[impact:' + analysisId + ']';\nconst impactedChanges = changeRows.filter((r) => String(r.change_summary || '').includes(prefix));\n\nconst impacts = {};\nfor (const [id, name] of repoNameById.entries()) {\n  impacts[name] = { impacto: false, mudancas: [], riscos: [], duvidas: [] };\n}\n\nconst criteriaMapped = [];\n\nfor (const change of impactedChanges) {\n  const repoId = Number(change.repo_id);\n  const repoName = repoNameById.get(repoId) || ('repo-' + String(repoId));\n  if (!impacts[repoName]) {\n    impacts[repoName] = { impacto: false, mudancas: [], riscos: [], duvidas: [] };\n  }\n\n  let summary = String(change.change_summary || '').trim();\n  if (summary.includes(prefix)) {\n    summary = summary.replace(prefix, '').trim();\n  }\n\n  const marker = '| criterios_aceite:';\n  let descricao = summary;\n  let criterios = [];\n  if (summary.includes(marker)) {\n    const parts = summary.split(marker);\n    descricao = String(parts.shift() || '').trim();\n    criterios = parts.join(marker).split('|').map((x) => String(x || '').trim()).filter(Boolean);\n  }\n\n  const suites = testsuiteRows.filter((t) => Number(t.change_id) === Number(change.id));\n  const suiteIds = new Set(suites.map((s) => Number(s.id)).filter((id) => Number.isFinite(id)));\n\n  const tests = testStepRows\n    .filter((s) => suiteIds.has(Number(s.testsuite_id)))\n    .map((s) => String(s.description || '').trim())\n    .filter(Boolean);\n\n  const uniqueTests = [...new Set(tests)];\n\n  impacts[repoName].impacto = true;\n  impacts[repoName].mudancas.push({\n    descricao: descricao || 'Mudanca sem descricao',\n    testes: uniqueTests,\n    criterios_aceite: criterios,\n  });\n\n  for (const criterio of criterios) {\n    criteriaMapped.push({\n      criterio,\n      repos: [repoName],\n      teste_sugerido: uniqueTests[0] || '',\n    });\n  }\n}\n\nif (!impacts.infra) impacts.infra = { impacto: false, itens: [] };\nif (!impacts.integracoes_externas) impacts.integracoes_externas = { impacto: false, itens: [] };\n\nconst impactAnalysis = {\n  resumo: String(impactRow.change_summary || 'Sem resumo'),\n  viabilidade: {\n    nivel: String(impactRow.complexity_level || 'Media'),\n    justificativa: 'Reconstruida a partir das data-tables via analysis_id.'\n  },\n  impactos: impacts,\n  criterios_aceite_mapeados: criteriaMapped,\n  riscos: [],\n  duvidas: [],\n  source_analysis_id: analysisId,\n};\n\nreturn [{\n  approved: true,\n  owner: decision.owner,\n  repo: decision.repo,\n  github_token: decision.github_token,\n  deploy_api: decision.deploy_api,\n  domain_ref: decision.domain_ref,\n  api_ref: decision.api_ref,\n  mobile_ref: decision.mobile_ref,\n  mobile_profile: decision.mobile_profile,\n  impact_analysis: impactAnalysis\n}];\n"
       }
+    },
+    {
+      "id": "9682974f-a168-48ea-b659-6590817695da",
+      "name": "Clear Impact Analysis",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3320,
+        20
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "impact_analysis"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e3f469d2-a19c-4dd1-8663-29ed73118fe4",
+      "name": "Clear Changes In Repo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3080,
+        20
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "changes_in_repo"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "522a6141-a7d4-4339-91ea-06221e3390ae",
+      "name": "Clear Testsuites For Change",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -2840,
+        20
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "testsuites_for_change"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f53c684f-cfc0-46b4-916a-2e4ebc68aa15",
+      "name": "Clear Tests For Testsuite",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -2600,
+        20
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "tests_for_testsuite"
+        },
+        "matchType": "anyCondition",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -657,7 +773,7 @@
       "main": [
         [
           {
-            "node": "Basic LLM Chain (FastRoute Skill)",
+            "node": "Clear Impact Analysis",
             "type": "main",
             "index": 0
           }
@@ -965,6 +1081,50 @@
         [
           {
             "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Impact Analysis": {
+      "main": [
+        [
+          {
+            "node": "Clear Changes In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Changes In Repo": {
+      "main": [
+        [
+          {
+            "node": "Clear Testsuites For Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Testsuites For Change": {
+      "main": [
+        [
+          {
+            "node": "Clear Tests For Testsuite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Tests For Testsuite": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (FastRoute Skill)",
             "type": "main",
             "index": 0
           }
