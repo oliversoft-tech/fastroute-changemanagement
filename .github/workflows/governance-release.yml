@@ -294,10 +294,123 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
+  implement-changes:
+    name: Implement Impact Changes (LLM)
+    runs-on: ubuntu-latest
+    needs: [prepare-implementation]
+    outputs:
+      implementation_log: ${{ steps.impl.outputs.implementation_log }}
+
+    steps:
+      - name: Checkout changemanagement
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Auto-implement impacted repositories
+        id: impl
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          RUN_ID: ${{ github.run_id }}
+          IMPACT_JSON: ${{ toJson(github.event.client_payload.impact_analysis) }}
+          RUN_AUTO_IMPLEMENT: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.auto_implement != false }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ github.event.client_payload.openai_model || 'gpt-4o-mini' }}
+          DOMAIN_REF: ${{ needs.prepare-implementation.outputs.domain_ref }}
+          API_REF: ${{ needs.prepare-implementation.outputs.api_ref }}
+          MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
+        run: |
+          set -euo pipefail
+
+          if [ "${RUN_AUTO_IMPLEMENT}" != "true" ]; then
+            {
+              echo "implementation_log<<EOF"
+              echo "- Auto-implementation desativada para este evento."
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "${IMPACT_JSON:-}" ] || [ "${IMPACT_JSON}" = "null" ] || [ "${IMPACT_JSON}" = "{}" ]; then
+            {
+              echo "implementation_log<<EOF"
+              echo "- Sem impact_analysis no payload; nenhuma change foi implementada."
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY não configurado. Necessário para etapa de codificação automática." >&2
+            exit 1
+          fi
+
+          printf '%s' "${IMPACT_JSON}" > impact.json
+
+          LOG_LINES=""
+
+          run_repo() {
+            local repo="$1"
+            local key="$2"
+            local ref="$3"
+
+            local json
+            json=$(node scripts/governance/auto-implement-repo.js \
+              --owner "${OWNER}" \
+              --repo "${repo}" \
+              --repo_key "${key}" \
+              --ref "${ref}" \
+              --run_id "${RUN_ID}" \
+              --impact_json_file impact.json \
+              --token "${TOKEN}" \
+              --openai_api_key "${OPENAI_API_KEY}" \
+              --model "${OPENAI_MODEL}")
+
+            local status branch commit
+            status=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.status||''));" "${json}")
+            branch=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.branch||''));" "${json}")
+            commit=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.commit||''));" "${json}")
+
+            if [ "${status}" = "implemented" ]; then
+              LOG_LINES="${LOG_LINES}- ${repo}: implemented (branch=${branch}, commit=${commit})\n"
+            else
+              LOG_LINES="${LOG_LINES}- ${repo}: ${status}\n"
+            fi
+          }
+
+          run_repo "${DOMAIN_REPO}" "domain" "${DOMAIN_REF}"
+          run_repo "${API_REPO}" "api" "${API_REF}"
+          run_repo "${MOBILE_REPO}" "mobile" "${MOBILE_REF}"
+
+          {
+            echo "implementation_log<<EOF"
+            if [ -n "${LOG_LINES}" ]; then
+              printf "%b" "${LOG_LINES}"
+            else
+              echo "- Nenhuma alteração aplicada."
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish implementation summary
+        run: |
+          {
+            echo "## Auto Implementation";
+            if [ -n "${{ steps.impl.outputs.implementation_log }}" ]; then
+              printf "%b\n" "${{ steps.impl.outputs.implementation_log }}";
+            else
+              echo "- Nenhuma informação de implementação disponível.";
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
   quality-gates-unit:
     name: Quality Gates (Unit + Integration)
     runs-on: ubuntu-latest
-    needs: [prepare-implementation]
+    needs: [prepare-implementation, implement-changes]
 
     steps:
       - name: Checkout domain
@@ -360,7 +473,7 @@ jobs:
   quality-gates-mobile-android:
     name: Quality Gates (Functional UI Android)
     runs-on: ubuntu-latest
-    needs: [prepare-implementation, quality-gates-unit]
+    needs: [prepare-implementation, implement-changes, quality-gates-unit]
 
     steps:
       - name: Checkout domain
@@ -442,7 +555,7 @@ jobs:
   quality-gates-mobile-ios:
     name: Quality Gates (Functional UI iOS)
     runs-on: macos-14
-    needs: [prepare-implementation, quality-gates-unit]
+    needs: [prepare-implementation, implement-changes, quality-gates-unit]
 
     steps:
       - name: Checkout domain
@@ -670,7 +783,7 @@ jobs:
   governance-summary:
     name: Governance Summary
     runs-on: ubuntu-latest
-    needs: [prepare-implementation, quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
+    needs: [prepare-implementation, implement-changes, quality-gates-unit, quality-gates-mobile-android, quality-gates-mobile-ios]
     if: ${{ always() }}
 
     steps:
@@ -687,6 +800,12 @@ jobs:
             echo "- Deploy API: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || (github.event.action == 'governance-release' && (github.event.client_payload.deploy_api == true) || false) }}";
             echo "- Impact summary: ${{ needs.prepare-implementation.outputs.impact_summary }}";
             echo "- Impact viability: ${{ needs.prepare-implementation.outputs.impact_viability }}";
+            echo "- Auto-implementation (code stage):";
+            if [ -n "${{ needs.implement-changes.outputs.implementation_log }}" ]; then
+              printf "%b\n" "${{ needs.implement-changes.outputs.implementation_log }}";
+            else
+              echo "  - none";
+            fi
             echo "- Auto-implementation PRs:";
             if [ -n "${{ needs.prepare-implementation.outputs.implementation_prs }}" ]; then
               printf "%b\n" "${{ needs.prepare-implementation.outputs.implementation_prs }}";

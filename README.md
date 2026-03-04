@@ -24,6 +24,7 @@ Orquestração central da governança de qualidade e release do ecossistema Fast
 ## Segredos necessários
 
 - `CROSS_REPO_PAT`
+- `OPENAI_API_KEY` (obrigatório para a etapa de codificação automática quando `auto_implement=true`)
 - `EXPO_TOKEN`
 - `GHCR_USERNAME`
 - `GHCR_PAT`
