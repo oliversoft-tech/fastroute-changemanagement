@@ -166,7 +166,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"event_type\":\"governance-release\",\"client_payload\":{\"domain_ref\":$json.domain_ref,\"api_ref\":$json.api_ref,\"mobile_ref\":$json.mobile_ref,\"mobile_profile\":$json.mobile_profile,\"run_release\":true,\"deploy_api\":$json.deploy_api,\"impact_analysis\":$json.impact_analysis}}",
+        "jsonBody": "={{ JSON.stringify({\n  event_type: 'governance-release',\n  client_payload: {\n    domain_ref: $json.domain_ref || 'main',\n    api_ref: $json.api_ref || 'main',\n    mobile_ref: $json.mobile_ref || 'main',\n    mobile_profile: $json.mobile_profile || 'preview',\n    run_release: true,\n    deploy_api: !!$json.deploy_api,\n    impact_analysis: $json.impact_analysis || {}\n  }\n}) }}",
         "options": {}
       },
       "id": "dispatch-governance",
