@@ -9,7 +9,7 @@ Orquestração central da governança de qualidade e release do ecossistema Fast
 
 ### Modos
 
-- `repository_dispatch` (`governance-ci`): executa gates automáticos (unit + integração + UI Android/iOS) quando qualquer repositório (`domain`, `api`, `mobile`) dispara o evento.
+- `repository_dispatch` (`governance-ci`): executa gates automáticos (unit + integração) quando qualquer repositório (`domain`, `api`, `mobile`) dispara o evento.
 - `workflow_dispatch`: execução manual com refs específicas e opção de release:
   - build de artefatos mobile (APK + iOS package via EAS)
   - build/push da imagem Docker da API
