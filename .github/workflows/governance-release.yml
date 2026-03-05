@@ -671,6 +671,7 @@ jobs:
           cd mobile
           export MAESTRO_FLOW_TARGET=.maestro/flows
           export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT}"
+          export MAESTRO_IOS_SIM_ID="${SIM_ID}"
 
           if [ -n "${SIM_ID:-}" ]; then
             xcrun simctl boot "${SIM_ID}" || true
