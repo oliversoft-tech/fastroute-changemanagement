@@ -569,9 +569,7 @@ jobs:
           emulator-options: -no-window -noaudio -no-boot-anim -gpu off -no-snapshot-save -camera-back none -camera-front none
           emulator-boot-timeout: 420
           script: |
-            cd mobile
-            export MAESTRO_FLOW_TARGET=.maestro/flows
-            bash ./scripts/ci/run-maestro-tests.sh android
+            bash -lc 'cd mobile && export MAESTRO_FLOW_TARGET=.maestro/flows && bash ./scripts/ci/run-maestro-tests.sh android'
 
       - name: Upload Android UI test artifacts
         if: always()
