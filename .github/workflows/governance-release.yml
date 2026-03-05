@@ -624,6 +624,7 @@ jobs:
           npm pack
 
       - name: Build iOS simulator app
+        id: build_ios_sim
         env:
           EXPO_PUBLIC_E2E_BYPASS_LOGIN: "1"
         run: |
@@ -641,6 +642,7 @@ jobs:
             echo "Nenhum simulador iPhone disponível" >&2
             exit 1
           fi
+          echo "sim_id=$SIM_ID" >> "$GITHUB_OUTPUT"
 
           xcrun simctl boot "$SIM_ID" || true
           xcrun simctl bootstatus "$SIM_ID" -b
@@ -663,9 +665,31 @@ jobs:
           xcrun simctl install booted "$APP_PATH"
 
       - name: Run Maestro flow on iOS simulator
+        env:
+          SIM_ID: ${{ steps.build_ios_sim.outputs.sim_id }}
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "300000"
         run: |
+          set -euo pipefail
           cd mobile
           export MAESTRO_FLOW_TARGET=.maestro/flows
+          export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT}"
+
+          if [ -n "${SIM_ID:-}" ]; then
+            xcrun simctl boot "${SIM_ID}" || true
+            xcrun simctl bootstatus "${SIM_ID}" -b
+          fi
+
+          if bash ./scripts/ci/run-maestro-tests.sh ios; then
+            exit 0
+          fi
+
+          echo "Primeira tentativa de Maestro iOS falhou; reiniciando simulador e tentando novamente..."
+          if [ -n "${SIM_ID:-}" ]; then
+            xcrun simctl shutdown "${SIM_ID}" || true
+            xcrun simctl boot "${SIM_ID}" || true
+            xcrun simctl bootstatus "${SIM_ID}" -b
+          fi
+          sleep 20
           bash ./scripts/ci/run-maestro-tests.sh ios
 
       - name: Upload iOS UI test artifacts
