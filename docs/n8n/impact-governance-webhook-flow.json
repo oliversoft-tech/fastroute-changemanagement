@@ -139,7 +139,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.github.com/repos/oliversoft-tech/fastroute-management/releases",
+        "url": "=https://api.github.com/repos/{{$item(0).$node[\"Parse Decision\"].json.owner || \"oliversoft-tech\"}}/{{$item(0).$node[\"Parse Decision\"].json.repo || \"fastroute-changemanagement\"}}/releases",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -163,7 +163,7 @@
         "options": {}
       },
       "id": "create-github-release",
-      "name": "Create GitHub Release (fastroute-management)",
+      "name": "Create GitHub Release",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -332,14 +332,14 @@
       "main": [
         [
           {
-            "node": "Create GitHub Release (fastroute-management)",
+                "node": "Create GitHub Release",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Create GitHub Release (fastroute-management)": {
+      "Create GitHub Release": {
       "main": [
         [
           {
