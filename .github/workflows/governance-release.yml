@@ -46,8 +46,8 @@ permissions:
   packages: write
 
 concurrency:
-  group: governance-central-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || format('{0}-{1}', github.event.action || 'dispatch', github.event.client_payload.source_repo || 'manual') }}
-  cancel-in-progress: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' }}
+  group: governance-central-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || format('{0}-{1}-{2}', github.event.action || 'dispatch', github.event.client_payload.source_repo || 'manual', github.event.client_payload.source_sha || github.event.client_payload.head_sha || github.run_id) }}
+  cancel-in-progress: false
 
 env:
   NODE_VERSION: "20"
