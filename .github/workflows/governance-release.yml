@@ -529,10 +529,29 @@ jobs:
 
       - name: Reset ADB state before emulator
         run: |
-          adb kill-server || true
+          set -euo pipefail
+          ADB_BIN="$(command -v adb || true)"
+          if [ -z "${ADB_BIN}" ]; then
+            for CANDIDATE in \
+              "/usr/local/lib/android/sdk/platform-tools/adb" \
+              "${ANDROID_HOME:-}/platform-tools/adb" \
+              "${ANDROID_SDK_ROOT:-}/platform-tools/adb"; do
+              if [ -x "${CANDIDATE}" ]; then
+                ADB_BIN="${CANDIDATE}"
+                break
+              fi
+            done
+          fi
+
+          if [ -z "${ADB_BIN}" ]; then
+            echo "adb ainda não disponível neste ponto; pulando reset pré-emulador."
+            exit 0
+          fi
+
+          "${ADB_BIN}" kill-server || true
           pkill -f "qemu-system|emulator.*-avd" || true
           sleep 2
-          adb start-server
+          "${ADB_BIN}" start-server
 
       - name: Run Maestro flow on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
