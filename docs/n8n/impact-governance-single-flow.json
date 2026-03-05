@@ -1,5 +1,5 @@
 {
-  "name": "FastRoute Impact Analysis (LLM)",
+  "name": "FastRoute Impact Analysis",
   "nodes": [
     {
       "parameters": {
@@ -194,7 +194,7 @@
         16
       ],
       "parameters": {
-        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst impactInsert = $items('Insert Impact Analysis', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\nconst analysisId = impactInsert.id || null;\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/[_\\s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^\\uFEFF/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\n\nconst normalizeChange = (change) => {\n  if (typeof change === 'string') {\n    return {\n      descricao: change,\n      testes: [],\n      criterios_aceite: []\n    };\n  }\n\n  const c = asObj(change);\n  return {\n    descricao: String(c.descricao || c.desc || c.description || '').trim(),\n    testes: toArray(c.testes || c.tests || c.test_steps).map((x) => String(x || '').trim()).filter(Boolean),\n    criterios_aceite: toArray(c.criterios_aceite || c.acceptance_criterias || c.acceptance_criteria).map((x) => String(x || '').trim()).filter(Boolean)\n  };\n};\n\nconst impactByKey = new Map(\n  Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)])\n);\n\nconst findImpactForRepo = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'mobile');\n\n  for (const c of candidates) {\n    const hit = impactByKey.get(normalize(c));\n    if (hit) return hit;\n  }\n\n  return {};\n};\n\nconst repos = $input.all().map((i) => i.json).filter((r) => r && r.name);\nconst out = [];\n\nfor (const repo of repos) {\n  const repoId = [repo.repo_id, repo.id, repo['\\uFEFFid']]\n    .map(toSafeNumber)\n    .find((n) => Number.isFinite(n));\n\n  if (!Number.isFinite(repoId)) {\n    continue;\n  }\n\n  const impactInfo = asObj(findImpactForRepo(repo.name));\n  const impacted = impactInfo.impacto === true || impactInfo.impact === true || impactInfo.has_impact === true;\n  if (!impacted) continue;\n\n  const changes = toArray(impactInfo.mudancas || impactInfo.changes).map(normalizeChange);\n  const changeRisks = toArray(impactInfo.riscos || impactInfo.risks).map((x) => String(x || '').trim()).filter(Boolean);\n  const changeDoubts = toArray(impactInfo.duvidas || impactInfo.doubts).map((x) => String(x || '').trim()).filter(Boolean);\n\n  const normalizedChanges = changes.length > 0\n    ? changes\n    : [{\n        descricao: analysisId\n          ? '[impact:' + analysisId + '] Mudanca sem detalhamento fornecido pelo LLM'\n          : 'Mudanca sem detalhamento fornecido pelo LLM',\n        testes: [],\n        criterios_aceite: []\n      }];\n\n  for (const change of normalizedChanges) {\n    const desc = String(change.descricao || '').trim() || 'Mudanca sem descricao';\n    const criteria = toArray(change.criterios_aceite).map((x) => String(x || '').trim()).filter(Boolean);\n    const summaryBase = analysisId ? '[impact:' + analysisId + '] ' + desc : desc;\n    const summary = criteria.length > 0\n      ? summaryBase + ' | criterios_aceite: ' + criteria.join(' | ')\n      : summaryBase;\n\n    out.push({\n      repo_id: repoId,\n      repo_name: repo.name,\n      change_summary: summary,\n      test_steps: toArray(change.testes).map((x) => String(x || '').trim()).filter(Boolean),\n      acceptance_criteria: criteria,\n      change_risks: changeRisks,\n      change_doubts: changeDoubts,\n      impact_analysis_id: analysisId,\n    });\n  }\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_repo_persistence: true } }];\n}\n\nreturn out.map((json) => ({ json }));\n"
+        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst impactInsert = $items('Insert Impact Analysis', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\nconst analysisId = impactInsert.id || null;\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/[_\\s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^\\uFEFF/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\n\nconst normalizeChange = (change) => {\n  if (typeof change === 'string') {\n    const desc = String(change || '').trim();\n    return {\n      descricao: desc,\n      testes: [],\n      criterios_aceite: [],\n      code_changes: desc ? [desc] : []\n    };\n  }\n\n  const c = asObj(change);\n  const descricao = String(c.descricao || c.desc || c.description || '').trim();\n  const explicitCodes = toArray(c.code_changes || c.codeChanges || c.codes || c.code || c.implementacao || c.codigo)\n    .map((x) => String(x || '').trim())\n    .filter(Boolean);\n\n  return {\n    descricao,\n    testes: toArray(c.testes || c.tests || c.test_steps).map((x) => String(x || '').trim()).filter(Boolean),\n    criterios_aceite: toArray(c.criterios_aceite || c.acceptance_criterias || c.acceptance_criteria).map((x) => String(x || '').trim()).filter(Boolean),\n    code_changes: explicitCodes.length > 0 ? explicitCodes : (descricao ? [descricao] : [])\n  };\n};\n\nconst impactByKey = new Map(\n  Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)])\n);\n\nconst findImpactForRepo = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'mobile');\n\n  for (const c of candidates) {\n    const hit = impactByKey.get(normalize(c));\n    if (hit) return hit;\n  }\n\n  return {};\n};\n\nconst repos = $input.all().map((i) => i.json).filter((r) => r && r.name);\nconst out = [];\n\nfor (const repo of repos) {\n  const repoId = [repo.repo_id, repo.id, repo['\\uFEFFid']]\n    .map(toSafeNumber)\n    .find((n) => Number.isFinite(n));\n\n  if (!Number.isFinite(repoId)) {\n    continue;\n  }\n\n  const impactInfo = asObj(findImpactForRepo(repo.name));\n  const impacted = impactInfo.impacto === true || impactInfo.impact === true || impactInfo.has_impact === true;\n  if (!impacted) continue;\n\n  const changes = toArray(impactInfo.mudancas || impactInfo.changes).map(normalizeChange);\n  const changeRisks = toArray(impactInfo.riscos || impactInfo.risks).map((x) => String(x || '').trim()).filter(Boolean);\n  const changeDoubts = toArray(impactInfo.duvidas || impactInfo.doubts).map((x) => String(x || '').trim()).filter(Boolean);\n\n  const normalizedChanges = changes.length > 0\n    ? changes\n    : [{\n        descricao: analysisId\n          ? '[impact:' + analysisId + '] Mudanca sem detalhamento fornecido pelo LLM'\n          : 'Mudanca sem detalhamento fornecido pelo LLM',\n        testes: [],\n        criterios_aceite: [],\n        code_changes: []\n      }];\n\n  for (const change of normalizedChanges) {\n    const desc = String(change.descricao || '').trim() || 'Mudanca sem descricao';\n    const criteria = toArray(change.criterios_aceite).map((x) => String(x || '').trim()).filter(Boolean);\n    const summaryBase = analysisId ? '[impact:' + analysisId + '] ' + desc : desc;\n    const summary = criteria.length > 0\n      ? summaryBase + ' | criterios_aceite: ' + criteria.join(' | ')\n      : summaryBase;\n\n    const normalizedCodeChanges = toArray(change.code_changes).map((x) => String(x || '').trim()).filter(Boolean);\n\n    out.push({\n      repo_id: repoId,\n      repo_name: repo.name,\n      change_summary: summary,\n      test_steps: toArray(change.testes).map((x) => String(x || '').trim()).filter(Boolean),\n      code_changes: normalizedCodeChanges.length > 0 ? normalizedCodeChanges : [summary],\n      acceptance_criteria: criteria,\n      change_risks: changeRisks,\n      change_doubts: changeDoubts,\n      impact_analysis_id: analysisId,\n    });\n  }\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_repo_persistence: true } }];\n}\n\nreturn out.map((json) => ({ json }));"
       }
     },
     {
@@ -499,6 +499,84 @@
       "parameters": {
         "jsCode": "const toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^\\uFEFF/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\n\nconst repoId = toSafeNumber($json.repo_id);\nif (!Number.isFinite(repoId)) {\n  return [];\n}\n\nreturn [{\n  json: {\n    ...$json,\n    repo_id: repoId,\n  },\n}];\n"
       }
+    },
+    {
+      "id": "build-code-change-rows",
+      "name": "Build Code Change Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2300,
+        80
+      ],
+      "parameters": {
+        "jsCode": "const insertedChanges = $input.all();\nif (insertedChanges.length === 0) {\n  return [];\n}\n\nconst sourceRows = $items('Build Change Rows', 0, 0).map((i) => i.json || {});\nconst makeKey = (repoId, changeSummary) => Number(repoId) + '::' + String(changeSummary || '').trim();\n\nconst sourceByKey = new Map();\nfor (const source of sourceRows) {\n  sourceByKey.set(makeKey(source.repo_id, source.change_summary), source);\n}\n\nconst out = [];\nfor (const item of insertedChanges) {\n  const inserted = item.json || {};\n  const key = makeKey(inserted.repo_id, inserted.change_summary);\n  const source = sourceByKey.get(key);\n\n  const codes = Array.isArray(source?.code_changes)\n    ? source.code_changes.map((x) => String(x || '').trim()).filter(Boolean)\n    : [];\n\n  const normalizedCodes = codes.length > 0\n    ? [...new Set(codes)]\n    : [String(inserted.change_summary || '').trim()].filter(Boolean);\n\n  for (const code of normalizedCodes) {\n    out.push({\n      json: {\n        change_id: Number(inserted.id),\n        code,\n      },\n    });\n  }\n}\n\nreturn out;"
+      }
+    },
+    {
+      "id": "upsert-code-changes",
+      "name": "Upsert Code Changes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -2080,
+        80
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "code_changes"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "change_id",
+              "condition": "eq",
+              "keyValue": "={{String($json.change_id)}}"
+            },
+            {
+              "keyName": "code",
+              "condition": "eq",
+              "keyValue": "={{$json.code}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "change_id": "={{Number($json.change_id)}}",
+            "code": "={{$json.code}}"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "clear-code-changes",
+      "name": "Clear Code Changes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3600,
+        16
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "delete",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "code_changes"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -604,6 +682,11 @@
             "node": "Build Test Rows",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Build Code Change Rows",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -696,7 +779,7 @@
       "main": [
         [
           {
-            "node": "Clear Changes In Repo",
+            "node": "Clear Code Changes",
             "type": "main",
             "index": 0
           }
@@ -741,6 +824,28 @@
         [
           {
             "node": "Upsert Change In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Code Change Rows": {
+      "main": [
+        [
+          {
+            "node": "Upsert Code Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Code Changes": {
+      "main": [
+        [
+          {
+            "node": "Clear Changes In Repo",
             "type": "main",
             "index": 0
           }
