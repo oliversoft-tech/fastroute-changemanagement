@@ -539,7 +539,7 @@ jobs:
     name: Build & Push API Docker image
     runs-on: ubuntu-latest
     needs: [prepare-implementation, quality-gates-unit]
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false) }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain')) }}
     env:
       RESOLVED_API_REF: ${{ needs.prepare-implementation.outputs.api_ref }}
 
@@ -579,7 +579,7 @@ jobs:
     name: Deploy API to VPS
     runs-on: ubuntu-latest
     needs: [build-api-image]
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release && inputs.deploy_api) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false && github.event.client_payload.deploy_api == true) }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release && inputs.deploy_api) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false && github.event.client_payload.deploy_api == true) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain')) }}
 
     steps:
       - name: SSH deploy
@@ -620,7 +620,7 @@ jobs:
             echo "- API ref: ${{ needs.prepare-implementation.outputs.api_ref }}";
             echo "- Mobile ref: ${{ needs.prepare-implementation.outputs.mobile_ref }}";
             echo "- Run release: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release || (github.event.action == 'governance-release' && (github.event.client_payload.run_release != false) || false) }}";
-            echo "- Deploy API: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || (github.event.action == 'governance-release' && (github.event.client_payload.deploy_api == true) || false) }}";
+            echo "- Deploy API: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_api) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.deploy_api == true) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain')) }}";
             echo "- Impact summary: ${{ needs.prepare-implementation.outputs.impact_summary }}";
             echo "- Impact viability: ${{ needs.prepare-implementation.outputs.impact_viability }}";
             echo "- Auto-implementation (code stage):";
