@@ -494,7 +494,7 @@ jobs:
     name: Build APK + iOS package (internal)
     runs-on: ubuntu-latest
     needs: [prepare-implementation, quality-gates-unit]
-    if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) && (needs.prepare-implementation.outputs.mobile_ref != env.DEFAULT_MOBILE_REF || (github.event_name == 'workflow_dispatch' && inputs.domain_ref == env.DEFAULT_DOMAIN_REF && inputs.api_ref == env.DEFAULT_API_REF && inputs.mobile_ref == env.DEFAULT_MOBILE_REF) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.source_repo == 'fastroute-mobile-hybrid')) }}
+    if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) && (needs.prepare-implementation.outputs.mobile_ref != 'main' || (github.event_name == 'workflow_dispatch' && inputs.domain_ref == 'main' && inputs.api_ref == 'main' && inputs.mobile_ref == 'main') || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.source_repo == 'fastroute-mobile-hybrid')) }}
     env:
       RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
       RESOLVED_MOBILE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_profile || github.event.client_payload.mobile_profile || 'preview' }}
