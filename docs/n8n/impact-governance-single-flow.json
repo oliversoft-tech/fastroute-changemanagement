@@ -4,7 +4,7 @@
     {
       "parameters": {
         "formTitle": "FastRoute - Impact Gate",
-        "formDescription": "Executa analise de impacto com LLM e aguarda sua decisao para disparar governanca.",
+        "formDescription": "Executa analise de impacto com LLM, dispara governanca e abre PRs para aprovacao por repositorio impactado.",
         "formFields": {
           "values": [
             {
@@ -57,7 +57,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $json;\n\nconst normalize = (value) =>\n  String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .trim();\n\nconst getByHint = (hints, fallback = '') => {\n  const entries = Object.entries(input);\n  for (const hint of hints) {\n    const h = normalize(hint);\n    const found = entries.find(([k, v]) => normalize(k).includes(h) && v !== undefined && v !== null && String(v).trim() !== '');\n    if (found) return String(found[1]).trim();\n  }\n  return fallback;\n};\n\nconst problem = getByHint(['problema ou oportunidade', 'problema'], 'Nao informado');\nconst expectedChange = getByHint(['mudanca como voce espera ver no produto', 'mudanca esperada', 'espera ver no produto'], 'Nao informado');\nconst evidence = getByHint(['evidencias comprovam que a entrega esta pronta', 'evidencias', 'entrega pronta'], 'Nao informado');\nconst constraints = getByHint(['restricoes', 'compliance', 'integracoes proibidas', 'limites de prazo'], 'Nenhuma restricao informada');\nconst deployChoice = getByHint(['deploy api apos aprovacao'], 'nao').toLowerCase();\n\nconst owner = 'oliversoft-tech';\nconst repo = 'fastroute-changemanagement';\n\nconst githubToken = 'COLE_SEU_GITHUB_TOKEN_AQUI';\nconst llmModel = 'gpt-4o-mini';\n\nconst skillFastRoute = [\n  'SKILL_FASTROUTE',\n  '1) Produto com 3 repositorios: fastroute-domain, fastroute-api, fastroute-mobile-hybrid.',\n  '2) fastroute-domain contem regras de negocio compartilhadas (validacoes, invariantes, FSM).',\n  '3) fastroute-api (Node.js) faz persistencia, autorizacao, reconciliacao e conflito.',\n  '4) fastroute-mobile-hybrid e offline-first e consome API + domain.',\n  '5) Infra atual: VPS + Docker Compose + Nginx + Cloudflare Full Strict + GHCR.',\n  '6) API via Nginx e health /health, porta interna 3002.',\n  '7) N8N + Supabase existem no contexto operacional; clustering depende de lat/long validos.',\n  '8) Mudanca de regra compartilhada tende a impactar domain + api + mobile.',\n  '9) Evitar complexidade desnecessaria; manter arquitetura simples quando possivel.',\n  '10) Sempre propor testes por repositorio e gates de regressao.'\n].join('\\n');\n\nconst systemPrompt = [\n  'Voce e arquiteto de change management do FastRoute.',\n  'Use obrigatoriamente a SKILL_FASTROUTE abaixo para analisar impacto e viabilidade.',\n  '',\n  skillFastRoute,\n  '',\n  'Retorne SOMENTE JSON valido (sem markdown) com este formato:',\n  '{',\n  '  resumo: string,',\n  '  viabilidade: { nivel: Alta|Media|Baixa, justificativa: string },',\n  '  impactos: {',\n  '    \"fastroute-domain\": {',\n  '      impacto: boolean,',\n  '      mudancas: [{ descricao: string, testes: string[], criterios_aceite: string[] }],',\n  '      riscos: string[],',\n  '      duvidas: string[]',\n  '    },',\n  '    \"fastroute-api\": {',\n  '      impacto: boolean,',\n  '      mudancas: [{ descricao: string, testes: string[], criterios_aceite: string[] }],',\n  '      riscos: string[],',\n  '      duvidas: string[]',\n  '    },',\n  '    \"fastroute-mobile-hybrid\": {',\n  '      impacto: boolean,',\n  '      mudancas: [{ descricao: string, testes: string[], criterios_aceite: string[] }],',\n  '      riscos: string[],',\n  '      duvidas: string[]',\n  '    },',\n  '    infra: { impacto: boolean, itens: string[] },',\n  '    integracoes_externas: { impacto: boolean, itens: string[] }',\n  '  }',\n  '}',\n  '',\n  'Regras obrigatorias:',\n  '1) Use exatamente as chaves: resumo, viabilidade, impactos, impacto, mudancas, descricao, testes, criterios_aceite, riscos, duvidas.',\n  '2) Se um repositorio nao tiver impacto, retorne impacto=false e mudancas/riscos/duvidas vazios.',\n  '3) Cada item de mudancas deve conter testes como passos executaveis de validacao (test_steps).',\n  '4) Nao inclua texto fora do JSON.',\n  '5) Campos de teste (testes/test_steps/teste_sugerido) DEVEM ser descricoes completas em linguagem natural (frases claras, com contexto de comportamento esperado).',\n  '6) Nao use nomes tecnicos curtos, codigos, snake_case ou ids de teste como: test_fsm_transicao_planejado_para_aguardando_confirmacao.',\n  '7) Exemplo correto: \"Validar que a entrega muda de Planejado para Aguardando confirmacao quando o SMS D-1 e enviado com sucesso.\"'\n].join('\\n');\n\nconst userPrompt = [\n  'Problema/Oportunidade:',\n  problem,\n  '',\n  'Mudanca esperada no produto:',\n  expectedChange,\n  '',\n  'Evidencias de pronto:',\n  evidence,\n  '',\n  'Restricoes:',\n  constraints\n].join('\\n');\n\nreturn [{\n  owner,\n  repo,\n  github_token: githubToken,\n  llm_model: llmModel,\n  system_prompt: systemPrompt,\n  user_prompt: userPrompt,\n  deploy_api: deployChoice === 'sim',\n  domain_ref: 'main',\n  api_ref: 'main',\n  mobile_ref: 'main',\n  mobile_profile: 'preview'\n}];\n"
+        "jsCode": "const input = $json;\n\nconst normalize = (value) =>\n  String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .trim();\n\nconst getByHint = (hints, fallback = '') => {\n  const entries = Object.entries(input);\n  for (const hint of hints) {\n    const h = normalize(hint);\n    const found = entries.find(([k, v]) => normalize(k).includes(h) && v !== undefined && v !== null && String(v).trim() !== '');\n    if (found) return String(found[1]).trim();\n  }\n  return fallback;\n};\n\nconst problem = getByHint(['problema ou oportunidade', 'problema'], 'Nao informado');\nconst expectedChange = getByHint(['mudanca como voce espera ver no produto', 'mudanca esperada', 'espera ver no produto'], 'Nao informado');\nconst evidence = getByHint(['evidencias comprovam que a entrega esta pronta', 'evidencias', 'entrega pronta'], 'Nao informado');\nconst constraints = getByHint(['restricoes', 'compliance', 'integracoes proibidas', 'limites de prazo'], 'Nenhuma restricao informada');\nconst deployChoice = getByHint(['deploy api apos aprovacao'], 'nao').toLowerCase();\n\nconst fallbackToken = 'COLE_SEU_GITHUB_TOKEN_AQUI';\nconst envToken = (typeof process !== 'undefined' && process.env && process.env.GITHUB_TOKEN)\n  ? String(process.env.GITHUB_TOKEN).trim()\n  : '';\nconst githubToken = String(envToken || fallbackToken)\n  .replace(/^Bearer\\s+/i, '')\n  .replace(/[\\r\\n\\t]/g, '')\n  .replace(/[^\\x20-\\x7E]/g, '')\n  .trim();\n\nreturn [{\n  owner: 'oliversoft-tech',\n  repo: 'fastroute-changemanagement',\n  github_token: githubToken,\n  llm_model: 'gpt-4o-mini',\n  problem,\n  expected_change: expectedChange,\n  evidence,\n  constraints,\n  deploy_api: deployChoice === 'sim',\n  domain_ref: 'main',\n  api_ref: 'main',\n  mobile_ref: 'main',\n  mobile_profile: 'preview'\n}];"
       },
       "id": "normalize",
       "name": "Normalize",
@@ -83,7 +83,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const analysisId = Number($json.impact_analysis_id);\n\nconst q = 'analysis_id=' + encodeURIComponent(String(Number.isFinite(analysisId) ? analysisId : ''));\nconst implementUrl = 'http://localhost:5678/webhook/fastroute-impact-decision?' + q;\n\nreturn [{\n  analysis_id: Number.isFinite(analysisId) ? analysisId : null,\n  aprovar_url: implementUrl,\n  mensagem: 'Analise registrada. Clique em Implementar changes para disparar o Governance.'\n}];\n"
+        "jsCode": "const ctx = $items('Finalize Analysis Context', 0, 0)?.[0]?.json || {};\nconst analysisId = Number(ctx.impact_analysis_id);\nconst analysis = (ctx.analysis && typeof ctx.analysis === 'object') ? ctx.analysis : {};\nconst impacts = analysis.impactos || analysis.impacts || {};\n\nconst impactedRepos = Object.entries(impacts)\n  .filter(([, info]) => info && (info.impacto === true || info.impact === true || info.has_impact === true))\n  .map(([repoName, info]) => {\n    const changes = Array.isArray(info.mudancas) ? info.mudancas : [];\n    return {\n      repositorio: repoName,\n      mudancas: changes\n        .map((c) => String((c && (c.descricao || c.description)) || '').trim())\n        .filter(Boolean),\n      testes_sugeridos: changes\n        .flatMap((c) => Array.isArray(c?.testes) ? c.testes : [])\n        .map((t) => String(t || '').trim())\n        .filter(Boolean)\n    };\n  });\n\nconst artifacts = impactedRepos.map((r) => ({\n  repositorio: r.repositorio,\n  artefatos: [\n    'PR de implementacao no repositorio',\n    'Diff real de codigo no PR',\n    'Checklist de testes no corpo/arquivos da PR'\n  ]\n}));\n\nconst owner = String(ctx.owner || 'oliversoft-tech');\nconst repo = String(ctx.repo || 'fastroute-changemanagement');\n\nreturn [{\n  analysis_id: Number.isFinite(analysisId) ? analysisId : null,\n  dispatch_status: 'queued',\n  repos_impactados: impactedRepos.map((r) => r.repositorio),\n  artefatos_previstos: artifacts,\n  mudancas_previstas: impactedRepos,\n  revisar_em: `https://github.com/${owner}/${repo}/actions`,\n  mensagem: 'Governance disparado para gerar PRs por repositorio impactado. Revise os diffs reais nas PRs antes de aprovar.'\n}];"
       },
       "id": "build-links",
       "name": "Build Decision Links",
@@ -97,12 +97,12 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{$json.user_prompt}}",
+        "text": "={{[\n  'Problema/Oportunidade:',\n  $json.problem || 'Nao informado',\n  '',\n  'Mudanca esperada no produto:',\n  $json.expected_change || 'Nao informado',\n  '',\n  'Evidencias de pronto:',\n  $json.evidence || 'Nao informado',\n  '',\n  'Restricoes:',\n  $json.constraints || 'Nenhuma restricao informada'\n].join('\\n')}}",
         "hasOutputParser": false,
         "messages": {
           "messageValues": [
             {
-              "message": "={{$json.system_prompt}}"
+              "message": "Voce e arquiteto de change management do FastRoute.\nUse obrigatoriamente a SKILL_FASTROUTE abaixo para analisar impacto e viabilidade.\n\nSKILL_FASTROUTE\n1) Produto com 3 repositorios: fastroute-domain, fastroute-api, fastroute-mobile-hybrid.\n2) fastroute-domain contem regras de negocio compartilhadas (validacoes, invariantes, FSM).\n3) fastroute-api (Node.js) faz persistencia, autorizacao, reconciliacao e conflito.\n4) fastroute-mobile-hybrid e offline-first e consome API + domain.\n5) Infra atual: VPS + Docker Compose + Nginx + Cloudflare Full Strict + GHCR.\n6) API via Nginx e health /health, porta interna 3002.\n7) N8N + Supabase existem no contexto operacional; clustering depende de lat/long validos.\n8) Mudanca de regra compartilhada tende a impactar domain + api + mobile.\n9) Evitar complexidade desnecessaria; manter arquitetura simples quando possivel.\n10) Sempre propor testes por repositorio e gates de regressao.\n\nRetorne SOMENTE JSON valido (sem markdown) com este formato:\n{\n  \"resumo\": string,\n  \"viabilidade\": { \"nivel\": \"Alta|Media|Baixa\", \"justificativa\": string },\n  \"impactos\": {\n    \"fastroute-domain\": { \"impacto\": boolean, \"mudancas\": [{ \"descricao\": string, \"testes\": string[], \"criterios_aceite\": string[] }], \"riscos\": string[], \"duvidas\": string[] },\n    \"fastroute-api\": { \"impacto\": boolean, \"mudancas\": [{ \"descricao\": string, \"testes\": string[], \"criterios_aceite\": string[] }], \"riscos\": string[], \"duvidas\": string[] },\n    \"fastroute-mobile-hybrid\": { \"impacto\": boolean, \"mudancas\": [{ \"descricao\": string, \"testes\": string[], \"criterios_aceite\": string[] }], \"riscos\": string[], \"duvidas\": string[] },\n    \"infra\": { \"impacto\": boolean, \"itens\": string[] },\n    \"integracoes_externas\": { \"impacto\": boolean, \"itens\": string[] }\n  }\n}\n\nRegras obrigatorias:\n1) Se um repositorio nao tiver impacto, retorne impacto=false e arrays vazios.\n2) Campos de teste devem ser descricoes completas em linguagem natural.\n3) Sem snake_case, sem ids de teste, sem texto fora do JSON.\n4) Mantenha resposta concisa: max 2 mudancas por repo, max 3 testes e 3 criterios por mudanca, max 2 riscos e 2 duvidas por repo.\n5) resumo <= 450 chars; justificativa <= 300 chars."
             }
           ]
         },
@@ -125,7 +125,8 @@
           "value": "claude-3-5-sonnet-20241022"
         },
         "options": {
-          "temperature": 0.1
+          "temperature": 0,
+          "maxTokens": 500
         }
       },
       "id": "openai-chat-model",
@@ -194,7 +195,7 @@
         16
       ],
       "parameters": {
-        "jsCode": "const base = $items('Parse LLM JSON', 0, 0)?.[0]?.json || {};\nconst impactInsert = $items('Insert Impact Analysis', 0, 0)?.[0]?.json || {};\nconst analysis = base.analysis || {};\nconst impacts = analysis.impactos || analysis.impacts || {};\nconst analysisId = impactInsert.id || null;\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/[_\\s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\n\nconst toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^\\uFEFF/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\n\nconst normalizeChange = (change) => {\n  if (typeof change === 'string') {\n    const desc = String(change || '').trim();\n    return {\n      descricao: desc,\n      testes: [],\n      criterios_aceite: [],\n      code_changes: desc ? [desc] : []\n    };\n  }\n\n  const c = asObj(change);\n  const descricao = String(c.descricao || c.desc || c.description || '').trim();\n  const explicitCodes = toArray(c.code_changes || c.codeChanges || c.codes || c.code || c.implementacao || c.codigo)\n    .map((x) => String(x || '').trim())\n    .filter(Boolean);\n\n  return {\n    descricao,\n    testes: toArray(c.testes || c.tests || c.test_steps).map((x) => String(x || '').trim()).filter(Boolean),\n    criterios_aceite: toArray(c.criterios_aceite || c.acceptance_criterias || c.acceptance_criteria).map((x) => String(x || '').trim()).filter(Boolean),\n    code_changes: explicitCodes.length > 0 ? explicitCodes : (descricao ? [descricao] : [])\n  };\n};\n\nconst impactByKey = new Map(\n  Object.entries(asObj(impacts)).map(([k, v]) => [normalize(k), asObj(v)])\n);\n\nconst findImpactForRepo = (repoName) => {\n  const n = normalize(repoName);\n  const candidates = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n\n  if (n.includes('domain')) candidates.push('fastroute-domain', 'domain');\n  if (n.includes('api')) candidates.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) candidates.push('fastroute-mobile-hybrid', 'mobile');\n\n  for (const c of candidates) {\n    const hit = impactByKey.get(normalize(c));\n    if (hit) return hit;\n  }\n\n  return {};\n};\n\nconst repos = $input.all().map((i) => i.json).filter((r) => r && r.name);\nconst out = [];\n\nfor (const repo of repos) {\n  const repoId = [repo.repo_id, repo.id, repo['\\uFEFFid']]\n    .map(toSafeNumber)\n    .find((n) => Number.isFinite(n));\n\n  if (!Number.isFinite(repoId)) {\n    continue;\n  }\n\n  const impactInfo = asObj(findImpactForRepo(repo.name));\n  const impacted = impactInfo.impacto === true || impactInfo.impact === true || impactInfo.has_impact === true;\n  if (!impacted) continue;\n\n  const changes = toArray(impactInfo.mudancas || impactInfo.changes).map(normalizeChange);\n  const changeRisks = toArray(impactInfo.riscos || impactInfo.risks).map((x) => String(x || '').trim()).filter(Boolean);\n  const changeDoubts = toArray(impactInfo.duvidas || impactInfo.doubts).map((x) => String(x || '').trim()).filter(Boolean);\n\n  const normalizedChanges = changes.length > 0\n    ? changes\n    : [{\n        descricao: analysisId\n          ? '[impact:' + analysisId + '] Mudanca sem detalhamento fornecido pelo LLM'\n          : 'Mudanca sem detalhamento fornecido pelo LLM',\n        testes: [],\n        criterios_aceite: [],\n        code_changes: []\n      }];\n\n  for (const change of normalizedChanges) {\n    const desc = String(change.descricao || '').trim() || 'Mudanca sem descricao';\n    const criteria = toArray(change.criterios_aceite).map((x) => String(x || '').trim()).filter(Boolean);\n    const summaryBase = analysisId ? '[impact:' + analysisId + '] ' + desc : desc;\n    const summary = criteria.length > 0\n      ? summaryBase + ' | criterios_aceite: ' + criteria.join(' | ')\n      : summaryBase;\n\n    const normalizedCodeChanges = toArray(change.code_changes).map((x) => String(x || '').trim()).filter(Boolean);\n\n    out.push({\n      repo_id: repoId,\n      repo_name: repo.name,\n      change_summary: summary,\n      test_steps: toArray(change.testes).map((x) => String(x || '').trim()).filter(Boolean),\n      code_changes: normalizedCodeChanges.length > 0 ? normalizedCodeChanges : [summary],\n      acceptance_criteria: criteria,\n      change_risks: changeRisks,\n      change_doubts: changeDoubts,\n      impact_analysis_id: analysisId,\n    });\n  }\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_repo_persistence: true } }];\n}\n\nreturn out.map((json) => ({ json }));"
+        "jsCode": "const firstFromNode = (names) => {\n  for (const name of names) {\n    try {\n      const rows = $items(name, 0, 0);\n      if (Array.isArray(rows) && rows.length > 0) return rows[0].json || {};\n    } catch (_e) {}\n  }\n  return {};\n};\n\nconst base = firstFromNode(['Parse LLM JSON2', 'Parse LLM JSON1', 'Parse LLM JSON']);\nconst impactInsert = firstFromNode(['Insert Impact Analysis2', 'Insert Impact Analysis1', 'Insert Impact Analysis']);\nconst analysis = (base.analysis && typeof base.analysis === 'object') ? base.analysis : base;\nconst impacts = analysis.impactos || analysis.impacts || analysis.impact || {};\nconst analysisId = impactInsert.id || base.impact_analysis_id || null;\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/[_\\s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\nconst toBool = (v) => v === true || String(v || '').toLowerCase() === 'true';\n\nconst toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^\\uFEFF/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\n\nconst normalizeChange = (change) => {\n  if (typeof change === 'string') {\n    const desc = String(change || '').trim();\n    return {\n      descricao: desc,\n      testes: [],\n      criterios_aceite: [],\n      code_changes: desc ? [desc] : []\n    };\n  }\n\n  const c = asObj(change);\n  const descricao = String(c.descricao || c.desc || c.description || '').trim();\n  const explicitCodes = toArray(c.code_changes || c.codeChanges || c.codes || c.code || c.implementacao || c.codigo)\n    .map((x) => String(x || '').trim())\n    .filter(Boolean);\n\n  return {\n    descricao,\n    testes: toArray(c.testes || c.tests || c.test_steps).map((x) => String(x || '').trim()).filter(Boolean),\n    criterios_aceite: toArray(c.criterios_aceite || c.acceptance_criterias || c.acceptance_criteria).map((x) => String(x || '').trim()).filter(Boolean),\n    code_changes: explicitCodes.length > 0 ? explicitCodes : (descricao ? [descricao] : [])\n  };\n};\n\nconst impactEntries = Object.entries(asObj(impacts)).map(([k, v]) => ({ key: k, normKey: normalize(k), info: asObj(v) }));\nconst impactByKey = new Map(impactEntries.map((e) => [e.normKey, e.info]));\n\nconst repoRows = $input\n  .all()\n  .map((i) => i.json || {})\n  .map((r) => {\n    const repoId = [r.repo_id, r.id, r['\\uFEFFid']].map(toSafeNumber).find((n) => Number.isFinite(n) && n > 0);\n    const repoName = String(r.name || r.repo_name || r.repository || r.full_name || '').trim();\n    if (!Number.isFinite(repoId) || !repoName) return null;\n    return { ...r, repo_id: repoId, repo_name: repoName, norm_name: normalize(repoName) };\n  })\n  .filter(Boolean);\n\nconst candidatesForRepoName = (repoName) => {\n  const n = normalize(repoName);\n  const c = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n  if (n.includes('domain')) c.push('fastroute-domain', 'domain');\n  if (n.includes('api')) c.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) c.push('fastroute-mobile-hybrid', 'mobile');\n  return [...new Set(c.map(normalize))];\n};\n\nconst matchImpactForRepo = (repoName) => {\n  for (const key of candidatesForRepoName(repoName)) {\n    const hit = impactByKey.get(key);\n    if (hit) return hit;\n  }\n  return null;\n};\n\nconst rowsFromImpact = (repoId, repoName, impactInfo) => {\n  const impacted = toBool(impactInfo.impacto) || toBool(impactInfo.impact) || toBool(impactInfo.has_impact);\n  if (!impacted) return [];\n\n  const changes = toArray(impactInfo.mudancas || impactInfo.changes).map(normalizeChange);\n  const changeRisks = toArray(impactInfo.riscos || impactInfo.risks).map((x) => String(x || '').trim()).filter(Boolean);\n  const changeDoubts = toArray(impactInfo.duvidas || impactInfo.doubts).map((x) => String(x || '').trim()).filter(Boolean);\n\n  const normalizedChanges = changes.length > 0\n    ? changes\n    : [{\n        descricao: analysisId\n          ? '[impact:' + analysisId + '] Mudanca sem detalhamento fornecido pelo LLM'\n          : 'Mudanca sem detalhamento fornecido pelo LLM',\n        testes: [],\n        criterios_aceite: [],\n        code_changes: []\n      }];\n\n  const out = [];\n  for (const change of normalizedChanges) {\n    const desc = String(change.descricao || '').trim() || 'Mudanca sem descricao';\n    const criteria = toArray(change.criterios_aceite).map((x) => String(x || '').trim()).filter(Boolean);\n    const summaryBase = analysisId ? '[impact:' + analysisId + '] ' + desc : desc;\n    const summary = criteria.length > 0\n      ? summaryBase + ' | criterios_aceite: ' + criteria.join(' | ')\n      : summaryBase;\n\n    const normalizedCodeChanges = toArray(change.code_changes).map((x) => String(x || '').trim()).filter(Boolean);\n\n    out.push({\n      repo_id: repoId,\n      repo_name: repoName,\n      change_summary: summary,\n      test_steps: toArray(change.testes).map((x) => String(x || '').trim()).filter(Boolean),\n      code_changes: normalizedCodeChanges.length > 0 ? normalizedCodeChanges : [summary],\n      acceptance_criteria: criteria,\n      change_risks: changeRisks,\n      change_doubts: changeDoubts,\n      impact_analysis_id: analysisId,\n    });\n  }\n  return out;\n};\n\nlet out = [];\nconst usedImpactKeys = new Set();\n\nfor (const repo of repoRows) {\n  const impactInfo = matchImpactForRepo(repo.repo_name);\n  if (!impactInfo) continue;\n\n  // track by canonical keys for fallback diagnostics\n  for (const key of candidatesForRepoName(repo.repo_name)) {\n    if (impactByKey.has(key)) usedImpactKeys.add(key);\n  }\n\n  out.push(...rowsFromImpact(repo.repo_id, repo.repo_name, impactInfo));\n}\n\n// Fallback: if there are impacted entries but no row matched by exact repo name, map by keywords.\nif (out.length === 0 && impactEntries.length > 0 && repoRows.length > 0) {\n  const pickRepo = (kind) =>\n    repoRows.find((r) => r.norm_name.includes(kind)) ||\n    repoRows.find((r) => r.norm_name.includes('fastroute-' + kind)) ||\n    null;\n\n  for (const entry of impactEntries) {\n    const info = entry.info;\n    const impacted = toBool(info.impacto) || toBool(info.impact) || toBool(info.has_impact);\n    if (!impacted) continue;\n\n    let repo = null;\n    if (entry.normKey.includes('domain')) repo = pickRepo('domain');\n    else if (entry.normKey.includes('api')) repo = pickRepo('api');\n    else if (entry.normKey.includes('mobile')) repo = pickRepo('mobile');\n\n    if (!repo) continue;\n    out.push(...rowsFromImpact(repo.repo_id, repo.repo_name, info));\n  }\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_repo_persistence: true, reason: 'no_impacted_repo_rows_matched' } }];\n}\n\nreturn out.map((json) => ({ json }));"
       }
     },
     {
@@ -210,7 +211,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{$json.skip_repo_persistence === true}}",
+              "value1": "={{(() => { const v = $json.skip_repo_persistence; const isSkip = (v === true) || (String(v || \"\").toLowerCase() === \"true\"); return isSkip; })()}}",
               "operation": "isFalse"
             }
           ]
@@ -245,114 +246,15 @@
             {
               "keyName": "change_summary",
               "condition": "eq",
-              "keyValue": "={{$json.change_summary}}"
+              "keyValue": "={{String($json.change_summary || \"\").trim()}}"
             }
           ]
         },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "repo_id": "={{Number($json.repo_id)}}",
-            "change_summary": "={{$json.change_summary}}"
-          }
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "e0f024df-1ba3-4436-b4ee-bef9a25972a4",
-      "name": "Build Test Rows",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -2300,
-        -100
-      ],
-      "parameters": {
-        "jsCode": "const insertedChanges = $input.all();\nif (insertedChanges.length === 0) {\n  return [{ json: { skip_test_persistence: true } }];\n}\n\nconst tryLoadSourceRows = () => {\n  const candidates = [\n    'Build Change Rows',\n    'Build Change Rows1',\n    'Build Change Rows2'\n  ];\n\n  for (const name of candidates) {\n    try {\n      const rows = $items(name, 0, 0).map((i) => i.json || {});\n      if (rows.length > 0) return rows;\n    } catch (_e) {\n      // Node may not exist with this exact name in this workflow copy.\n    }\n  }\n\n  return [];\n};\n\nconst sourceRows = tryLoadSourceRows();\nconst makeKey = (repoId, changeSummary) => Number(repoId) + '::' + String(changeSummary || '').trim();\n\nconst sourceByKey = new Map();\nfor (const source of sourceRows) {\n  sourceByKey.set(makeKey(source.repo_id, source.change_summary), source);\n}\n\nconst out = [];\nfor (const item of insertedChanges) {\n  const inserted = item.json || {};\n  const key = makeKey(inserted.repo_id, inserted.change_summary);\n  const source = sourceByKey.get(key);\n\n  const steps = Array.isArray(source?.test_steps)\n    ? source.test_steps.map((x) => String(x || '').trim()).filter(Boolean)\n    : [];\n\n  if (steps.length === 0) {\n    continue;\n  }\n\n  out.push({\n    json: {\n      change_id: Number(inserted.id),\n      change_summary: String(inserted.change_summary || ''),\n      test_steps: steps,\n    },\n  });\n}\n\nif (out.length === 0) {\n  return [{ json: { skip_test_persistence: true } }];\n}\n\nreturn out;"
-      }
-    },
-    {
-      "id": "79e94bce-6bff-4d22-b68c-abe94201a517",
-      "name": "Has Tests?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        -2080,
-        -100
-      ],
-      "parameters": {
-        "conditions": {
-          "boolean": [
-            {
-              "value1": "={{$json.skip_test_persistence === true}}",
-              "operation": "isFalse"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "a976b749-0c24-453e-94c1-c71a3f150b27",
-      "name": "Insert Tests For Change",
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        -1860,
-        -220
-      ],
-      "parameters": {
-        "resource": "row",
-        "operation": "insert",
-        "dataTableId": {
-          "__rl": true,
-          "mode": "name",
-          "value": "testsuites_for_change"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "change_id": "={{Number($json.change_id)}}"
-          }
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "97612b7e-7c10-4e32-bcf9-6e315ae0ace2",
-      "name": "Build Step Rows",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1640,
-        -220
-      ],
-      "parameters": {
-        "jsCode": "const insertedTests = $input.all().map((i) => i.json).filter((r) => r && r.id !== undefined && r.change_id !== undefined);\nif (insertedTests.length === 0) {\n  return [];\n}\n\nconst sourceTests = $items('Build Test Rows', 0, 0).map((i) => i.json || {});\nconst stepsByChangeId = new Map();\n\nfor (const source of sourceTests) {\n  const changeId = String(source.change_id);\n  const steps = Array.isArray(source.test_steps)\n    ? source.test_steps.map((x) => String(x || '').trim()).filter(Boolean)\n    : [];\n\n  if (!stepsByChangeId.has(changeId)) {\n    stepsByChangeId.set(changeId, steps);\n  }\n}\n\nconst out = [];\nfor (const inserted of insertedTests) {\n  const changeId = String(inserted.change_id);\n  const steps = stepsByChangeId.get(changeId) || [];\n\n  for (const description of steps) {\n    out.push({\n      json: {\n        testsuite_id: Number(inserted.id),\n        description,\n      },\n    });\n  }\n}\n\nreturn out;\n"
-      }
-    },
-    {
-      "id": "20bc43f1-8fb9-445a-88f5-ee805f359632",
-      "name": "Insert Steps For Test",
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        -1420,
-        -220
-      ],
-      "parameters": {
-        "resource": "row",
-        "operation": "insert",
-        "dataTableId": {
-          "__rl": true,
-          "mode": "name",
-          "value": "tests_for_testsuite"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "testsuite_id": "={{Number($json.testsuite_id)}}",
-            "description": "={{$json.description}}"
+            "repo_id": "={{$json.repo_id}}",
+            "change_summary": "={{String($json.change_summary || \"\").trim()}}"
           }
         },
         "options": {}
@@ -398,7 +300,8 @@
           ]
         },
         "options": {}
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "e3f469d2-a19c-4dd1-8663-29ed73118fe4",
@@ -427,7 +330,8 @@
           ]
         },
         "options": {}
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "522a6141-a7d4-4339-91ea-06221e3390ae",
@@ -456,7 +360,8 @@
           ]
         },
         "options": {}
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "f53c684f-cfc0-46b4-916a-2e4ebc68aa15",
@@ -485,7 +390,8 @@
           ]
         },
         "options": {}
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "51c67e62-1208-4d78-b1ab-9cb01befe828",
@@ -497,8 +403,9 @@
         -100
       ],
       "parameters": {
-        "jsCode": "const toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^\\uFEFF/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\n\nconst repoId = toSafeNumber($json.repo_id);\nif (!Number.isFinite(repoId)) {\n  return [];\n}\n\nreturn [{\n  json: {\n    ...$json,\n    repo_id: repoId,\n  },\n}];\n"
-      }
+        "jsCode": "const toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^\\uFEFF/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\n\nconst inputItems = $input.all();\nconst out = [];\n\nfor (const item of inputItems) {\n  const row = item.json || {};\n\n  if (row.skip_repo_persistence === true || String(row.skip_repo_persistence || '').toLowerCase() === 'true') {\n    continue;\n  }\n\n  const repoId = toSafeNumber(row.repo_id);\n  const changeSummary = String(row.change_summary || '').trim();\n\n  if (!Number.isFinite(repoId) || !changeSummary) {\n    continue;\n  }\n\n  out.push({\n    json: {\n      ...row,\n      repo_id: repoId,\n      change_summary: changeSummary,\n    },\n  });\n}\n\nif (out.length === 0) {\n  return [{\n    json: {\n      skip_repo_persistence: true,\n      reason: 'no_valid_change_rows_after_ensure'\n    }\n  }];\n}\n\nreturn out;"
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "build-code-change-rows",
@@ -510,7 +417,7 @@
         80
       ],
       "parameters": {
-        "jsCode": "const insertedChanges = $input.all();\nif (insertedChanges.length === 0) {\n  return [];\n}\n\nconst tryLoadSourceRows = () => {\n  const candidates = [\n    'Build Change Rows',\n    'Build Change Rows1',\n    'Build Change Rows2'\n  ];\n\n  for (const name of candidates) {\n    try {\n      const rows = $items(name, 0, 0).map((i) => i.json || {});\n      if (rows.length > 0) return rows;\n    } catch (_e) {\n      // Node may not exist with this exact name in this workflow copy.\n    }\n  }\n\n  return [];\n};\n\nconst sourceRows = tryLoadSourceRows();\nconst makeKey = (repoId, changeSummary) => Number(repoId) + '::' + String(changeSummary || '').trim();\n\nconst sourceByKey = new Map();\nfor (const source of sourceRows) {\n  sourceByKey.set(makeKey(source.repo_id, source.change_summary), source);\n}\n\nconst out = [];\nfor (const item of insertedChanges) {\n  const inserted = item.json || {};\n  const key = makeKey(inserted.repo_id, inserted.change_summary);\n  const source = sourceByKey.get(key);\n\n  const codes = Array.isArray(source?.code_changes)\n    ? source.code_changes.map((x) => String(x || '').trim()).filter(Boolean)\n    : [];\n\n  const normalizedCodes = codes.length > 0\n    ? [...new Set(codes)]\n    : [String(inserted.change_summary || '').trim()].filter(Boolean);\n\n  for (const code of normalizedCodes) {\n    out.push({\n      json: {\n        change_id: Number(inserted.id),\n        code,\n      },\n    });\n  }\n}\n\nreturn out;"
+        "jsCode": "const insertedChanges = $input.all();\nif (insertedChanges.length === 0) {\n  return [];\n}\n\nconst tryLoadSourceRows = () => {\n  const candidates = ['Build Change Rows', 'Build Change Rows1', 'Build Change Rows2'];\n  for (const name of candidates) {\n    try {\n      const rows = $items(name, 0, 0).map((i) => i.json || {});\n      if (rows.length > 0) return rows;\n    } catch (_e) {}\n  }\n  return [];\n};\n\nconst sourceRows = tryLoadSourceRows();\nconst makeKey = (repoId, changeSummary) => Number(repoId) + '::' + String(changeSummary || '').trim();\nconst sourceByKey = new Map();\nfor (const source of sourceRows) {\n  sourceByKey.set(makeKey(source.repo_id, source.change_summary), source);\n}\n\nconst out = [];\nfor (const item of insertedChanges) {\n  const inserted = item.json || {};\n  const key = makeKey(inserted.repo_id, inserted.change_summary);\n  const source = sourceByKey.get(key) || {};\n\n  const changeId = Number(inserted.id);\n  if (!Number.isFinite(changeId)) continue;\n\n  const suggested = Array.isArray(source.code_changes)\n    ? source.code_changes.map((x) => String(x || '').trim()).filter(Boolean)\n    : [];\n\n  out.push({\n    json: {\n      change_id: changeId,\n      repo_id: Number(inserted.repo_id),\n      repo_name: String(source.repo_name || inserted.repo_name || '').trim(),\n      change_summary: String(inserted.change_summary || '').trim(),\n      suggested_code_changes: suggested,\n    }\n  });\n}\n\nreturn out;"
       }
     },
     {
@@ -566,17 +473,292 @@
       ],
       "parameters": {
         "resource": "row",
-        "operation": "delete",
+        "operation": "deleteRows",
         "dataTableId": {
           "__rl": true,
           "mode": "name",
           "value": "code_changes"
         },
         "filters": {
-          "conditions": []
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {},
+        "matchType": "anyCondition"
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Input da change_in_repo:',\n  JSON.stringify({\n    change_id: Number($json.change_id),\n    repo_id: Number($json.repo_id),\n    repo_name: $json.repo_name || '',\n    change_summary: $json.change_summary || '',\n    suggested_code_changes: Array.isArray($json.suggested_code_changes) ? $json.suggested_code_changes : []\n  }, null, 2)\n].join('\\n\\n')}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce transforma uma change_in_repo em code_changes com CODIGO REAL.\ncode deve conter trechos concretos de implementacao em TypeScript/Node.js/Express.\nNao retorne descricao de alto nivel; retorne snippets de codigo prontos para commit.\n\nRetorne SOMENTE JSON valido (sem markdown) no formato:\n{\n  \"rows\": [\n    { \"change_id\": number, \"code\": string }\n  ]\n}\n\nRegras obrigatorias:\n1) change_id deve ser exatamente o recebido no input.\n2) Gere de 1 a 8 rows.\n3) Cada code deve incluir sintaxe valida de codigo (ex.: router Express, service function, zod schema, type/interface, unit test).\n4) Cada snippet deve ter contexto de arquivo no proprio texto, iniciando com comentario: // file: <caminho/arquivo.ts>.\n5) Sem placeholders genéricos como TODO, sem pseudo-codigo, sem explicacoes narrativas.\n6) Sem crases/backticks de markdown; apenas texto JSON puro.\n7) Preferir TypeScript; em fastroute-api pode usar Node/Express em .js quando fizer sentido.\n8) Se repo_name indicar API, priorize handlers/routes/middlewares/services Express.\n9) Se repo_name indicar domain, priorize regras/funcoes/tipos reutilizaveis.\n10) Se repo_name indicar mobile, priorize hooks/services/screens em TypeScript."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "basic-llm-chain-code-changes",
+      "name": "Basic LLM Chain (Code Changes)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -2080,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\nconst seen = new Set();\n\nconst parseMaybeJson = (raw) => {\n  if (!raw || typeof raw !== 'string') return null;\n  let txt = raw.trim();\n  if (!txt) return null;\n\n  txt = txt.replace(/^\\uFEFF/, '').trim();\n  if (txt.startsWith('```')) {\n    txt = txt.replace(/^```json\\s*/i, '').replace(/^```/, '').replace(/```$/, '').trim();\n  }\n\n  try {\n    return JSON.parse(txt);\n  } catch (_e) {\n    return null;\n  }\n};\n\nconst rowsFromPayload = (payload, fallbackChangeId, fallbackSummary) => {\n  const items = [];\n  const toText = (v) => String(v || '').trim();\n  const cid = Number(fallbackChangeId);\n\n  const pushRow = (changeId, code) => {\n    const id = Number(changeId);\n    const text = toText(code);\n    if (!Number.isFinite(id) || !text) return;\n    const key = id + '::' + text;\n    if (seen.has(key)) return;\n    seen.add(key);\n    items.push({ change_id: id, code: text });\n  };\n\n  if (Array.isArray(payload)) {\n    for (const row of payload) {\n      if (row && typeof row === 'object') {\n        pushRow(row.change_id ?? cid, row.code ?? row.desc ?? row.description);\n      }\n    }\n  } else if (payload && typeof payload === 'object') {\n    if (Array.isArray(payload.rows)) {\n      for (const row of payload.rows) {\n        if (row && typeof row === 'object') {\n          pushRow(row.change_id ?? cid, row.code ?? row.desc ?? row.description);\n        }\n      }\n    }\n\n    if (Array.isArray(payload.code_changes)) {\n      for (const code of payload.code_changes) {\n        pushRow(cid, code);\n      }\n    }\n  }\n\n  if (items.length === 0 && Number.isFinite(cid)) {\n    const fb = toText(fallbackSummary);\n    if (fb) pushRow(cid, fb);\n  }\n\n  return items;\n};\n\nconst inputItems = $input.all();\nfor (let i = 0; i < inputItems.length; i++) {\n  const llm = inputItems[i].json || {};\n  let src = {};\n  try {\n    src = $item(i).$node['Build Code Change Rows'].json || {};\n  } catch (_e) {\n    src = {};\n  }\n\n  const raw =\n    llm.text ||\n    llm.response?.text ||\n    llm.response ||\n    llm.choices?.[0]?.message?.content ||\n    '';\n\n  const parsed = parseMaybeJson(raw);\n  const rows = rowsFromPayload(parsed, src.change_id ?? llm.change_id, src.change_summary ?? llm.change_summary);\n  for (const row of rows) {\n    out.push({ json: row });\n  }\n}\n\nreturn out;"
+      },
+      "id": "parse-code-changes-json",
+      "name": "Parse Code Changes JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1860,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map((i) => i.json || {});\nif (rows.length === 0) return [];\n\nconst changeMeta = new Map();\ntry {\n  const changes = $items('Upsert Change In Repo', 0, 0).map((i) => i.json || {});\n  for (const c of changes) {\n    const id = Number(c.id);\n    if (!Number.isFinite(id)) continue;\n    changeMeta.set(id, {\n      repo_id: Number(c.repo_id),\n      change_summary: String(c.change_summary || '').trim(),\n    });\n  }\n} catch (_e) {}\n\nconst repoNamesById = new Map();\ntry {\n  const repos = $items('Load Repos Table', 0, 0).map((i) => i.json || {});\n  for (const r of repos) {\n    const id = Number(r.id);\n    if (Number.isFinite(id)) {\n      repoNamesById.set(id, String(r.name || r.repo_name || r.repository || '').trim());\n    }\n  }\n} catch (_e) {}\n\nconst grouped = new Map();\nfor (const row of rows) {\n  const changeId = Number(row.change_id);\n  const code = String(row.code || '').trim();\n  if (!Number.isFinite(changeId) || !code) continue;\n\n  if (!grouped.has(changeId)) {\n    const meta = changeMeta.get(changeId) || {};\n    const repoId = Number(meta.repo_id);\n    grouped.set(changeId, {\n      change_id: changeId,\n      repo_id: Number.isFinite(repoId) ? repoId : null,\n      repo_name: Number.isFinite(repoId) ? (repoNamesById.get(repoId) || '') : '',\n      change_summary: String(meta.change_summary || '').trim(),\n      code_changes: [],\n    });\n  }\n\n  grouped.get(changeId).code_changes.push(code);\n}\n\nconst payload = Array.from(grouped.values());\nif (payload.length === 0) return [];\n\nreturn [{ json: { grouped_changes: payload } }];"
+      },
+      "id": "9cf9bc7f-64a2-4f20-bcbc-7e40ce87a0c5",
+      "name": "Build Unit Test Prompt Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -860,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Gere/atualize testes unitarios para estas changes com code snippets:',\n  JSON.stringify($json.grouped_changes || [], null, 2)\n].join('\\n\\n')}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce e engenheiro de QA focado em testes unitarios para FastRoute.\nRetorne SOMENTE JSON valido (sem markdown) no formato:\n{\n  \"rows\": [\n    { \"change_id\": number, \"tests\": [string] }\n  ]\n}\nRegras:\n1) Para cada change_id de entrada, retorne 1 item em rows.\n2) tests: 3 a 8 descricoes completas em linguagem natural (pt-BR).\n3) Cobrir: caminho feliz, validacoes de regra, erros, edge cases e contrato de retorno.\n4) Sem nomes crípticos (ex.: test_x_y), sem texto fora do JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "0053d5f5-a57d-4456-8db3-baf6ca89b1a2",
+      "name": "Basic LLM Chain (Unit Tests)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -640,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nlet groupedChanges = [];\ntry {\n  groupedChanges = $items('Build Unit Test Prompt Rows', 0, 0)[0]?.json?.grouped_changes || [];\n} catch (_e) {}\n\nconst fallbackById = new Map();\nfor (const row of groupedChanges) {\n  const id = Number(row.change_id);\n  if (Number.isFinite(id)) fallbackById.set(id, row);\n}\n\nconst parseMaybeJson = (raw) => {\n  if (!raw || typeof raw !== 'string') return null;\n  let txt = raw.trim();\n  if (!txt) return null;\n  txt = txt.replace(/^\\uFEFF/, '').trim();\n  if (txt.startsWith('```')) {\n    txt = txt.replace(/^```json\\s*/i, '').replace(/^```/, '').replace(/```$/, '').trim();\n  }\n  try { return JSON.parse(txt); } catch (_e) { return null; }\n};\n\nconst asTestList = (obj) => {\n  if (!obj) return [];\n  const src = Array.isArray(obj.tests)\n    ? obj.tests\n    : Array.isArray(obj.unit_tests)\n      ? obj.unit_tests\n      : Array.isArray(obj.test_steps)\n        ? obj.test_steps\n        : [];\n  return src.map((t) => String(t || '').trim()).filter(Boolean);\n};\n\nconst out = [];\nconst seen = new Set();\nconst pushRow = (changeId, description) => {\n  const cid = Number(changeId);\n  const desc = String(description || '').trim();\n  if (!Number.isFinite(cid) || !desc) return;\n  const key = cid + '::' + desc;\n  if (seen.has(key)) return;\n  seen.add(key);\n  out.push({ json: { change_id: cid, description: desc } });\n};\n\nfor (const item of input) {\n  const llm = item.json || {};\n  const raw = llm.text || llm.response?.text || llm.response || llm.choices?.[0]?.message?.content || '';\n  const parsed = parseMaybeJson(raw);\n\n  let rows = [];\n  if (Array.isArray(parsed)) rows = parsed;\n  else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.rows)) rows = parsed.rows;\n\n  if (rows.length === 0) {\n    for (const fb of fallbackById.values()) {\n      const cid = Number(fb.change_id);\n      const base = String(fb.change_summary || '').trim() || 'Change sem resumo';\n      const samples = [\n        'Validar cenário principal da change ' + cid + ': ' + base + '.',\n        'Validar regras de erro e entradas inválidas da change ' + cid + '.',\n        'Validar edge cases e consistência de contrato da change ' + cid + '.'\n      ];\n      for (const s of samples) pushRow(cid, s);\n    }\n    continue;\n  }\n\n  for (const row of rows) {\n    const cid = Number(row?.change_id);\n    const tests = asTestList(row);\n    if (!Number.isFinite(cid)) continue;\n\n    if (tests.length === 0) {\n      const fb = fallbackById.get(cid);\n      const base = String(fb?.change_summary || '').trim() || ('change ' + cid);\n      pushRow(cid, 'Validar cenário principal da ' + base + '.');\n      pushRow(cid, 'Validar entradas inválidas e mensagens de erro da ' + base + '.');\n      pushRow(cid, 'Validar edge cases e estado final consistente da ' + base + '.');\n      continue;\n    }\n\n    for (const t of tests) pushRow(cid, t);\n  }\n}\n\nreturn out;"
+      },
+      "id": "8ac9a993-7d05-49e9-9d1c-ffdf682d7539",
+      "name": "Parse Unit Tests JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "testsuites_for_change"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "change_id",
+              "condition": "eq",
+              "keyValue": "={{String($json.change_id)}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "change_id": "={{Number($json.change_id)}}"
+          }
         },
         "options": {}
+      },
+      "id": "f7c907c0-9f6f-4db6-933e-6fd9d570bc6b",
+      "name": "Upsert Testsuite For Change (LLM)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const suites = $input.all().map((i) => i.json || {}).filter((r) => r && r.id !== undefined && r.change_id !== undefined);\nif (suites.length === 0) return [];\n\nlet parsedRows = [];\ntry {\n  parsedRows = $items('Parse Unit Tests JSON', 0, 0).map((i) => i.json || {});\n} catch (_e) {}\n\nconst byChange = new Map();\nfor (const row of parsedRows) {\n  const cid = Number(row.change_id);\n  const desc = String(row.description || '').trim();\n  if (!Number.isFinite(cid) || !desc) continue;\n  if (!byChange.has(cid)) byChange.set(cid, []);\n  byChange.get(cid).push(desc);\n}\n\nconst out = [];\nfor (const s of suites) {\n  const cid = Number(s.change_id);\n  const suiteId = Number(s.id);\n  if (!Number.isFinite(cid) || !Number.isFinite(suiteId)) continue;\n\n  const descs = byChange.get(cid) || [];\n  const uniq = [...new Set(descs.map((d) => String(d || '').trim()).filter(Boolean))];\n\n  for (const description of uniq) {\n    out.push({ json: { testsuite_id: suiteId, description } });\n  }\n}\n\nreturn out;"
+      },
+      "id": "a1ce308d-1a8e-4552-a629-050f831766ea",
+      "name": "Build Tests For Testsuite Rows (LLM)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        20,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "tests_for_testsuite"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "testsuite_id",
+              "condition": "eq",
+              "keyValue": "={{String($json.testsuite_id)}}"
+            },
+            {
+              "keyName": "description",
+              "condition": "eq",
+              "keyValue": "={{$json.description}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "testsuite_id": "={{Number($json.testsuite_id)}}",
+            "description": "={{$json.description}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "67d75f2e-b9d4-4b23-b739-7d7298857ec4",
+      "name": "Upsert Tests For Testsuite (LLM)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        240,
+        540
+      ]
+    },
+    {
+      "id": "7f96c93e-8619-4a5e-b719-3f072536f152",
+      "name": "Has Valid Change Rows?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2140,
+        40
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{(() => { const repoRaw = String($json.repo_id ?? \"\").trim(); const validRepo = repoRaw !== \"\" && Number.isFinite(Number(repoRaw)); const validSummary = String($json.change_summary ?? \"\").trim() !== \"\"; return validRepo && validSummary; })()}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
       }
+    },
+    {
+      "id": "c4c2f36f-58d6-4d6f-87db-d6f923809f5d",
+      "name": "Restore Normalize Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3100,
+        16
+      ],
+      "parameters": {
+        "jsCode": "const rows = $items('Normalize', 0, 0).map((i) => i.json || {});\nif (rows.length === 0) {\n  return [];\n}\nreturn rows.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "c7f8f5d7-b0de-4f27-b6b2-a8c58c39a92e",
+      "name": "Guard Upsert Change Row",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1920,
+        40
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{(() => { const skip = ($json.skip_repo_persistence === true) || (String($json.skip_repo_persistence || \"\").toLowerCase() === \"true\"); if (skip) return false; const raw = String($json.repo_id ?? \"\").replace(/^\\uFEFF/, \"\").trim(); const validRepo = raw !== \"\" && Number.isFinite(Number(raw)); const validSummary = String($json.change_summary ?? \"\").trim() !== \"\"; return validRepo && validSummary; })()}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{$json.owner || \"oliversoft-tech\"}}/{{$json.repo || \"fastroute-changemanagement\"}}/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + String($json.github_token || '').replace(/^Bearer\\s+/i, '').replace(/[\\r\\n\\t]/g, '').replace(/[^\\x20-\\x7E]/g, '').trim()}}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => {\n  const analysis = ($json.analysis && typeof $json.analysis === 'object') ? $json.analysis : {};\n  const rawSummary = String(analysis.resumo || analysis.summary || 'Sem resumo').trim();\n  const safeSummary = rawSummary\n    .replace(/[\"'`]/g, '')\n    .replace(/[()]/g, '')\n    .replace(/\\s+/g, ' ')\n    .slice(0, 450);\n\n  const payloadAnalysis = {\n    ...analysis,\n    resumo: safeSummary,\n  };\n\n  return JSON.stringify({\n    event_type: 'governance-release',\n    client_payload: {\n      source_repo: 'fastroute-changemanagement',\n      source_ref: 'main',\n      domain_ref: $json.domain_ref || 'main',\n      api_ref: $json.api_ref || 'main',\n      mobile_ref: $json.mobile_ref || 'main',\n      mobile_profile: $json.mobile_profile || 'preview',\n      run_release: false,\n      deploy_api: false,\n      auto_implement: true,\n      impact_analysis: payloadAnalysis\n    }\n  });\n})() }}",
+        "options": {
+          "fullResponse": true
+        },
+        "responseFormat": "string"
+      },
+      "id": "dispatch-governance-pr",
+      "name": "Dispatch Governance PR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -930,
+        60
+      ],
+      "alwaysOutputData": true
     }
   ],
   "connections": {
@@ -679,74 +861,7 @@
       "main": [
         [
           {
-            "node": "Build Test Rows",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Build Code Change Rows",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Test Rows": {
-      "main": [
-        [
-          {
-            "node": "Has Tests?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Tests?": {
-      "main": [
-        [
-          {
-            "node": "Insert Tests For Change",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Finalize Analysis Context",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Insert Tests For Change": {
-      "main": [
-        [
-          {
-            "node": "Build Step Rows",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Step Rows": {
-      "main": [
-        [
-          {
-            "node": "Insert Steps For Test",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Insert Steps For Test": {
-      "main": [
-        [
-          {
-            "node": "Finalize Analysis Context",
             "type": "main",
             "index": 0
           }
@@ -756,6 +871,11 @@
     "Finalize Analysis Context": {
       "main": [
         [
+          {
+            "node": "Dispatch Governance PR",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "Build Decision Links",
             "type": "main",
@@ -769,6 +889,16 @@
         [
           {
             "node": "Basic LLM Chain (FastRoute Skill)",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain (Code Changes)",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain (Unit Tests)",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -812,7 +942,7 @@
       "main": [
         [
           {
-            "node": "Basic LLM Chain (FastRoute Skill)",
+            "node": "Restore Normalize Payload",
             "type": "main",
             "index": 0
           }
@@ -823,7 +953,7 @@
       "main": [
         [
           {
-            "node": "Upsert Change In Repo",
+            "node": "Guard Upsert Change Row",
             "type": "main",
             "index": 0
           }
@@ -834,7 +964,7 @@
       "main": [
         [
           {
-            "node": "Upsert Code Changes",
+            "node": "Basic LLM Chain (Code Changes)",
             "type": "main",
             "index": 0
           }
@@ -846,6 +976,152 @@
         [
           {
             "node": "Clear Changes In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (Code Changes)": {
+      "main": [
+        [
+          {
+            "node": "Parse Code Changes JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Code Changes JSON": {
+      "main": [
+        [
+          {
+            "node": "Upsert Code Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Code Changes": {
+      "main": [
+        [
+          {
+            "node": "Build Unit Test Prompt Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unit Test Prompt Rows": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (Unit Tests)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (Unit Tests)": {
+      "main": [
+        [
+          {
+            "node": "Parse Unit Tests JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Unit Tests JSON": {
+      "main": [
+        [
+          {
+            "node": "Upsert Testsuite For Change (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Testsuite For Change (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Build Tests For Testsuite Rows (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Tests For Testsuite Rows (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Upsert Tests For Testsuite (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Tests For Testsuite (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Valid Change Rows?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Change In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Normalize Payload": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (FastRoute Skill)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guard Upsert Change Row": {
+      "main": [
+        [
+          {
+            "node": "Upsert Change In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize Analysis Context",
             "type": "main",
             "index": 0
           }

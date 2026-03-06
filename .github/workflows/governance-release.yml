@@ -278,19 +278,34 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Publish preparation summary
+        env:
+          PREP_DOMAIN_REF: ${{ steps.prepare.outputs.domain_ref }}
+          PREP_API_REF: ${{ steps.prepare.outputs.api_ref }}
+          PREP_MOBILE_REF: ${{ steps.prepare.outputs.mobile_ref }}
+          PREP_IMPACT_SUMMARY: ${{ steps.prepare.outputs.impact_summary }}
+          PREP_IMPACT_VIABILITY: ${{ steps.prepare.outputs.impact_viability }}
+          PREP_IMPLEMENTATION_PRS: ${{ steps.prepare.outputs.implementation_prs }}
         run: |
+          set -euo pipefail
           {
-            echo "## Implementation Preparation";
-            echo "- Domain ref: ${{ steps.prepare.outputs.domain_ref }}";
-            echo "- API ref: ${{ steps.prepare.outputs.api_ref }}";
-            echo "- Mobile ref: ${{ steps.prepare.outputs.mobile_ref }}";
-            echo "- Impact summary: ${{ steps.prepare.outputs.impact_summary }}";
-            echo "- Impact viability: ${{ steps.prepare.outputs.impact_viability }}";
-            echo "- Auto-implementation PRs:";
-            if [ -n "${{ steps.prepare.outputs.implementation_prs }}" ]; then
-              printf "%b\n" "${{ steps.prepare.outputs.implementation_prs }}";
+            echo "## Implementation Preparation"
+            echo "- Domain ref: ${PREP_DOMAIN_REF}"
+            echo "- API ref: ${PREP_API_REF}"
+            echo "- Mobile ref: ${PREP_MOBILE_REF}"
+            echo "- Impact summary:"
+            if [ -n "${PREP_IMPACT_SUMMARY:-}" ]; then
+              echo '```json'
+              printf '%s\n' "${PREP_IMPACT_SUMMARY}"
+              echo '```'
             else
-              echo "  - none";
+              echo "  - none"
+            fi
+            echo "- Impact viability: ${PREP_IMPACT_VIABILITY:-N/A}"
+            echo "- Auto-implementation PRs:"
+            if [ -n "${PREP_IMPLEMENTATION_PRS:-}" ]; then
+              printf "%b\n" "${PREP_IMPLEMENTATION_PRS}"
+            else
+              echo "  - none"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -644,29 +659,49 @@ jobs:
 
     steps:
       - name: Publish summary
+        env:
+          SUMMARY_TRIGGER: ${{ github.event_name }}
+          SUMMARY_SOURCE_REPO: ${{ github.event.client_payload.source_repo || 'manual' }}
+          SUMMARY_DOMAIN_REF: ${{ needs.prepare-implementation.outputs.domain_ref }}
+          SUMMARY_API_REF: ${{ needs.prepare-implementation.outputs.api_ref }}
+          SUMMARY_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
+          SUMMARY_RUN_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release || (github.event.action == 'governance-release' && (github.event.client_payload.run_release != false) || false) }}
+          SUMMARY_DEPLOY_API: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_api) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.deploy_api == true) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain')) }}
+          SUMMARY_IMPACT: ${{ needs.prepare-implementation.outputs.impact_summary }}
+          SUMMARY_VIABILITY: ${{ needs.prepare-implementation.outputs.impact_viability }}
+          SUMMARY_IMPL_LOG: ${{ needs.implement-changes.outputs.implementation_log }}
+          SUMMARY_IMPL_PRS: ${{ needs.prepare-implementation.outputs.implementation_prs }}
         run: |
+          set -euo pipefail
           {
-            echo "## FastRoute Governance (Central)";
-            echo "- Trigger: ${{ github.event_name }}";
-            echo "- Source repo: ${{ github.event.client_payload.source_repo || 'manual' }}";
-            echo "- Domain ref: ${{ needs.prepare-implementation.outputs.domain_ref }}";
-            echo "- API ref: ${{ needs.prepare-implementation.outputs.api_ref }}";
-            echo "- Mobile ref: ${{ needs.prepare-implementation.outputs.mobile_ref }}";
-            echo "- Run release: ${{ github.event_name == 'workflow_dispatch' && inputs.run_release || (github.event.action == 'governance-release' && (github.event.client_payload.run_release != false) || false) }}";
-            echo "- Deploy API: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_api) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.deploy_api == true) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain')) }}";
-            echo "- Impact summary: ${{ needs.prepare-implementation.outputs.impact_summary }}";
-            echo "- Impact viability: ${{ needs.prepare-implementation.outputs.impact_viability }}";
-            echo "- Auto-implementation (code stage):";
-            if [ -n "${{ needs.implement-changes.outputs.implementation_log }}" ]; then
-              printf "%b\n" "${{ needs.implement-changes.outputs.implementation_log }}";
+            echo "## FastRoute Governance (Central)"
+            echo "- Trigger: ${SUMMARY_TRIGGER}"
+            echo "- Source repo: ${SUMMARY_SOURCE_REPO}"
+            echo "- Domain ref: ${SUMMARY_DOMAIN_REF}"
+            echo "- API ref: ${SUMMARY_API_REF}"
+            echo "- Mobile ref: ${SUMMARY_MOBILE_REF}"
+            echo "- Run release: ${SUMMARY_RUN_RELEASE}"
+            echo "- Deploy API: ${SUMMARY_DEPLOY_API}"
+            echo "- Impact summary:"
+            if [ -n "${SUMMARY_IMPACT:-}" ]; then
+              echo '```json'
+              printf '%s\n' "${SUMMARY_IMPACT}"
+              echo '```'
             else
-              echo "  - none";
+              echo "  - none"
             fi
-            echo "- Auto-implementation PRs:";
-            if [ -n "${{ needs.prepare-implementation.outputs.implementation_prs }}" ]; then
-              printf "%b\n" "${{ needs.prepare-implementation.outputs.implementation_prs }}";
+            echo "- Impact viability: ${SUMMARY_VIABILITY:-N/A}"
+            echo "- Auto-implementation (code stage):"
+            if [ -n "${SUMMARY_IMPL_LOG:-}" ]; then
+              printf "%b\n" "${SUMMARY_IMPL_LOG}"
             else
-              echo "  - none";
+              echo "  - none"
+            fi
+            echo "- Auto-implementation PRs:"
+            if [ -n "${SUMMARY_IMPL_PRS:-}" ]; then
+              printf "%b\n" "${SUMMARY_IMPL_PRS}"
+            else
+              echo "  - none"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
