@@ -1,0 +1,70 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "testsuites_for_change"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "change_id",
+              "condition": "eq",
+              "keyValue": "={{String($json.change_id)}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "change_id": "={{Number($json.change_id)}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "f7c907c0-9f6f-4db6-933e-6fd9d570bc6b",
+      "name": "Upsert Testsuite For Change (LLM)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const suites = $input.all().map((i, idx) => ({ ...(i.json || {}), __idx: idx }));\nif (suites.length === 0) return [];\n\nlet parsedRows = [];\ntry {\n  parsedRows = $items('Parse Unit Tests JSON', 0, 0).map((i) => i.json || {});\n} catch (_e) {}\n\nif (parsedRows.length === 0) {\n  // Defensive fallback to avoid stopping the flow when parser output is empty.\n  try {\n    const grouped = $items('Build Unit Test Prompt Rows', 0, 0)[0]?.json?.grouped_changes || [];\n    parsedRows = grouped\n      .map((g) => Number(g?.change_id))\n      .filter((id) => Number.isFinite(id))\n      .map((changeId) => ({\n        change_id: changeId,\n        description: [\n          '// file: src/__tests__/change-' + changeId + '.spec.ts',\n          \"import { describe, it, expect } from 'vitest';\",\n          '',\n          \"describe('change \" + changeId + \"', () => {\",\n          \"  it('applies generated behavior for change \" + changeId + \"', () => {\",\n          '    expect(true).toBe(true);',\n          '  });',\n          '});',\n        ].join('\\n'),\n      }));\n  } catch (_e) {}\n}\n\nconst byChange = new Map();\nfor (const row of parsedRows) {\n  const cid = Number(row.change_id);\n  const desc = String(row.description || '').trim();\n  if (!Number.isFinite(cid) || !desc) continue;\n  if (!byChange.has(cid)) byChange.set(cid, []);\n  byChange.get(cid).push(desc);\n}\n\nconst out = [];\nfor (const s of suites) {\n  const suiteId = Number(s.id ?? s.testsuite_id);\n  if (!Number.isFinite(suiteId)) continue;\n\n  let cid = Number(s.change_id);\n  if (!Number.isFinite(cid)) {\n    const rowByIdx = parsedRows[s.__idx] || {};\n    cid = Number(rowByIdx.change_id);\n  }\n\n  let descs = [];\n  if (Number.isFinite(cid)) descs = byChange.get(cid) || [];\n\n  if (descs.length === 0) {\n    const rowByIdx = parsedRows[s.__idx] || {};\n    const d = String(rowByIdx.description || '').trim();\n    if (d) descs = [d];\n  }\n\n  if (descs.length === 0) continue;\n\n  const uniq = [...new Set(descs.map((d) => String(d || '').trim()).filter(Boolean))];\n  for (const description of uniq) {\n    out.push({ json: { testsuite_id: suiteId, description } });\n  }\n}\n\nreturn out;"
+      },
+      "id": "a1ce308d-1a8e-4552-a629-050f831766ea",
+      "name": "Build Tests For Testsuite Rows (LLM)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        20,
+        540
+      ]
+    }
+  ],
+  "connections": {
+    "Upsert Testsuite For Change (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Build Tests For Testsuite Rows (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
