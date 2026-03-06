@@ -281,9 +281,18 @@ async function main() {
     }
   }
 
+  const desiredBranch = String(ref).startsWith('codex/governance-')
+    ? String(ref)
+    : `codex/governance-${runId}-${repoKey}`;
+
   const currentBranch = run('git rev-parse --abbrev-ref HEAD', repoDir);
   if (currentBranch === 'HEAD') {
-    run(`git checkout -B "codex/governance-${runId}-${repoKey}"`, repoDir);
+    run(`git checkout -B "${desiredBranch}"`, repoDir);
+  } else if (currentBranch !== desiredBranch) {
+    const checkoutDesired = runAllowFail(`git checkout "${desiredBranch}"`, repoDir);
+    if (!checkoutDesired.ok) {
+      run(`git checkout -b "${desiredBranch}"`, repoDir);
+    }
   }
 
   const branch = run('git rev-parse --abbrev-ref HEAD', repoDir);
@@ -341,7 +350,7 @@ async function main() {
   run('git config user.name "FastRoute Governance Bot"', repoDir);
   run('git config user.email "governance-bot@users.noreply.github.com"', repoDir);
   run(`git commit -m "feat(governance): implement impact changes (${repoKey}) run ${runId}"`, repoDir);
-  run(`git push origin "${branch}"`, repoDir);
+  run(`git push -u origin "${branch}"`, repoDir);
 
   const commit = run('git rev-parse HEAD', repoDir);
   process.stdout.write(JSON.stringify({ status: 'implemented', repo, branch, commit }) + '\n');

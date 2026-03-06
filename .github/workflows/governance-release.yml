@@ -395,7 +395,38 @@ jobs:
             commit=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.commit||''));" "${json}")
 
             if [ "${status}" = "implemented" ]; then
-              LOG_LINES="${LOG_LINES}- ${repo}: implemented (branch=${branch}, commit=${commit})\n"
+              local pr_base pr_title pr_body pr_url
+              pr_base="${ref}"
+              if [[ "${pr_base}" =~ ^codex/ ]]; then
+                pr_base="main"
+              fi
+              if [[ "${pr_base}" =~ ^[0-9a-f]{40}$ ]]; then
+                pr_base="main"
+              fi
+
+              pr_title="Governance Auto Implementation (${key}) - run ${RUN_ID}"
+              pr_body="Auto-generated governance implementation. Repo=${repo}, Run=${RUN_ID}, Branch=${branch}, Base=${pr_base}."
+              pr_url=""
+
+              if command -v gh >/dev/null 2>&1; then
+                pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls?state=open&head=${OWNER}:${branch}" -q '.[0].html_url' 2>/dev/null || true)"
+
+                if [ -z "$pr_url" ]; then
+                  pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls" \
+                    -f title="${pr_title}" \
+                    -f head="${OWNER}:${branch}" \
+                    -f base="${pr_base}" \
+                    -f body="${pr_body}" \
+                    -q .html_url 2>/dev/null || true)"
+                fi
+              fi
+
+              if [ -z "$pr_url" ]; then
+                echo "Failed to create or locate PR for ${repo} (branch=${branch}, base=${pr_base})." >&2
+                exit 1
+              fi
+
+              LOG_LINES="${LOG_LINES}- ${repo}: implemented (branch=${branch}, commit=${commit}, pr=${pr_url})\n"
             else
               LOG_LINES="${LOG_LINES}- ${repo}: ${status}\n"
             fi
