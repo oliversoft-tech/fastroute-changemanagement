@@ -360,8 +360,12 @@ jobs:
           fi
 
           if [ -z "${OPENAI_API_KEY:-}" ]; then
-            echo "OPENAI_API_KEY não configurado. Necessário para etapa de codificação automática." >&2
-            exit 1
+            {
+              echo "implementation_log<<EOF"
+              echo "- OPENAI_API_KEY não configurado; etapa de codificação automática foi pulada."
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
           printf '%s' "${IMPACT_JSON}" > impact.json
