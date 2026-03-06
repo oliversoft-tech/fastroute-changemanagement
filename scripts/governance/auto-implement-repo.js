@@ -204,37 +204,42 @@ function extractDiff(text) {
   return out;
 }
 
-async function callOpenAI({ apiKey, model, system, user }) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+async function callAnthropic({ apiKey, model, system, user }) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model,
+      system,
       temperature: 0.1,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user }
-      ]
-    })
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: user }],
+    }),
   });
 
   const body = await response.text();
   if (!response.ok) {
-    throw new Error(`OpenAI request failed (${response.status}): ${body.slice(0, 800)}`);
+    throw new Error(`Anthropic request failed (${response.status}): ${body.slice(0, 800)}`);
   }
 
   let parsed = {};
   try {
     parsed = JSON.parse(body);
   } catch (_e) {
-    throw new Error(`OpenAI returned non-JSON body: ${body.slice(0, 800)}`);
+    throw new Error(`Anthropic returned non-JSON body: ${body.slice(0, 800)}`);
   }
 
-  const content = parsed?.choices?.[0]?.message?.content || '';
-  return String(content);
+  const content = Array.isArray(parsed?.content)
+    ? parsed.content
+      .filter((item) => item?.type === 'text' && typeof item?.text === 'string')
+      .map((item) => item.text)
+      .join('\n')
+    : '';
+  return String(content || '').trim();
 }
 
 async function main() {
@@ -246,8 +251,8 @@ async function main() {
   const runId = args.run_id || process.env.RUN_ID || 'manual';
   const impactPath = args.impact_json_file || process.env.IMPACT_JSON_FILE;
   const token = args.token || process.env.TOKEN;
-  const model = args.model || process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  const apiKey = args.openai_api_key || process.env.OPENAI_API_KEY;
+  const model = args.model || process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest';
+  const apiKey = args.anthropic_api_key || process.env.ANTHROPIC_API_KEY;
 
   if (!owner || !repo || !repoKey || !ref || !impactPath || !token) {
     throw new Error('Missing required arguments: owner, repo, repo_key, ref, impact_json_file, token');
@@ -262,9 +267,7 @@ async function main() {
     return;
   }
 
-  if (!apiKey) {
-    throw new Error(`OPENAI_API_KEY is required to auto-implement impacted repo ${repo}.`);
-  }
+  if (!apiKey) throw new Error(`ANTHROPIC_API_KEY is required to auto-implement impacted repo ${repo}.`);
 
   const workdir = fs.mkdtempSync(path.join(os.tmpdir(), `fastroute-impl-${repoKey}-`));
   const repoDir = path.join(workdir, 'repo');
@@ -311,7 +314,7 @@ async function main() {
   };
   const { system, user } = buildPrompt(payload, repoTree, fileContexts.join('\n'));
 
-  const llmText = await callOpenAI({ apiKey, model, system, user });
+  const llmText = await callAnthropic({ apiKey, model, system, user });
   const diffText = extractDiff(llmText);
   if (!diffText || !diffText.includes('diff --git')) {
     throw new Error(`LLM did not return a valid git diff for ${repo}.`);
