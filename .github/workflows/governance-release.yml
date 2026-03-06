@@ -395,7 +395,38 @@ jobs:
             commit=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.commit||''));" "${json}")
 
             if [ "${status}" = "implemented" ]; then
-              LOG_LINES="${LOG_LINES}- ${repo}: implemented (branch=${branch}, commit=${commit})\n"
+              local pr_base pr_title pr_body pr_url
+              pr_base="${ref}"
+              if [[ "${pr_base}" =~ ^codex/ ]]; then
+                pr_base="main"
+              fi
+              if [[ "${pr_base}" =~ ^[0-9a-f]{40}$ ]]; then
+                pr_base="main"
+              fi
+
+              pr_title="Governance Auto Implementation (${key}) - run ${RUN_ID}"
+              pr_body="Auto-generated governance implementation. Repo=${repo}, Run=${RUN_ID}, Branch=${branch}, Base=${pr_base}."
+              pr_url=""
+
+              if command -v gh >/dev/null 2>&1; then
+                pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls?state=open&head=${OWNER}:${branch}" -q '.[0].html_url' 2>/dev/null || true)"
+
+                if [ -z "$pr_url" ]; then
+                  pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls" \
+                    -f title="${pr_title}" \
+                    -f head="${OWNER}:${branch}" \
+                    -f base="${pr_base}" \
+                    -f body="${pr_body}" \
+                    -q .html_url 2>/dev/null || true)"
+                fi
+              fi
+
+              if [ -z "$pr_url" ]; then
+                echo "Failed to create or locate PR for ${repo} (branch=${branch}, base=${pr_base})." >&2
+                exit 1
+              fi
+
+              LOG_LINES="${LOG_LINES}- ${repo}: implemented (branch=${branch}, commit=${commit}, pr=${pr_url})\n"
             else
               LOG_LINES="${LOG_LINES}- ${repo}: ${status}\n"
             fi
@@ -494,7 +525,7 @@ jobs:
     name: Build APK + iOS package (internal)
     runs-on: ubuntu-latest
     needs: [prepare-implementation, quality-gates-unit]
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false) }}
+    if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) && (needs.prepare-implementation.outputs.mobile_ref != 'main' || (github.event_name == 'workflow_dispatch' && inputs.domain_ref == 'main' && inputs.api_ref == 'main' && inputs.mobile_ref == 'main') || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.source_repo == 'fastroute-mobile-hybrid')) }}
     env:
       RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
       RESOLVED_MOBILE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_profile || github.event.client_payload.mobile_profile || 'preview' }}
@@ -720,8 +751,8 @@ jobs:
         run: |
           {
             echo "## FastRoute Release Artifacts";
-            echo "- APK: ${{ needs.build-mobile-artifacts.outputs.android_url }}";
-            echo "- iOS package: ${{ needs.build-mobile-artifacts.outputs.ios_url }}";
+            echo "- APK: ${{ needs.build-mobile-artifacts.outputs.android_url || 'N/A (mobile build skipped)' }}";
+            echo "- iOS package: ${{ needs.build-mobile-artifacts.outputs.ios_url || 'N/A (mobile build skipped)' }}";
             echo "- API image tag: ${{ needs.build-api-image.outputs.image_tag }}";
             echo "- Deploy API executado: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || (github.event.action == 'governance-release' && (github.event.client_payload.deploy_api == true) || false) }}";
           } >> "$GITHUB_STEP_SUMMARY"
