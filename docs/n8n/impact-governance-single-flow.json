@@ -746,9 +746,13 @@
         "specifyBody": "json",
         "jsonBody": "={{ (() => {\n  const analysis = ($json.analysis && typeof $json.analysis === 'object') ? $json.analysis : {};\n  const rawSummary = String(analysis.resumo || analysis.summary || 'Sem resumo').trim();\n  const safeSummary = rawSummary\n    .replace(/[\"'`]/g, '')\n    .replace(/[()]/g, '')\n    .replace(/\\s+/g, ' ')\n    .slice(0, 450);\n\n  const payloadAnalysis = {\n    ...analysis,\n    resumo: safeSummary,\n  };\n\n  return JSON.stringify({\n    event_type: 'governance-release',\n    client_payload: {\n      source_repo: 'fastroute-changemanagement',\n      source_ref: 'main',\n      domain_ref: $json.domain_ref || 'main',\n      api_ref: $json.api_ref || 'main',\n      mobile_ref: $json.mobile_ref || 'main',\n      mobile_profile: $json.mobile_profile || 'preview',\n      run_release: false,\n      deploy_api: false,\n      auto_implement: true,\n      impact_analysis: payloadAnalysis\n    }\n  });\n})() }}",
         "options": {
-          "fullResponse": true
-        },
-        "responseFormat": "string"
+          "response": {
+            "response": {
+              "responseFormat": "autodetect",
+              "fullResponse": true
+            }
+          }
+        }
       },
       "id": "dispatch-governance-pr",
       "name": "Dispatch Governance PR",
