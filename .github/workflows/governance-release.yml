@@ -334,7 +334,8 @@ jobs:
           IMPACT_JSON: ${{ toJson(github.event.client_payload.impact_analysis) }}
           RUN_AUTO_IMPLEMENT: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.auto_implement != false }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ANTHROPIC_MODEL: ${{ github.event.client_payload.anthropic_model || 'claude-3-5-sonnet-latest' }}
+          ANTHROPIC_MODEL: ${{ github.event.client_payload.anthropic_model || 'claude-sonnet-4-5-20250929' }}
+          ANTHROPIC_FALLBACK_MODELS: ${{ github.event.client_payload.anthropic_fallback_models || 'claude-3-5-sonnet-20241022' }}
           DOMAIN_REF: ${{ needs.prepare-implementation.outputs.domain_ref }}
           API_REF: ${{ needs.prepare-implementation.outputs.api_ref }}
           MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
@@ -387,7 +388,8 @@ jobs:
               --impact_json_file impact.json \
               --token "${TOKEN}" \
               --anthropic_api_key "${ANTHROPIC_API_KEY}" \
-              --model "${ANTHROPIC_MODEL}")
+              --model "${ANTHROPIC_MODEL}" \
+              --fallback_models "${ANTHROPIC_FALLBACK_MODELS}")
 
             local status branch commit
             status=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.status||''));" "${json}")

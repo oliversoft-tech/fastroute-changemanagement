@@ -5,6 +5,9 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
+const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-5-20250929';
+const DEFAULT_FALLBACK_MODELS = ['claude-3-5-sonnet-20241022'];
+
 function parseArgs(argv) {
   const args = {};
   for (let i = 2; i < argv.length; i += 1) {
@@ -251,7 +254,8 @@ async function main() {
   const runId = args.run_id || process.env.RUN_ID || 'manual';
   const impactPath = args.impact_json_file || process.env.IMPACT_JSON_FILE;
   const token = args.token || process.env.TOKEN;
-  const model = args.model || process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest';
+  const model = args.model || process.env.ANTHROPIC_MODEL || DEFAULT_ANTHROPIC_MODEL;
+  const fallbackModelsRaw = args.fallback_models || process.env.ANTHROPIC_FALLBACK_MODELS || '';
   const apiKey = args.anthropic_api_key || process.env.ANTHROPIC_API_KEY;
 
   if (!owner || !repo || !repoKey || !ref || !impactPath || !token) {
@@ -323,7 +327,51 @@ async function main() {
   };
   const { system, user } = buildPrompt(payload, repoTree, fileContexts.join('\n'));
 
-  const llmText = await callAnthropic({ apiKey, model, system, user });
+  const modelCandidates = [];
+  const addModel = (value) => {
+    const m = String(value || '').trim();
+    if (!m || modelCandidates.includes(m)) return;
+    modelCandidates.push(m);
+  };
+
+  addModel(model);
+  for (const item of String(fallbackModelsRaw).split(',').map((s) => s.trim()).filter(Boolean)) {
+    addModel(item);
+  }
+  for (const m of DEFAULT_FALLBACK_MODELS) addModel(m);
+
+  let llmText = '';
+  let resolvedModel = '';
+  let lastModelError = null;
+
+  for (const candidateModel of modelCandidates) {
+    try {
+      llmText = await callAnthropic({ apiKey, model: candidateModel, system, user });
+      resolvedModel = candidateModel;
+      break;
+    } catch (err) {
+      const msg = String(err?.message || err);
+      const isModelNotFound =
+        msg.includes('(404)') ||
+        msg.includes('not_found_error') ||
+        (msg.includes('model:') && msg.toLowerCase().includes('anthropic request failed'));
+
+      if (isModelNotFound) {
+        console.error(`Model unavailable for ${repo}: ${candidateModel}. Trying next fallback...`);
+        lastModelError = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  if (!llmText) {
+    const details = lastModelError ? String(lastModelError.message || lastModelError) : 'unknown model error';
+    throw new Error(
+      `No valid Anthropic model available for ${repo}. Tried: ${modelCandidates.join(', ')}. Last error: ${details}`
+    );
+  }
+
   const diffText = extractDiff(llmText);
   if (!diffText || !diffText.includes('diff --git')) {
     throw new Error(`LLM did not return a valid git diff for ${repo}.`);
@@ -353,7 +401,7 @@ async function main() {
   run(`git push -u origin "${branch}"`, repoDir);
 
   const commit = run('git rev-parse HEAD', repoDir);
-  process.stdout.write(JSON.stringify({ status: 'implemented', repo, branch, commit }) + '\n');
+  process.stdout.write(JSON.stringify({ status: 'implemented', repo, branch, commit, model: resolvedModel }) + '\n');
 }
 
 main().catch((err) => {
