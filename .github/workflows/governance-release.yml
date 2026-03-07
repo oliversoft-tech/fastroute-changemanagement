@@ -68,6 +68,10 @@ jobs:
       domain_ref: ${{ steps.prepare.outputs.domain_ref }}
       api_ref: ${{ steps.prepare.outputs.api_ref }}
       mobile_ref: ${{ steps.prepare.outputs.mobile_ref }}
+      domain_impacted: ${{ steps.prepare.outputs.domain_impacted }}
+      api_impacted: ${{ steps.prepare.outputs.api_impacted }}
+      mobile_impacted: ${{ steps.prepare.outputs.mobile_impacted }}
+      domain_needed: ${{ steps.prepare.outputs.domain_needed }}
       impact_summary: ${{ steps.prepare.outputs.impact_summary }}
       impact_viability: ${{ steps.prepare.outputs.impact_viability }}
       implementation_prs: ${{ steps.prepare.outputs.implementation_prs }}
@@ -85,6 +89,7 @@ jobs:
           TOKEN: ${{ secrets.CROSS_REPO_PAT }}
           RUN_ID: ${{ github.run_id }}
           RUN_AUTO_IMPLEMENT: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.auto_implement != false }}
+          PRECREATE_BRANCHES: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.precreate_branches == true }}
           IMPACT_JSON: ${{ toJson(github.event.client_payload.impact_analysis) }}
         run: |
           set -euo pipefail
@@ -96,6 +101,22 @@ jobs:
           IMPACT_SUMMARY="N/A"
           IMPACT_VIABILITY="N/A"
           PR_LINES=""
+          DOMAIN_IMPACTED="true"
+          API_IMPACTED="true"
+          MOBILE_IMPACTED="true"
+
+          repo_impacted() {
+            local repo_key="$1"
+            KEY="$repo_key" node - <<'NODE'
+          const impact = JSON.parse(process.env.IMPACT_JSON || '{}');
+          const key = process.env.KEY;
+          const map = { domain: 'fastroute-domain', api: 'fastroute-api', mobile: 'fastroute-mobile-hybrid' };
+          const impacts = impact.impactos || impact.impacts || {};
+          const info = impacts[map[key]] || impacts[key] || {};
+          const yes = info.impacto === true || info.impact === true || info.has_impact === true;
+          process.stdout.write(yes ? 'true' : 'false');
+          NODE
+          }
 
           if [ -n "${IMPACT_JSON:-}" ] && [ "${IMPACT_JSON}" != "null" ] && [ "${IMPACT_JSON}" != "{}" ]; then
             IMPACT_SUMMARY=$(node - <<'NODE'
@@ -110,6 +131,15 @@ jobs:
           process.stdout.write(String(v.nivel || v.level || 'N/A'));
           NODE
             )
+
+            DOMAIN_IMPACTED="$(repo_impacted domain)"
+            API_IMPACTED="$(repo_impacted api)"
+            MOBILE_IMPACTED="$(repo_impacted mobile)"
+          fi
+
+          DOMAIN_NEEDED="false"
+          if [ "${DOMAIN_IMPACTED}" = "true" ] || [ "${API_IMPACTED}" = "true" ] || [ "${MOBILE_IMPACTED}" = "true" ]; then
+            DOMAIN_NEEDED="true"
           fi
 
           create_repo_branch() {
@@ -260,7 +290,7 @@ jobs:
             fi
           }
 
-          if [ "${RUN_AUTO_IMPLEMENT}" = "true" ] && [ -n "${IMPACT_JSON:-}" ] && [ "${IMPACT_JSON}" != "null" ] && [ "${IMPACT_JSON}" != "{}" ]; then
+          if [ "${PRECREATE_BRANCHES}" = "true" ] && [ "${RUN_AUTO_IMPLEMENT}" = "true" ] && [ -n "${IMPACT_JSON:-}" ] && [ "${IMPACT_JSON}" != "null" ] && [ "${IMPACT_JSON}" != "{}" ]; then
             create_repo_branch "$DOMAIN_REPO" "domain" "$DOMAIN_REF" DOMAIN_REF
             create_repo_branch "$API_REPO" "api" "$API_REF" API_REF
             create_repo_branch "$MOBILE_REPO" "mobile" "$MOBILE_REF" MOBILE_REF
@@ -270,6 +300,10 @@ jobs:
             echo "domain_ref=$DOMAIN_REF"
             echo "api_ref=$API_REF"
             echo "mobile_ref=$MOBILE_REF"
+            echo "domain_impacted=$DOMAIN_IMPACTED"
+            echo "api_impacted=$API_IMPACTED"
+            echo "mobile_impacted=$MOBILE_IMPACTED"
+            echo "domain_needed=$DOMAIN_NEEDED"
             echo "impact_summary=$IMPACT_SUMMARY"
             echo "impact_viability=$IMPACT_VIABILITY"
             echo "implementation_prs<<EOF"
@@ -468,9 +502,16 @@ jobs:
     name: Quality Gates (Unit + Integration)
     runs-on: ubuntu-latest
     needs: [prepare-implementation, implement-changes]
+    if: ${{ needs.prepare-implementation.outputs.domain_impacted == 'true' || needs.prepare-implementation.outputs.api_impacted == 'true' || needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
+    env:
+      DOMAIN_IMPACTED: ${{ needs.prepare-implementation.outputs.domain_impacted }}
+      API_IMPACTED: ${{ needs.prepare-implementation.outputs.api_impacted }}
+      MOBILE_IMPACTED: ${{ needs.prepare-implementation.outputs.mobile_impacted }}
+      DOMAIN_NEEDED: ${{ needs.prepare-implementation.outputs.domain_needed }}
 
     steps:
       - name: Checkout domain
+        if: ${{ needs.prepare-implementation.outputs.domain_needed == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
@@ -479,6 +520,7 @@ jobs:
           path: domain
 
       - name: Checkout API
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.API_REPO) }}
@@ -487,6 +529,7 @@ jobs:
           path: api
 
       - name: Checkout mobile
+        if: ${{ needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
@@ -498,18 +541,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            domain/package-lock.json
+            api/package-lock.json
+            mobile/package-lock.json
 
-      - name: Domain - lint/test/build
+      - name: Domain - prepare package (and full gates when impacted)
+        if: ${{ needs.prepare-implementation.outputs.domain_needed == 'true' }}
         run: |
           cd domain
           npm ci
-          npm run lint
-          npm run typecheck
-          npm run test
-          npm run build
+          if [ "${DOMAIN_IMPACTED}" = "true" ]; then
+            npm run lint
+            npm run typecheck
+            npm run test
+            npm run build
+          fi
           npm pack
 
       - name: API - lint/typecheck/test/build
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' }}
         run: |
           cd api
           npm ci
@@ -521,6 +573,7 @@ jobs:
           npm run build
 
       - name: Mobile - typecheck/unit tests
+        if: ${{ needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
         run: |
           cd mobile
           npm ci
