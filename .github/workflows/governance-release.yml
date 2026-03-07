@@ -68,6 +68,11 @@ jobs:
       domain_ref: ${{ steps.prepare.outputs.domain_ref }}
       api_ref: ${{ steps.prepare.outputs.api_ref }}
       mobile_ref: ${{ steps.prepare.outputs.mobile_ref }}
+      ci_approved: ${{ steps.prepare.outputs.ci_approved }}
+      domain_impacted: ${{ steps.prepare.outputs.domain_impacted }}
+      api_impacted: ${{ steps.prepare.outputs.api_impacted }}
+      mobile_impacted: ${{ steps.prepare.outputs.mobile_impacted }}
+      domain_needed: ${{ steps.prepare.outputs.domain_needed }}
       impact_summary: ${{ steps.prepare.outputs.impact_summary }}
       impact_viability: ${{ steps.prepare.outputs.impact_viability }}
       implementation_prs: ${{ steps.prepare.outputs.implementation_prs }}
@@ -84,7 +89,12 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           TOKEN: ${{ secrets.CROSS_REPO_PAT }}
           RUN_ID: ${{ github.run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          PAYLOAD_APPROVED: ${{ github.event.client_payload.approved == true }}
+          PAYLOAD_RUN_CI: ${{ github.event.client_payload.run_ci == true }}
           RUN_AUTO_IMPLEMENT: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.auto_implement != false }}
+          PRECREATE_BRANCHES: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.precreate_branches == true }}
           IMPACT_JSON: ${{ toJson(github.event.client_payload.impact_analysis) }}
         run: |
           set -euo pipefail
@@ -96,6 +106,31 @@ jobs:
           IMPACT_SUMMARY="N/A"
           IMPACT_VIABILITY="N/A"
           PR_LINES=""
+          DOMAIN_IMPACTED="true"
+          API_IMPACTED="true"
+          MOBILE_IMPACTED="true"
+          CI_APPROVED="false"
+
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            CI_APPROVED="true"
+          elif [ "${EVENT_NAME}" = "repository_dispatch" ] && [ "${EVENT_ACTION}" = "governance-ci" ] && [ "${PAYLOAD_APPROVED}" = "true" ]; then
+            CI_APPROVED="true"
+          elif [ "${EVENT_NAME}" = "repository_dispatch" ] && [ "${EVENT_ACTION}" = "governance-release" ] && [ "${PAYLOAD_RUN_CI}" = "true" ]; then
+            CI_APPROVED="true"
+          fi
+
+          repo_impacted() {
+            local repo_key="$1"
+            KEY="$repo_key" node - <<'NODE'
+          const impact = JSON.parse(process.env.IMPACT_JSON || '{}');
+          const key = process.env.KEY;
+          const map = { domain: 'fastroute-domain', api: 'fastroute-api', mobile: 'fastroute-mobile-hybrid' };
+          const impacts = impact.impactos || impact.impacts || {};
+          const info = impacts[map[key]] || impacts[key] || {};
+          const yes = info.impacto === true || info.impact === true || info.has_impact === true;
+          process.stdout.write(yes ? 'true' : 'false');
+          NODE
+          }
 
           if [ -n "${IMPACT_JSON:-}" ] && [ "${IMPACT_JSON}" != "null" ] && [ "${IMPACT_JSON}" != "{}" ]; then
             IMPACT_SUMMARY=$(node - <<'NODE'
@@ -110,6 +145,15 @@ jobs:
           process.stdout.write(String(v.nivel || v.level || 'N/A'));
           NODE
             )
+
+            DOMAIN_IMPACTED="$(repo_impacted domain)"
+            API_IMPACTED="$(repo_impacted api)"
+            MOBILE_IMPACTED="$(repo_impacted mobile)"
+          fi
+
+          DOMAIN_NEEDED="false"
+          if [ "${DOMAIN_IMPACTED}" = "true" ] || [ "${API_IMPACTED}" = "true" ] || [ "${MOBILE_IMPACTED}" = "true" ]; then
+            DOMAIN_NEEDED="true"
           fi
 
           create_repo_branch() {
@@ -260,7 +304,7 @@ jobs:
             fi
           }
 
-          if [ "${RUN_AUTO_IMPLEMENT}" = "true" ] && [ -n "${IMPACT_JSON:-}" ] && [ "${IMPACT_JSON}" != "null" ] && [ "${IMPACT_JSON}" != "{}" ]; then
+          if [ "${PRECREATE_BRANCHES}" = "true" ] && [ "${RUN_AUTO_IMPLEMENT}" = "true" ] && [ -n "${IMPACT_JSON:-}" ] && [ "${IMPACT_JSON}" != "null" ] && [ "${IMPACT_JSON}" != "{}" ]; then
             create_repo_branch "$DOMAIN_REPO" "domain" "$DOMAIN_REF" DOMAIN_REF
             create_repo_branch "$API_REPO" "api" "$API_REF" API_REF
             create_repo_branch "$MOBILE_REPO" "mobile" "$MOBILE_REF" MOBILE_REF
@@ -270,6 +314,11 @@ jobs:
             echo "domain_ref=$DOMAIN_REF"
             echo "api_ref=$API_REF"
             echo "mobile_ref=$MOBILE_REF"
+            echo "ci_approved=$CI_APPROVED"
+            echo "domain_impacted=$DOMAIN_IMPACTED"
+            echo "api_impacted=$API_IMPACTED"
+            echo "mobile_impacted=$MOBILE_IMPACTED"
+            echo "domain_needed=$DOMAIN_NEEDED"
             echo "impact_summary=$IMPACT_SUMMARY"
             echo "impact_viability=$IMPACT_VIABILITY"
             echo "implementation_prs<<EOF"
@@ -282,6 +331,7 @@ jobs:
           PREP_DOMAIN_REF: ${{ steps.prepare.outputs.domain_ref }}
           PREP_API_REF: ${{ steps.prepare.outputs.api_ref }}
           PREP_MOBILE_REF: ${{ steps.prepare.outputs.mobile_ref }}
+          PREP_CI_APPROVED: ${{ steps.prepare.outputs.ci_approved }}
           PREP_IMPACT_SUMMARY: ${{ steps.prepare.outputs.impact_summary }}
           PREP_IMPACT_VIABILITY: ${{ steps.prepare.outputs.impact_viability }}
           PREP_IMPLEMENTATION_PRS: ${{ steps.prepare.outputs.implementation_prs }}
@@ -292,6 +342,7 @@ jobs:
             echo "- Domain ref: ${PREP_DOMAIN_REF}"
             echo "- API ref: ${PREP_API_REF}"
             echo "- Mobile ref: ${PREP_MOBILE_REF}"
+            echo "- CI approved gate: ${PREP_CI_APPROVED}"
             echo "- Impact summary:"
             if [ -n "${PREP_IMPACT_SUMMARY:-}" ]; then
               echo '```json'
@@ -310,7 +361,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   implement-changes:
-    name: Implement Impact Changes (LLM)
+    name: Implement Impact Changes (Precomputed)
     runs-on: ubuntu-latest
     needs: [prepare-implementation]
     outputs:
@@ -332,10 +383,8 @@ jobs:
           TOKEN: ${{ secrets.CROSS_REPO_PAT }}
           RUN_ID: ${{ github.run_id }}
           IMPACT_JSON: ${{ toJson(github.event.client_payload.impact_analysis) }}
+          CODE_CHANGES_JSON: ${{ toJson(github.event.client_payload.code_changes) }}
           RUN_AUTO_IMPLEMENT: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.auto_implement != false }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ANTHROPIC_MODEL: ${{ github.event.client_payload.anthropic_model || 'claude-sonnet-4-5-20250929' }}
-          ANTHROPIC_FALLBACK_MODELS: ${{ github.event.client_payload.anthropic_fallback_models || 'claude-3-5-sonnet-20241022' }}
           DOMAIN_REF: ${{ needs.prepare-implementation.outputs.domain_ref }}
           API_REF: ${{ needs.prepare-implementation.outputs.api_ref }}
           MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
@@ -360,16 +409,17 @@ jobs:
             exit 0
           fi
 
-          if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+          if [ -z "${CODE_CHANGES_JSON:-}" ] || [ "${CODE_CHANGES_JSON}" = "null" ] || [ "${CODE_CHANGES_JSON}" = "[]" ] || [ "${CODE_CHANGES_JSON}" = "{}" ]; then
             {
               echo "implementation_log<<EOF"
-              echo "- ANTHROPIC_API_KEY não configurado; etapa de codificação automática foi pulada."
+              echo "- Sem code_changes no payload; nenhuma change foi implementada."
               echo "EOF"
             } >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           printf '%s' "${IMPACT_JSON}" > impact.json
+          printf '%s' "${CODE_CHANGES_JSON}" > code_changes.json
 
           LOG_LINES=""
 
@@ -386,10 +436,9 @@ jobs:
               --ref "${ref}" \
               --run_id "${RUN_ID}" \
               --impact_json_file impact.json \
+              --code_changes_json_file code_changes.json \
               --token "${TOKEN}" \
-              --anthropic_api_key "${ANTHROPIC_API_KEY}" \
-              --model "${ANTHROPIC_MODEL}" \
-              --fallback_models "${ANTHROPIC_FALLBACK_MODELS}" 2>&1); then
+               2>&1); then
               local err
               err="$(printf '%s' "${json}" | tr '\n' ' ' | cut -c1-1000)"
               LOG_LINES="${LOG_LINES}- ${repo}: failed (${err})\n"
@@ -468,9 +517,16 @@ jobs:
     name: Quality Gates (Unit + Integration)
     runs-on: ubuntu-latest
     needs: [prepare-implementation, implement-changes]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && (needs.prepare-implementation.outputs.domain_impacted == 'true' || needs.prepare-implementation.outputs.api_impacted == 'true' || needs.prepare-implementation.outputs.mobile_impacted == 'true') }}
+    env:
+      DOMAIN_IMPACTED: ${{ needs.prepare-implementation.outputs.domain_impacted }}
+      API_IMPACTED: ${{ needs.prepare-implementation.outputs.api_impacted }}
+      MOBILE_IMPACTED: ${{ needs.prepare-implementation.outputs.mobile_impacted }}
+      DOMAIN_NEEDED: ${{ needs.prepare-implementation.outputs.domain_needed }}
 
     steps:
       - name: Checkout domain
+        if: ${{ needs.prepare-implementation.outputs.domain_needed == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
@@ -479,6 +535,7 @@ jobs:
           path: domain
 
       - name: Checkout API
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.API_REPO) }}
@@ -487,6 +544,7 @@ jobs:
           path: api
 
       - name: Checkout mobile
+        if: ${{ needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
@@ -498,18 +556,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            domain/package-lock.json
+            api/package-lock.json
+            mobile/package-lock.json
 
-      - name: Domain - lint/test/build
+      - name: Domain - prepare package (and full gates when impacted)
+        if: ${{ needs.prepare-implementation.outputs.domain_needed == 'true' }}
         run: |
           cd domain
           npm ci
-          npm run lint
-          npm run typecheck
-          npm run test
-          npm run build
+          if [ "${DOMAIN_IMPACTED}" = "true" ]; then
+            npm run lint
+            npm run typecheck
+            npm run test
+            npm run build
+          fi
           npm pack
 
       - name: API - lint/typecheck/test/build
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' }}
         run: |
           cd api
           npm ci
@@ -521,6 +588,7 @@ jobs:
           npm run build
 
       - name: Mobile - typecheck/unit tests
+        if: ${{ needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
         run: |
           cd mobile
           npm ci
@@ -532,7 +600,7 @@ jobs:
     name: Build APK + iOS package (internal)
     runs-on: ubuntu-latest
     needs: [prepare-implementation, quality-gates-unit]
-    if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) && (needs.prepare-implementation.outputs.mobile_ref != 'main' || (github.event_name == 'workflow_dispatch' && inputs.domain_ref == 'main' && inputs.api_ref == 'main' && inputs.mobile_ref == 'main') || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.source_repo == 'fastroute-mobile-hybrid')) }}
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) && (needs.prepare-implementation.outputs.mobile_ref != 'main' || (github.event_name == 'workflow_dispatch' && inputs.domain_ref == 'main' && inputs.api_ref == 'main' && inputs.mobile_ref == 'main') || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.source_repo == 'fastroute-mobile-hybrid')) }}
     env:
       RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
       RESOLVED_MOBILE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.mobile_profile || github.event.client_payload.mobile_profile || 'preview' }}
@@ -597,7 +665,7 @@ jobs:
     name: Build & Push API Docker image
     runs-on: ubuntu-latest
     needs: [prepare-implementation, quality-gates-unit]
-    if: ${{ (github.event_name == 'workflow_dispatch' && (inputs.run_release || inputs.deploy_api)) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && (github.event.client_payload.run_release != false || github.event.client_payload.deploy_api == true)) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain')) }}
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && ((github.event_name == 'workflow_dispatch' && (inputs.run_release || inputs.deploy_api)) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && (github.event.client_payload.run_release != false || github.event.client_payload.deploy_api == true)) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain'))) }}
     env:
       RESOLVED_API_REF: ${{ needs.prepare-implementation.outputs.api_ref }}
 
@@ -640,8 +708,8 @@ jobs:
   deploy-api:
     name: Deploy API to VPS
     runs-on: ubuntu-latest
-    needs: [build-api-image]
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_api) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.deploy_api == true) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain')) }}
+    needs: [prepare-implementation, build-api-image]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.deploy_api) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.deploy_api == true) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-ci' && (github.event.client_payload.source_repo == 'fastroute-api' || github.event.client_payload.source_repo == 'fastroute-domain'))) }}
     concurrency:
       group: governance-api-vps-deploy
       cancel-in-progress: false
