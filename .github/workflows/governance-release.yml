@@ -379,7 +379,7 @@ jobs:
             local ref="$3"
 
             local json
-            json=$(node scripts/governance/auto-implement-repo.js \
+            if ! json=$(node scripts/governance/auto-implement-repo.js \
               --owner "${OWNER}" \
               --repo "${repo}" \
               --repo_key "${key}" \
@@ -389,7 +389,12 @@ jobs:
               --token "${TOKEN}" \
               --anthropic_api_key "${ANTHROPIC_API_KEY}" \
               --model "${ANTHROPIC_MODEL}" \
-              --fallback_models "${ANTHROPIC_FALLBACK_MODELS}")
+              --fallback_models "${ANTHROPIC_FALLBACK_MODELS}" 2>&1); then
+              local err
+              err="$(printf '%s' "${json}" | tr '\n' ' ' | cut -c1-1000)"
+              LOG_LINES="${LOG_LINES}- ${repo}: failed (${err})\n"
+              return 0
+            fi
 
             local status branch commit
             status=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.status||''));" "${json}")
@@ -424,8 +429,8 @@ jobs:
               fi
 
               if [ -z "$pr_url" ]; then
-                echo "Failed to create or locate PR for ${repo} (branch=${branch}, base=${pr_base})." >&2
-                exit 1
+                LOG_LINES="${LOG_LINES}- ${repo}: implemented but PR creation failed (branch=${branch}, base=${pr_base})\n"
+                return 0
               fi
 
               LOG_LINES="${LOG_LINES}- ${repo}: implemented (branch=${branch}, commit=${commit}, pr=${pr_url})\n"

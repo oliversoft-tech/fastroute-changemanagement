@@ -218,8 +218,8 @@ async function callAnthropic({ apiKey, model, system, user }) {
     body: JSON.stringify({
       model,
       system,
-      temperature: 0.1,
-      max_tokens: 4000,
+      temperature: 0,
+      max_tokens: 6000,
       messages: [{ role: 'user', content: user }],
     }),
   });
@@ -372,21 +372,61 @@ async function main() {
     );
   }
 
-  const diffText = extractDiff(llmText);
-  if (!diffText || !diffText.includes('diff --git')) {
-    throw new Error(`LLM did not return a valid git diff for ${repo}.`);
+  const patchPath = path.join(workdir, 'changes.diff');
+  let applyError = '';
+  let applied = false;
+  let diffText = '';
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    if (attempt > 1) {
+      const retryHint = [
+        user,
+        '',
+        'PREVIOUS_ATTEMPT_FAILED:',
+        applyError || 'unknown apply error',
+        '',
+        'Regenerate the FULL unified diff from scratch.',
+        'Return ONLY valid unified diff. No prose. No markdown fences.',
+      ].join('\n');
+      llmText = await callAnthropic({ apiKey, model: resolvedModel, system, user: retryHint });
+    }
+
+    diffText = extractDiff(llmText);
+    if (!diffText || !diffText.includes('diff --git')) {
+      applyError = `missing diff --git header (attempt ${attempt})`;
+      continue;
+    }
+
+    fs.writeFileSync(patchPath, diffText, 'utf8');
+
+    // Validate patch before applying to avoid corrupt patch failures.
+    const check = runAllowFail(`git apply --check --whitespace=nowarn "${patchPath}"`, repoDir);
+    if (!check.ok) {
+      applyError = `git apply --check failed (attempt ${attempt}): ${(check.stderr || check.stdout || '').slice(0, 800)}`;
+      continue;
+    }
+
+    const applyStrict = runAllowFail(`git apply --index --whitespace=nowarn "${patchPath}"`, repoDir);
+    if (applyStrict.ok) {
+      applied = true;
+      break;
+    }
+
+    const applyRelaxed = runAllowFail(`git apply --recount --reject --whitespace=nowarn "${patchPath}"`, repoDir);
+    if (applyRelaxed.ok) {
+      run('git add -A', repoDir);
+      applied = true;
+      break;
+    }
+
+    applyError = [
+      `strict: ${(applyStrict.stderr || applyStrict.stdout || '').slice(0, 600)}`,
+      `relaxed: ${(applyRelaxed.stderr || applyRelaxed.stdout || '').slice(0, 600)}`
+    ].join(' | ');
   }
 
-  const patchPath = path.join(workdir, 'changes.diff');
-  fs.writeFileSync(patchPath, diffText, 'utf8');
-
-  const applyStrict = runAllowFail(`git apply --index --whitespace=nowarn "${patchPath}"`, repoDir);
-  if (!applyStrict.ok) {
-    const applyRelaxed = runAllowFail(`git apply --reject --whitespace=nowarn "${patchPath}"`, repoDir);
-    if (!applyRelaxed.ok) {
-      throw new Error(`Could not apply generated patch for ${repo}.\n${applyStrict.stderr}\n${applyRelaxed.stderr}`);
-    }
-    run('git add -A', repoDir);
+  if (!applied) {
+    throw new Error(`Could not apply generated patch for ${repo} after retries. Last error: ${applyError}`);
   }
 
   const hasDiff = runAllowFail('git diff --cached --quiet', repoDir);
