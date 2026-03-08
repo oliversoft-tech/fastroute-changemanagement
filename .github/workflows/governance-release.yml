@@ -601,10 +601,101 @@ jobs:
           npm run typecheck
           npm run test:unit
 
+  quality-gates-mobile-ui-android:
+    name: Quality Gates (Mobile UI Android - Firebase Robo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [prepare-implementation, implement-changes, quality-gates-unit]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
+    env:
+      RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
+
+    steps:
+      - name: Checkout changemanagement
+        uses: actions/checkout@v4
+
+      - name: Checkout mobile
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          ref: ${{ env.RESOLVED_MOBILE_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: mobile
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Authenticate Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Mobile Android UI (Robo auto-crawl)
+        env:
+          MOBILE_DIR: ${{ github.workspace }}/mobile
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          ANDROID_ROBO_TIMEOUT: 180s
+          ANDROID_ROBO_RESULTS_DIR: governance-ci/${{ github.run_id }}/android-robo
+          ANDROID_ROBO_DEVICE_MODEL: Nexus6
+          ANDROID_ROBO_VERSION: "30"
+          ANDROID_ROBO_LOCALE: pt_BR
+          ANDROID_ROBO_ORIENTATION: portrait
+        run: ./scripts/e2e/run-android-robo-testlab.sh
+
+  quality-gates-mobile-ui-ios:
+    name: Quality Gates (Mobile UI iOS - Simulator)
+    runs-on: macos-latest
+    timeout-minutes: 10
+    needs: [prepare-implementation, implement-changes, quality-gates-unit]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
+    env:
+      RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
+
+    steps:
+      - name: Checkout changemanagement
+        uses: actions/checkout@v4
+
+      - name: Checkout mobile
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          ref: ${{ env.RESOLVED_MOBILE_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: mobile
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Mobile iOS UI (simulator crawler)
+        env:
+          MOBILE_DIR: ${{ github.workspace }}/mobile
+          IOS_SIMULATOR_NAME: iPhone 15
+          IOS_UI_SCRIPT_NAME: test:ui:ios:crawler
+        run: ./scripts/e2e/run-ios-ui-simulator.sh
+
   build-mobile-artifacts:
     name: Build APK + iOS package (internal)
     runs-on: ubuntu-latest
-    needs: [prepare-implementation, quality-gates-unit]
+    needs: [prepare-implementation, quality-gates-unit, quality-gates-mobile-ui-android, quality-gates-mobile-ui-ios]
     if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) && (needs.prepare-implementation.outputs.mobile_ref != 'main' || (github.event_name == 'workflow_dispatch' && inputs.domain_ref == 'main' && inputs.api_ref == 'main' && inputs.mobile_ref == 'main') || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.source_repo == 'fastroute-mobile-hybrid')) }}
     env:
       RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
@@ -710,6 +801,81 @@ jobs:
             ghcr.io/${{ secrets.GHCR_USERNAME }}/fastroute-api:latest
             ghcr.io/${{ secrets.GHCR_USERNAME }}/fastroute-api:${{ steps.meta.outputs.image_tag }}
 
+  publish-domain-npm:
+    name: Publish Domain Package to NPM
+    runs-on: ubuntu-latest
+    needs: [prepare-implementation, quality-gates-unit]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && ((github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.publish_domain == true) || (github.event_name == 'workflow_dispatch' && false)) }}
+    env:
+      RESOLVED_DOMAIN_REF: ${{ needs.prepare-implementation.outputs.domain_ref }}
+
+    outputs:
+      package_name: ${{ steps.meta.outputs.package_name }}
+      package_version: ${{ steps.meta.outputs.package_version }}
+
+    steps:
+      - name: Checkout domain
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
+          ref: ${{ env.RESOLVED_DOMAIN_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: domain
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: domain/package-lock.json
+
+      - name: Install and build domain package
+        run: |
+          cd domain
+          npm ci
+          npm run build
+
+      - name: Package metadata
+        id: meta
+        run: |
+          cd domain
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "package_name=$PKG_NAME" >> "$GITHUB_OUTPUT"
+          echo "package_version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Validate NPM token
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NPM_TOKEN:-}" ]; then
+            echo "NPM_TOKEN não configurado."
+            exit 1
+          fi
+
+      - name: Check version availability
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          PKG="${{ steps.meta.outputs.package_name }}"
+          VER="${{ steps.meta.outputs.package_version }}"
+          if npm view "${PKG}@${VER}" version >/dev/null 2>&1; then
+            echo "Versão já publicada no NPM: ${PKG}@${VER}"
+            exit 1
+          fi
+
+      - name: Publish package
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          cd domain
+          npm publish --access public
+
   deploy-api:
     name: Deploy API to VPS
     runs-on: ubuntu-latest
@@ -794,7 +960,7 @@ jobs:
   governance-summary:
     name: Governance Summary
     runs-on: ubuntu-latest
-    needs: [prepare-implementation, implement-changes, quality-gates-unit]
+    needs: [prepare-implementation, implement-changes, quality-gates-unit, quality-gates-mobile-ui-android, quality-gates-mobile-ui-ios]
     if: ${{ always() }}
 
     steps:
@@ -811,6 +977,8 @@ jobs:
           SUMMARY_VIABILITY: ${{ needs.prepare-implementation.outputs.impact_viability }}
           SUMMARY_IMPL_LOG: ${{ needs.implement-changes.outputs.implementation_log }}
           SUMMARY_IMPL_PRS: ${{ needs.prepare-implementation.outputs.implementation_prs }}
+          SUMMARY_UI_ANDROID: ${{ needs['quality-gates-mobile-ui-android'].result }}
+          SUMMARY_UI_IOS: ${{ needs['quality-gates-mobile-ui-ios'].result }}
         run: |
           set -euo pipefail
           {
@@ -843,12 +1011,14 @@ jobs:
             else
               echo "  - none"
             fi
+            echo "- Mobile UI Android (Firebase Robo): ${SUMMARY_UI_ANDROID:-not_run}"
+            echo "- Mobile UI iOS (Simulator crawler): ${SUMMARY_UI_IOS:-not_run}"
           } >> "$GITHUB_STEP_SUMMARY"
 
   release-summary:
     name: Release Summary
     runs-on: ubuntu-latest
-    needs: [build-mobile-artifacts, build-api-image]
+    needs: [build-mobile-artifacts, build-api-image, publish-domain-npm]
     if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) }}
 
     steps:
@@ -859,5 +1029,6 @@ jobs:
             echo "- APK: ${{ needs.build-mobile-artifacts.outputs.android_url || 'N/A (mobile build skipped)' }}";
             echo "- iOS package: ${{ needs.build-mobile-artifacts.outputs.ios_url || 'N/A (mobile build skipped)' }}";
             echo "- API image tag: ${{ needs.build-api-image.outputs.image_tag }}";
+            echo "- Domain package: ${{ needs.publish-domain-npm.outputs.package_name || 'N/A (publish skipped)' }}@${{ needs.publish-domain-npm.outputs.package_version || 'N/A' }}";
             echo "- Deploy API executado: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || (github.event.action == 'governance-release' && (github.event.client_payload.deploy_api == true) || false) }}";
           } >> "$GITHUB_STEP_SUMMARY"
