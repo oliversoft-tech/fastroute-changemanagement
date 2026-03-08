@@ -535,7 +535,7 @@ jobs:
           path: domain
 
       - name: Checkout API
-        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' }}
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' || needs.prepare-implementation.outputs.domain_impacted == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.API_REPO) }}
@@ -576,7 +576,7 @@ jobs:
           npm pack
 
       - name: API - lint/typecheck/test/build
-        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' }}
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' || needs.prepare-implementation.outputs.domain_impacted == 'true' }}
         run: |
           cd api
           npm ci
@@ -584,8 +584,13 @@ jobs:
           npm run lint
           npm run typecheck
           npm test
-          node --test test/sync-api.test.js
           npm run build
+
+      - name: API - sync regression tests (governance-ci hard gate)
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' || needs.prepare-implementation.outputs.domain_impacted == 'true' }}
+        run: |
+          cd api
+          node --test test/sync-api.test.js
 
       - name: Mobile - typecheck/unit tests
         if: ${{ needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
