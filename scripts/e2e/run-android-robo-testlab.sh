@@ -63,6 +63,12 @@ fi
 
 gcloud --quiet config set project "$FIREBASE_PROJECT_ID" >/dev/null
 
+if ! gcloud --quiet firebase test android models list --limit=1 >/dev/null 2>&1; then
+  echo "Firebase Test Lab indisponível para o projeto ${FIREBASE_PROJECT_ID}." >&2
+  echo "Habilite APIs: testing.googleapis.com e cloudresourcemanager.googleapis.com, e confira permissões da service account." >&2
+  exit 1
+fi
+
 echo "Running Firebase Test Lab Robo"
 echo "- Project: $FIREBASE_PROJECT_ID"
 echo "- App: $ANDROID_APP_APK"

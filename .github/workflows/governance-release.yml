@@ -625,8 +625,8 @@ jobs:
           set -euo pipefail
 
           WORKFLOW_FILE="mobile-ui-artifacts.yml"
-          MAX_POLLS=45
-          SLEEP_SECONDS=20
+          MAX_POLLS=6
+          SLEEP_SECONDS=10
 
           MOBILE_SHA="$(gh api "repos/${TARGET_REPO}/commits/${TARGET_REF}" -q .sha)"
           echo "Resolved mobile sha: ${MOBILE_SHA}"
@@ -674,7 +674,7 @@ jobs:
   quality-gates-mobile-ui-android:
     name: Quality Gates (Mobile UI Android - Firebase Robo)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     needs: [prepare-implementation, implement-changes, quality-gates-unit, prepare-mobile-ui-artifacts]
     if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
     env:
@@ -728,7 +728,7 @@ jobs:
   quality-gates-mobile-ui-ios:
     name: Quality Gates (Mobile UI iOS - Simulator)
     runs-on: macos-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     needs: [prepare-implementation, implement-changes, quality-gates-unit, prepare-mobile-ui-artifacts]
     if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
     env:
@@ -784,6 +784,9 @@ jobs:
           IOS_SIMULATOR_NAME: iPhone 15
           IOS_UI_SCRIPT_NAME: test:ui:ios:crawler
           IOS_APP_PATH: ${{ env.IOS_APP_PATH }}
+          IOS_BOOT_TIMEOUT_SECONDS: "90"
+          IOS_CRAWLER_TIMEOUT_SECONDS: "120"
+          IOS_UI_GATE_TIMEOUT_SECONDS: "210"
         run: ./scripts/e2e/run-ios-ui-simulator.sh
 
   build-mobile-artifacts:
