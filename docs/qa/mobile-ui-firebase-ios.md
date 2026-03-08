@@ -35,7 +35,7 @@ Comportamento:
 
 Variáveis úteis:
 - `ANDROID_ROBO_TIMEOUT` (default `180s`)
-- `ANDROID_ROBO_DEVICE_MODEL` (default `Pixel2`)
+- `ANDROID_ROBO_DEVICE_MODEL` (default `Pixel2.arm`)
 - `ANDROID_ROBO_VERSION` (default `30`)
 - `ANDROID_ROBO_LOCALE` (default `pt_BR`)
 - `ANDROID_ROBO_ORIENTATION` (default `portrait`)
