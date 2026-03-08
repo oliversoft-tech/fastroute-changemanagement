@@ -6,12 +6,16 @@ Substituir a dependência de Maestro no gate de UI do `governance-ci` por:
 - iOS: simulador local no runner macOS com suíte de crawler do próprio app
 
 ## Jobs no workflow central
+- `prepare-mobile-ui-artifacts`
 - `quality-gates-mobile-ui-android`
 - `quality-gates-mobile-ui-ios`
 
 Ambos rodam apenas quando:
 - `ci_approved == true`
 - `mobile_impacted == true`
+
+O job `prepare-mobile-ui-artifacts` localiza (por SHA) um run bem-sucedido do workflow
+`mobile-ui-artifacts.yml` no repositório `fastroute-mobile-hybrid` e baixa os artefatos pré-build.
 
 ## Segredos necessários
 - `FIREBASE_PROJECT_ID`
@@ -26,9 +30,8 @@ Runner:
 - `scripts/e2e/run-android-robo-testlab.sh`
 
 Comportamento:
-1. Instala dependências do app mobile (`npm ci`)
-2. Gera APK debug (usa `build:android:debug` se existir; fallback para `expo prebuild + gradle`)
-3. Executa `gcloud firebase test android run --type robo` com timeout curto (`180s`)
+1. Baixa APK pré-compilado do workflow `mobile-ui-artifacts.yml`
+2. Executa `gcloud firebase test android run --type robo` com timeout curto (`180s`)
 
 Variáveis úteis:
 - `ANDROID_ROBO_TIMEOUT` (default `180s`)
@@ -46,9 +49,9 @@ Contrato obrigatório no `fastroute-mobile-hybrid`:
 - Script npm: `test:ui:ios:crawler`
 
 Comportamento:
-1. Instala dependências (`npm ci`)
+1. Baixa `FastRoute.app.zip` pré-compilado do workflow `mobile-ui-artifacts.yml`
 2. Inicializa simulador iOS (default `iPhone 15`)
-3. Executa `npm run test:ui:ios:crawler`
+3. Executa `npm run test:ui:ios:crawler` com `IOS_APP_PATH` (sem `xcodebuild` no gate)
 
 Se o script `test:ui:ios:crawler` não existir, o gate falha por design.
 

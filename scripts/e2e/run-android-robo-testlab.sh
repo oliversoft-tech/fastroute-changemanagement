@@ -19,29 +19,29 @@ if [[ -z "$FIREBASE_PROJECT_ID" ]]; then
   exit 1
 fi
 
-if [[ ! -d "$MOBILE_DIR" ]]; then
-  echo "Diretório mobile não encontrado: $MOBILE_DIR" >&2
-  exit 1
-fi
-
 if ! command -v gcloud >/dev/null 2>&1; then
   echo "gcloud CLI não encontrado no PATH." >&2
   exit 1
 fi
 
-cd "$MOBILE_DIR"
-npm ci
-
-if [[ -n "$DOMAIN_PACKAGE_GLOB" ]]; then
-  shopt -s nullglob
-  domain_packages=( $DOMAIN_PACKAGE_GLOB )
-  shopt -u nullglob
-  if (( ${#domain_packages[@]} > 0 )); then
-    npm install --no-save "${domain_packages[@]}"
-  fi
-fi
-
 if [[ -z "$ANDROID_APP_APK" ]]; then
+  if [[ ! -d "$MOBILE_DIR" ]]; then
+    echo "Diretório mobile não encontrado: $MOBILE_DIR" >&2
+    exit 1
+  fi
+
+  cd "$MOBILE_DIR"
+  npm ci
+
+  if [[ -n "$DOMAIN_PACKAGE_GLOB" ]]; then
+    shopt -s nullglob
+    domain_packages=( $DOMAIN_PACKAGE_GLOB )
+    shopt -u nullglob
+    if (( ${#domain_packages[@]} > 0 )); then
+      npm install --no-save "${domain_packages[@]}"
+    fi
+  fi
+
   if [[ -z "$ANDROID_BUILD_COMMAND" ]]; then
     if node -e "const p=require('./package.json'); process.exit(p.scripts?.['build:android:debug'] ? 0 : 1)"; then
       ANDROID_BUILD_COMMAND="npm run build:android:debug"

@@ -6,6 +6,7 @@ MOBILE_DIR="${MOBILE_DIR:-$ROOT_DIR/mobile}"
 IOS_SIMULATOR_NAME="${IOS_SIMULATOR_NAME:-iPhone 15}"
 IOS_UI_SCRIPT_NAME="${IOS_UI_SCRIPT_NAME:-test:ui:ios:crawler}"
 DOMAIN_PACKAGE_GLOB="${DOMAIN_PACKAGE_GLOB:-}"
+IOS_APP_PATH="${IOS_APP_PATH:-}"
 
 if [[ ! -d "$MOBILE_DIR" ]]; then
   echo "Diretório mobile não encontrado: $MOBILE_DIR" >&2
@@ -18,15 +19,20 @@ if ! command -v xcrun >/dev/null 2>&1; then
 fi
 
 cd "$MOBILE_DIR"
-npm ci
 
-if [[ -n "$DOMAIN_PACKAGE_GLOB" ]]; then
-  shopt -s nullglob
-  domain_packages=( $DOMAIN_PACKAGE_GLOB )
-  shopt -u nullglob
-  if (( ${#domain_packages[@]} > 0 )); then
-    npm install --no-save "${domain_packages[@]}"
+if [[ -z "$IOS_APP_PATH" ]]; then
+  npm ci
+
+  if [[ -n "$DOMAIN_PACKAGE_GLOB" ]]; then
+    shopt -s nullglob
+    domain_packages=( $DOMAIN_PACKAGE_GLOB )
+    shopt -u nullglob
+    if (( ${#domain_packages[@]} > 0 )); then
+      npm install --no-save "${domain_packages[@]}"
+    fi
   fi
+else
+  echo "IOS_APP_PATH detectado, pulando npm ci no gate iOS."
 fi
 
 if ! node -e "const p=require('./package.json'); process.exit(p.scripts?.[process.argv[1]] ? 0 : 1)" "$IOS_UI_SCRIPT_NAME"; then

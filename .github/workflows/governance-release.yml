@@ -601,39 +601,107 @@ jobs:
           npm run typecheck
           npm run test:unit
 
-  quality-gates-mobile-ui-android:
-    name: Quality Gates (Mobile UI Android - Firebase Robo)
+  prepare-mobile-ui-artifacts:
+    name: Prepare Mobile UI Artifacts
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     needs: [prepare-implementation, implement-changes, quality-gates-unit]
     if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
     env:
       RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
 
+    outputs:
+      mobile_ui_run_id: ${{ steps.resolve.outputs.mobile_ui_run_id }}
+      mobile_ui_sha: ${{ steps.resolve.outputs.mobile_ui_sha }}
+
+    steps:
+      - name: Resolve artifact run by mobile SHA
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          TARGET_REPO: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          TARGET_REF: ${{ env.RESOLVED_MOBILE_REF }}
+        run: |
+          set -euo pipefail
+
+          WORKFLOW_FILE="mobile-ui-artifacts.yml"
+          MAX_POLLS=45
+          SLEEP_SECONDS=20
+
+          MOBILE_SHA="$(gh api "repos/${TARGET_REPO}/commits/${TARGET_REF}" -q .sha)"
+          echo "Resolved mobile sha: ${MOBILE_SHA}"
+          echo "mobile_ui_sha=${MOBILE_SHA}" >> "$GITHUB_OUTPUT"
+
+          run_id=""
+          run_status=""
+          run_conclusion=""
+
+          for attempt in $(seq 1 "$MAX_POLLS"); do
+            runs_json="$(gh api "repos/${TARGET_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=100")"
+
+            run_id="$(echo "$runs_json" | jq -r --arg sha "$MOBILE_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | sort_by(.created_at) | reverse | .[0].id // empty')"
+
+            if [ -z "$run_id" ]; then
+              echo "Sem run de artefatos para ${MOBILE_SHA} (tentativa ${attempt}/${MAX_POLLS})."
+              sleep "$SLEEP_SECONDS"
+              continue
+            fi
+
+            run_status="$(echo "$runs_json" | jq -r --argjson rid "$run_id" '.workflow_runs[] | select(.id == $rid) | .status')"
+            run_conclusion="$(echo "$runs_json" | jq -r --argjson rid "$run_id" '.workflow_runs[] | select(.id == $rid) | .conclusion')"
+
+            echo "Run ${run_id} status=${run_status} conclusion=${run_conclusion} (attempt ${attempt}/${MAX_POLLS})"
+
+            if [ "$run_status" = "completed" ]; then
+              if [ "$run_conclusion" != "success" ]; then
+                echo "Run de artefatos não teve sucesso para ${MOBILE_SHA}: ${run_conclusion}" >&2
+                exit 1
+              fi
+              break
+            fi
+
+            sleep "$SLEEP_SECONDS"
+          done
+
+          if [ -z "$run_id" ] || [ "$run_status" != "completed" ] || [ "$run_conclusion" != "success" ]; then
+            echo "Não foi possível obter artefatos mobile prontos para ${MOBILE_SHA}." >&2
+            exit 1
+          fi
+
+          echo "mobile_ui_run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          echo "Mobile artifact run: https://github.com/${TARGET_REPO}/actions/runs/${run_id}"
+
+  quality-gates-mobile-ui-android:
+    name: Quality Gates (Mobile UI Android - Firebase Robo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [prepare-implementation, implement-changes, quality-gates-unit, prepare-mobile-ui-artifacts]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
+    env:
+      MOBILE_UI_RUN_ID: ${{ needs.prepare-mobile-ui-artifacts.outputs.mobile_ui_run_id }}
+
     steps:
       - name: Checkout changemanagement
         uses: actions/checkout@v4
 
-      - name: Checkout mobile
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
-          ref: ${{ env.RESOLVED_MOBILE_REF }}
-          token: ${{ secrets.CROSS_REPO_PAT }}
-          path: mobile
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: mobile/package-lock.json
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
+      - name: Download Android APK artifact
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          TARGET_REPO: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+        run: |
+          set -euo pipefail
+          mkdir -p mobile-ui-artifacts/android
+          gh run download "${MOBILE_UI_RUN_ID}" \
+            -R "${TARGET_REPO}" \
+            -n mobile-ui-android-apk \
+            -D mobile-ui-artifacts/android
+          APK_PATH="$(find mobile-ui-artifacts/android -type f -name 'app-debug.apk' | head -n1 || true)"
+          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+            echo "APK não encontrado no artifact do mobile." >&2
+            exit 1
+          fi
+          echo "ANDROID_APP_APK=${GITHUB_WORKSPACE}/${APK_PATH}" >> "$GITHUB_ENV"
+          echo "APK resolved: ${GITHUB_WORKSPACE}/${APK_PATH}"
 
       - name: Authenticate Google Cloud
         uses: google-github-actions/auth@v2
@@ -647,8 +715,8 @@ jobs:
 
       - name: Mobile Android UI (Robo auto-crawl)
         env:
-          MOBILE_DIR: ${{ github.workspace }}/mobile
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          ANDROID_APP_APK: ${{ env.ANDROID_APP_APK }}
           ANDROID_ROBO_TIMEOUT: 180s
           ANDROID_ROBO_RESULTS_DIR: governance-ci/${{ github.run_id }}/android-robo
           ANDROID_ROBO_DEVICE_MODEL: Nexus6
@@ -661,10 +729,11 @@ jobs:
     name: Quality Gates (Mobile UI iOS - Simulator)
     runs-on: macos-latest
     timeout-minutes: 10
-    needs: [prepare-implementation, implement-changes, quality-gates-unit]
+    needs: [prepare-implementation, implement-changes, quality-gates-unit, prepare-mobile-ui-artifacts]
     if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
     env:
       RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
+      MOBILE_UI_RUN_ID: ${{ needs.prepare-mobile-ui-artifacts.outputs.mobile_ui_run_id }}
 
     steps:
       - name: Checkout changemanagement
@@ -682,14 +751,39 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: mobile/package-lock.json
+
+      - name: Download iOS simulator app artifact
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          TARGET_REPO: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+        run: |
+          set -euo pipefail
+          mkdir -p mobile-ui-artifacts/ios
+          gh run download "${MOBILE_UI_RUN_ID}" \
+            -R "${TARGET_REPO}" \
+            -n mobile-ui-ios-simulator-app \
+            -D mobile-ui-artifacts/ios
+          ZIP_PATH="$(find mobile-ui-artifacts/ios -type f -name 'FastRoute.app.zip' | head -n1 || true)"
+          if [ -z "$ZIP_PATH" ] || [ ! -f "$ZIP_PATH" ]; then
+            echo "Artifact iOS (.zip) não encontrado." >&2
+            exit 1
+          fi
+          mkdir -p mobile-ui-artifacts/ios/unpacked
+          unzip -q "$ZIP_PATH" -d mobile-ui-artifacts/ios/unpacked
+          IOS_APP_PATH="$(find mobile-ui-artifacts/ios/unpacked -type d -name 'FastRoute.app' | head -n1 || true)"
+          if [ -z "$IOS_APP_PATH" ] || [ ! -d "$IOS_APP_PATH" ]; then
+            echo "FastRoute.app não encontrado após extração." >&2
+            exit 1
+          fi
+          echo "IOS_APP_PATH=${GITHUB_WORKSPACE}/${IOS_APP_PATH}" >> "$GITHUB_ENV"
+          echo "iOS app resolved: ${GITHUB_WORKSPACE}/${IOS_APP_PATH}"
 
       - name: Mobile iOS UI (simulator crawler)
         env:
           MOBILE_DIR: ${{ github.workspace }}/mobile
           IOS_SIMULATOR_NAME: iPhone 15
           IOS_UI_SCRIPT_NAME: test:ui:ios:crawler
+          IOS_APP_PATH: ${{ env.IOS_APP_PATH }}
         run: ./scripts/e2e/run-ios-ui-simulator.sh
 
   build-mobile-artifacts:
