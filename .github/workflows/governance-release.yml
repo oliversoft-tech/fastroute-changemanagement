@@ -719,7 +719,7 @@ jobs:
           ANDROID_APP_APK: ${{ env.ANDROID_APP_APK }}
           ANDROID_ROBO_TIMEOUT: 180s
           ANDROID_ROBO_RESULTS_DIR: governance-ci/${{ github.run_id }}/android-robo
-          ANDROID_ROBO_DEVICE_MODEL: Nexus6
+          ANDROID_ROBO_DEVICE_MODEL: Pixel2
           ANDROID_ROBO_VERSION: "30"
           ANDROID_ROBO_LOCALE: pt_BR
           ANDROID_ROBO_ORIENTATION: portrait
