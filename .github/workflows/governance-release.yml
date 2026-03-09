@@ -451,7 +451,7 @@ jobs:
             commit=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.commit||''));" "${json}")
 
             if [ "${status}" = "implemented" ]; then
-              local pr_base pr_title pr_body pr_url
+              local pr_base pr_title pr_body pr_url pr_number
               pr_base="${ref}"
               if [[ "${pr_base}" =~ ^codex/ ]]; then
                 pr_base="main"
@@ -461,13 +461,72 @@ jobs:
               fi
 
               pr_title="Governance Auto Implementation (${key}) - run ${RUN_ID}"
-              pr_body="Auto-generated governance implementation. Repo=${repo}, Run=${RUN_ID}, Branch=${branch}, Base=${pr_base}."
+              pr_body="$(RESULT_JSON="${json}" REPO_NAME="${repo}" RUN_ID_VALUE="${RUN_ID}" BRANCH_NAME="${branch}" BASE_NAME="${pr_base}" node - <<'NODE'
+          const result = JSON.parse(process.env.RESULT_JSON || '{}');
+          const repo = String(process.env.REPO_NAME || '');
+          const runId = String(process.env.RUN_ID_VALUE || '');
+          const branch = String(process.env.BRANCH_NAME || '');
+          const base = String(process.env.BASE_NAME || '');
+          const files = Array.isArray(result.files) ? result.files.map((f) => String(f || '').trim()).filter(Boolean) : [];
+          const changeMap = Array.isArray(result.change_map) ? result.change_map : [];
+
+          const lines = [
+            'Auto-generated governance implementation.',
+            '',
+            `- Repo: ${repo}`,
+            `- Run: ${runId}`,
+            `- Branch: ${branch}`,
+            `- Base: ${base}`,
+            `- Arquivos alterados: ${files.length}`,
+            ''
+          ];
+
+          if (changeMap.length > 0) {
+            lines.push('## Mudancas em linguagem natural');
+            for (const item of changeMap) {
+              const summary = String(item?.summary || '').trim();
+              if (summary) lines.push(`- ${summary}`);
+            }
+            lines.push('');
+            lines.push('## Relacao com changes em codigo');
+            lines.push('| Mudanca (natural) | Arquivos alterados |');
+            lines.push('| --- | --- |');
+            for (const item of changeMap) {
+              const summary = String(item?.summary || '').trim();
+              if (!summary) continue;
+              const itemFiles = Array.isArray(item?.files)
+                ? item.files.map((f) => String(f || '').trim()).filter(Boolean)
+                : [];
+              const filesInline = itemFiles.length > 0 ? itemFiles.join('<br>') : '(sem mapeamento)';
+              lines.push(`| ${summary} | ${filesInline} |`);
+            }
+            lines.push('');
+          }
+
+          if (files.length > 0) {
+            lines.push('## Arquivos alterados (detalhe)');
+            for (const filePath of files) {
+              lines.push(`- ${filePath}`);
+            }
+          }
+
+          process.stdout.write(lines.join('\n'));
+          NODE
+              )"
               pr_url=""
+              pr_number=""
 
               if command -v gh >/dev/null 2>&1; then
-                pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls?state=open&head=${OWNER}:${branch}" -q '.[0].html_url' 2>/dev/null || true)"
+                pr_number="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls?state=open&head=${OWNER}:${branch}" -q '.[0].number' 2>/dev/null || true)"
 
-                if [ -z "$pr_url" ]; then
+                if [ -n "$pr_number" ]; then
+                  GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls/${pr_number}" \
+                    -X PATCH \
+                    -f title="${pr_title}" \
+                    -f body="${pr_body}" \
+                    >/dev/null 2>&1 || true
+                  pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls/${pr_number}" -q .html_url 2>/dev/null || true)"
+                else
                   pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls" \
                     -f title="${pr_title}" \
                     -f head="${OWNER}:${branch}" \
