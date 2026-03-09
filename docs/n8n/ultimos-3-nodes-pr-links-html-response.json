@@ -1,0 +1,97 @@
+{
+  "name": "ultimos-3-nodes-pr-links-html-response",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const jobs = $input.all().map((i) => i.json || {});\nif (jobs.length === 0) {\n  throw new Error('[Create Governance PR (GitHub API)] nenhum job recebido.');\n}\n\nconst toStr = (v) => String(v ?? '').trim();\nconst toArr = (v) => Array.isArray(v) ? v : [];\n\nconst sanitize = (v) => toStr(v).replace(/[^a-zA-Z0-9._-]/g, '-');\nconst encodePath = (p) => toStr(p).split('/').map(encodeURIComponent).join('/');\n\nconst parseSnippet = (snippet, idx) => {\n  const raw = toStr(snippet).replace(/\\r\\n/g, '\\n');\n  if (!raw) throw new Error('[Create Governance PR (GitHub API)] snippet vazio em index ' + idx);\n\n  const lines = raw.split('\\n');\n  const first = toStr(lines[0]);\n  const match = first.match(/^\\/\\/\\s*file:\\s*(.+)$/i);\n  if (!match) {\n    throw new Error('[Create Governance PR (GitHub API)] snippet sem header // file: <path> em index ' + idx);\n  }\n\n  const filePath = toStr(match[1]).replace(/^['\\\"]|['\\\"]$/g, '');\n  if (!filePath || filePath.includes('..') || filePath.startsWith('/')) {\n    throw new Error('[Create Governance PR (GitHub API)] caminho de arquivo invalido: ' + filePath);\n  }\n\n  const content = lines.slice(1).join('\\n').replace(/^\\n+/, '');\n  if (!toStr(content)) {\n    throw new Error('[Create Governance PR (GitHub API)] conteudo vazio para arquivo: ' + filePath);\n  }\n\n  return { filePath, content };\n};\n\nconst parseBody = (body) => {\n  if (body === undefined || body === null) return null;\n  if (typeof body === 'object') return body;\n  const text = String(body);\n  try {\n    return JSON.parse(text);\n  } catch (_e) {\n    return null;\n  }\n};\n\nconst asText = (value) => {\n  if (value === undefined || value === null) return '';\n  if (typeof value === 'string') return value;\n  try {\n    return JSON.stringify(value);\n  } catch (_e) {\n    return String(value);\n  }\n};\n\nconst inferStatus = (e, fallbackText) => {\n  const direct = Number(\n    e?.statusCode ||\n    e?.status ||\n    e?.httpCode ||\n    e?.response?.statusCode ||\n    e?.response?.status ||\n    0\n  );\n  if (Number.isFinite(direct) && direct > 0) return direct;\n\n  const text = asText(fallbackText || e?.message || '');\n  const m = text.match(/status code\\s*(\\d{3})/i) || text.match(/\\b(\\d{3})\\b/);\n  if (m) {\n    const n = Number(m[1]);\n    if (Number.isFinite(n)) return n;\n  }\n  return 0;\n};\n\nconst gh = async ({ method, url, token, body }) => {\n  try {\n    const resp = await this.helpers.httpRequest({\n      method,\n      url,\n      headers: {\n        Authorization: 'Bearer ' + token,\n        Accept: 'application/vnd.github+json',\n        'X-GitHub-Api-Version': '2022-11-28',\n      },\n      body,\n      json: true,\n    });\n\n    // this.helpers.httpRequest normalmente retorna body quando sucesso.\n    return {\n      ok: true,\n      status: 200,\n      text: asText(resp),\n      json: resp,\n    };\n  } catch (e) {\n    const bodyData = e?.response?.body ?? e?.message ?? e;\n    const status = inferStatus(e, bodyData);\n    return {\n      ok: false,\n      status,\n      text: asText(bodyData),\n      json: parseBody(bodyData),\n    };\n  }\n};\n\nconst out = [];\n\nfor (const job of jobs) {\n  const owner = toStr(job.owner);\n  const repo = toStr(job.target_repo);\n  const token = toStr(job.github_token);\n  const baseRef = toStr(job.base_ref || 'main') || 'main';\n  const repoKey = sanitize(job.repo_key || repo);\n  const analysisId = sanitize(job.impact_analysis_id || 'na');\n  const runId = sanitize(job.run_id || Date.now());\n\n  if (!owner || !repo || !token) {\n    throw new Error('[Create Governance PR (GitHub API)] job invalido: owner/repo/token ausentes');\n  }\n\n  const parsedSnippets = toArr(job.snippets).map((s, idx) => parseSnippet(s, idx));\n  if (parsedSnippets.length === 0) {\n    throw new Error('[Create Governance PR (GitHub API)] sem snippets para ' + repo);\n  }\n\n  const branch = 'codex/governance-' + analysisId + '-' + repoKey + '-' + runId.slice(-20);\n\n  const baseRefResp = await gh({\n    method: 'GET',\n    url: 'https://api.github.com/repos/' + owner + '/' + repo + '/git/ref/heads/' + encodeURIComponent(baseRef),\n    token,\n  });\n  if (!baseRefResp.ok || !baseRefResp.json || !baseRefResp.json.object || !baseRefResp.json.object.sha) {\n    throw new Error('[Create Governance PR (GitHub API)] falha ao ler base ref ' + baseRef + ' em ' + repo + ': ' + baseRefResp.status + ' ' + (baseRefResp.text || '').slice(0, 300));\n  }\n  const baseSha = toStr(baseRefResp.json.object.sha);\n\n  const createBranchResp = await gh({\n    method: 'POST',\n    url: 'https://api.github.com/repos/' + owner + '/' + repo + '/git/refs',\n    token,\n    body: { ref: 'refs/heads/' + branch, sha: baseSha },\n  });\n\n  if (!createBranchResp.ok && createBranchResp.status !== 422) {\n    throw new Error('[Create Governance PR (GitHub API)] falha ao criar branch ' + branch + ' em ' + repo + ': ' + createBranchResp.status + ' ' + (createBranchResp.text || '').slice(0, 300));\n  }\n\n  const filesTouched = [];\n\n  for (const s of parsedSnippets) {\n    const contentApiUrl = 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + encodePath(s.filePath);\n    const createBody = {\n      message: 'chore(governance): apply code_changes for analysis ' + analysisId,\n      content: Buffer.from(s.content, 'utf8').toString('base64'),\n      branch,\n    };\n\n    // 1) tenta criar/atualizar sem sha (funciona para arquivo novo)\n    let putResp = await gh({\n      method: 'PUT',\n      url: contentApiUrl,\n      token,\n      body: createBody,\n    });\n\n    // 2) se arquivo já existe (422), pega sha e faz update\n    if (!putResp.ok && putResp.status === 422) {\n      const getResp = await gh({\n        method: 'GET',\n        url: contentApiUrl + '?ref=' + encodeURIComponent(branch),\n        token,\n      });\n\n      if (!getResp.ok || !getResp.json || !getResp.json.sha) {\n        throw new Error('[Create Governance PR (GitHub API)] falha ao buscar sha para update do arquivo ' + s.filePath + ' em ' + repo + ': ' + getResp.status + ' ' + (getResp.text || '').slice(0, 300));\n      }\n\n      const updateBody = {\n        ...createBody,\n        sha: toStr(getResp.json.sha),\n      };\n\n      putResp = await gh({\n        method: 'PUT',\n        url: contentApiUrl,\n        token,\n        body: updateBody,\n      });\n    }\n\n    if (!putResp.ok) {\n      throw new Error('[Create Governance PR (GitHub API)] falha ao gravar arquivo ' + s.filePath + ' em ' + repo + ': ' + putResp.status + ' ' + (putResp.text || '').slice(0, 300));\n    }\n\n    filesTouched.push(s.filePath);\n  }\n\n  const findPrResp = await gh({\n    method: 'GET',\n    url: 'https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=open&head=' + encodeURIComponent(owner + ':' + branch),\n    token,\n  });\n\n  let prUrl = '';\n  let prNumber = null;\n\n  if (findPrResp.ok && Array.isArray(findPrResp.json) && findPrResp.json.length > 0) {\n    prUrl = toStr(findPrResp.json[0].html_url);\n    prNumber = Number(findPrResp.json[0].number || 0) || null;\n  } else {\n    const createPrResp = await gh({\n      method: 'POST',\n      url: 'https://api.github.com/repos/' + owner + '/' + repo + '/pulls',\n      token,\n      body: {\n        title: 'Governance: Impact Analysis ' + analysisId + ' (' + repoKey + ')',\n        head: branch,\n        base: baseRef,\n        draft: false,\n        body: [\n          'PR automatica criada pelo fluxo n8n.',\n          '',\n          '- analysis_id: ' + analysisId,\n          '- repo: ' + repo,\n          '- base: ' + baseRef,\n          '- branch: ' + branch,\n          '- arquivos: ' + filesTouched.length,\n        ].join('\\n'),\n      },\n    });\n\n    if (!createPrResp.ok) {\n      throw new Error('[Create Governance PR (GitHub API)] falha ao criar PR em ' + repo + ': ' + createPrResp.status + ' ' + (createPrResp.text || '').slice(0, 400));\n    }\n\n    prUrl = toStr(createPrResp.json && createPrResp.json.html_url);\n    prNumber = Number((createPrResp.json && createPrResp.json.number) || 0) || null;\n  }\n\n  out.push({\n    json: {\n      status: 'implemented',\n      owner,\n      repo,\n      base_ref: baseRef,\n      branch,\n      pr_url: prUrl,\n      pr_number: prNumber,\n      files_touched: filesTouched,\n      files_count: filesTouched.length,\n      snippets_count: parsedSnippets.length,\n      impact_analysis_id: analysisId,\n    }\n  });\n}\n\nreturn out;\n"
+      },
+      "id": "create-governance-pr-local-git",
+      "name": "Create Governance PR (GitHub API)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -930,
+        60
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map((i) => i.json || {});\n\nconst toStr = (v) => String(v ?? '').trim();\nconst escapeHtml = (s) => toStr(s)\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\"/g, '&quot;')\n  .replace(/'/g, '&#39;');\n\nconst prs = rows\n  .map((r, idx) => ({\n    index: idx + 1,\n    repo: toStr(r.repo || r.target_repo || 'repo'),\n    branch: toStr(r.branch || ''),\n    url: toStr(r.pr_url || ''),\n    files_count: Number.isFinite(Number(r.files_count)) ? Number(r.files_count) : 0,\n    snippets_count: Number.isFinite(Number(r.snippets_count)) ? Number(r.snippets_count) : 0,\n  }))\n  .filter((r) => r.url);\n\nif (prs.length === 0) {\n  throw new Error('[Render PR Links HTML] nenhum pr_url recebido de Create Governance PR (GitHub API).');\n}\n\nconst listHtml = prs.map((pr) => {\n  return [\n    '<li style=\"margin: 0 0 14px;\">',\n    `<a href=\"${escapeHtml(pr.url)}\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"font-size:16px;\">#${pr.index} ${escapeHtml(pr.repo)}</a>`,\n    `<div style=\"color:#444; font-size:13px; margin-top:4px;\">branch: <code>${escapeHtml(pr.branch)}</code> | files: ${pr.files_count} | snippets: ${pr.snippets_count}</div>`,\n    '</li>'\n  ].join('');\n}).join('');\n\nconst html = [\n  '<!doctype html>',\n  '<html lang=\"pt-BR\">',\n  '<head>',\n  '  <meta charset=\"utf-8\" />',\n  '  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />',\n  '  <title>Governance PRs</title>',\n  '</head>',\n  '<body style=\"font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; margin: 24px;\">',\n  '  <h1 style=\"margin:0 0 8px;\">PRs geradas</h1>',\n  `  <p style=\"margin:0 0 20px; color:#444;\">Total: <strong>${prs.length}</strong></p>`,\n  `  <ul style=\"padding-left: 20px;\">${listHtml}</ul>`,\n  '</body>',\n  '</html>'\n].join('\\n');\n\nreturn [{\n  json: {\n    status: 'success',\n    pr_count: prs.length,\n    prs,\n    html,\n    content_type: 'text/html; charset=utf-8'\n  }\n}];\n"
+      },
+      "id": "render-pr-links-html",
+      "name": "Render PR Links HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -700,
+        60
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$json.html}}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-pr-links-html",
+      "name": "Respond PR Links HTML",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -470,
+        60
+      ]
+    }
+  ],
+  "connections": {
+    "Build Local PR Jobs": {
+      "main": [
+        [
+          {
+            "node": "Create Governance PR (GitHub API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Governance PR (GitHub API)": {
+      "main": [
+        [
+          {
+            "node": "Render PR Links HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render PR Links HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond PR Links HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "",
+  "meta": {}
+}
