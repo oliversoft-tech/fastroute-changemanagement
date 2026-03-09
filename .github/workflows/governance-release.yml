@@ -783,9 +783,6 @@ jobs:
           IOS_SIMULATOR_NAME: iPhone 15
           IOS_UI_SCRIPT_NAME: test:ui:ios:crawler
           IOS_APP_PATH: ${{ env.IOS_APP_PATH }}
-          IOS_BOOT_TIMEOUT_SECONDS: "90"
-          IOS_CRAWLER_TIMEOUT_SECONDS: "120"
-          IOS_UI_GATE_TIMEOUT_SECONDS: "210"
         run: ./scripts/e2e/run-ios-ui-simulator.sh
 
   build-mobile-artifacts:
