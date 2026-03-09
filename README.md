@@ -28,6 +28,7 @@ Orquestração central da governança de qualidade e release do ecossistema Fast
 - `EXPO_TOKEN`
 - `FIREBASE_PROJECT_ID` (GCP/Firebase para Android Robo Test)
 - `GCP_SA_KEY` (JSON da service account com permissão de Firebase Test Lab)
+- `FIREBASE_TESTLAB_RESULTS_BUCKET` (bucket GCS dedicado para resultados do Test Lab, ex: `gs://ocr-route-app-testlab-results`)
 - `GHCR_USERNAME`
 - `GHCR_PAT`
 - `VPS_HOST`

@@ -20,6 +20,7 @@ O job `prepare-mobile-ui-artifacts` localiza (por SHA) um run bem-sucedido do wo
 ## Segredos necessários
 - `FIREBASE_PROJECT_ID`
 - `GCP_SA_KEY` (JSON de service account)
+- `FIREBASE_TESTLAB_RESULTS_BUCKET` (ex.: `gs://ocr-route-app-testlab-results`)
 
 Permissões mínimas recomendadas da service account:
 - Firebase Test Lab Admin (ou papel equivalente no projeto)
@@ -39,6 +40,7 @@ Variáveis úteis:
 - `ANDROID_ROBO_VERSION` (default `30`)
 - `ANDROID_ROBO_LOCALE` (default `pt_BR`)
 - `ANDROID_ROBO_ORIENTATION` (default `portrait`)
+- `ANDROID_ROBO_RESULTS_BUCKET` (bucket GCS para upload de resultados do Test Lab)
 - `ANDROID_APP_APK` (opcional para reaproveitar APK já pronto)
 
 ## iOS (Simulator crawler)

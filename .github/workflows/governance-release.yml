@@ -719,6 +719,7 @@ jobs:
           ANDROID_APP_APK: ${{ env.ANDROID_APP_APK }}
           ANDROID_ROBO_TIMEOUT: 180s
           ANDROID_ROBO_RESULTS_DIR: governance-ci/${{ github.run_id }}/android-robo
+          ANDROID_ROBO_RESULTS_BUCKET: ${{ secrets.FIREBASE_TESTLAB_RESULTS_BUCKET }}
           ANDROID_ROBO_DEVICE_MODEL: Pixel2.arm
           ANDROID_ROBO_VERSION: "30"
           ANDROID_ROBO_LOCALE: pt_BR

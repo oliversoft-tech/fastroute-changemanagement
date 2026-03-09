@@ -10,6 +10,7 @@ ANDROID_ROBO_VERSION="${ANDROID_ROBO_VERSION:-30}"
 ANDROID_ROBO_LOCALE="${ANDROID_ROBO_LOCALE:-pt_BR}"
 ANDROID_ROBO_ORIENTATION="${ANDROID_ROBO_ORIENTATION:-portrait}"
 ANDROID_ROBO_RESULTS_DIR="${ANDROID_ROBO_RESULTS_DIR:-governance-ci/local/android-robo}"
+ANDROID_ROBO_RESULTS_BUCKET="${ANDROID_ROBO_RESULTS_BUCKET:-}"
 ANDROID_APP_APK="${ANDROID_APP_APK:-}"
 ANDROID_BUILD_COMMAND="${ANDROID_BUILD_COMMAND:-}"
 DOMAIN_PACKAGE_GLOB="${DOMAIN_PACKAGE_GLOB:-}"
@@ -75,12 +76,21 @@ echo "- App: $ANDROID_APP_APK"
 echo "- Device: model=$ANDROID_ROBO_DEVICE_MODEL,version=$ANDROID_ROBO_VERSION,locale=$ANDROID_ROBO_LOCALE,orientation=$ANDROID_ROBO_ORIENTATION"
 echo "- Timeout: $ANDROID_ROBO_TIMEOUT"
 echo "- Results dir: $ANDROID_ROBO_RESULTS_DIR"
+if [[ -n "$ANDROID_ROBO_RESULTS_BUCKET" ]]; then
+  echo "- Results bucket: $ANDROID_ROBO_RESULTS_BUCKET"
+fi
+
+results_bucket_args=()
+if [[ -n "$ANDROID_ROBO_RESULTS_BUCKET" ]]; then
+  results_bucket_args=(--results-bucket "$ANDROID_ROBO_RESULTS_BUCKET")
+fi
 
 gcloud firebase test android run \
   --type robo \
   --app "$ANDROID_APP_APK" \
   --timeout "$ANDROID_ROBO_TIMEOUT" \
   --device "model=$ANDROID_ROBO_DEVICE_MODEL,version=$ANDROID_ROBO_VERSION,locale=$ANDROID_ROBO_LOCALE,orientation=$ANDROID_ROBO_ORIENTATION" \
-  --results-dir "$ANDROID_ROBO_RESULTS_DIR"
+  --results-dir "$ANDROID_ROBO_RESULTS_DIR" \
+  "${results_bucket_args[@]}"
 
 echo "Robo Test concluído com sucesso."
