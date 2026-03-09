@@ -1050,10 +1050,78 @@ jobs:
             docker logout ghcr.io || true
             docker image prune -f
 
+  merge-implementation-branches:
+    name: Merge and Delete Auto-Implementation Branches
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-implementation
+      - implement-changes
+      - quality-gates-unit
+      - quality-gates-mobile-ui-android
+      - quality-gates-mobile-ui-ios
+      - build-mobile-artifacts
+      - build-api-image
+      - publish-domain-npm
+      - deploy-api
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.implement-changes.result == 'success' && needs.quality-gates-unit.result == 'success' && (needs['quality-gates-mobile-ui-android'].result == 'success' || needs['quality-gates-mobile-ui-android'].result == 'skipped') && (needs['quality-gates-mobile-ui-ios'].result == 'success' || needs['quality-gates-mobile-ui-ios'].result == 'skipped') && (needs['build-mobile-artifacts'].result == 'success' || needs['build-mobile-artifacts'].result == 'skipped') && (needs['build-api-image'].result == 'success' || needs['build-api-image'].result == 'skipped') && (needs['publish-domain-npm'].result == 'success' || needs['publish-domain-npm'].result == 'skipped') && (needs['deploy-api'].result == 'success' || needs['deploy-api'].result == 'skipped') }}
+    steps:
+      - name: Merge open auto-implementation PRs and delete branches
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          PREP_IMPLEMENTATION_PRS: ${{ needs.prepare-implementation.outputs.implementation_prs }}
+          IMPLEMENTATION_LOG: ${{ needs.implement-changes.outputs.implementation_log }}
+        run: |
+          set -euo pipefail
+
+          collect_urls() {
+            printf '%s\n%s\n' "${PREP_IMPLEMENTATION_PRS:-}" "${IMPLEMENTATION_LOG:-}" | \
+              rg -o 'https://github.com/[^ )]+' | \
+              sed 's/[),.]$//' | \
+              rg '/pull/[0-9]+' | \
+              sort -u
+          }
+
+          mapfile -t PR_URLS < <(collect_urls || true)
+          if (( ${#PR_URLS[@]} == 0 )); then
+            echo "Nenhum PR de auto-implementação para merge/delete."
+            exit 0
+          fi
+
+          for pr_url in "${PR_URLS[@]}"; do
+            repo="$(echo "$pr_url" | awk -F/ '{print $4 "/" $5}')"
+            pr_number="$(echo "$pr_url" | awk -F/ '{print $7}')"
+
+            echo "Processando ${repo}#${pr_number} (${pr_url})"
+
+            pr_state="$(gh pr view "$pr_number" -R "$repo" --json state --jq '.state')"
+            if [ "$pr_state" = "MERGED" ]; then
+              echo "PR já estava mergeado; seguindo."
+              continue
+            fi
+            if [ "$pr_state" != "OPEN" ]; then
+              echo "PR não está aberto (state=${pr_state}); não é seguro continuar." >&2
+              exit 1
+            fi
+
+            pr_draft="$(gh pr view "$pr_number" -R "$repo" --json isDraft --jq '.isDraft')"
+            if [ "$pr_draft" = "true" ]; then
+              echo "PR está em draft e não pode ser mergeado automaticamente." >&2
+              exit 1
+            fi
+
+            gh pr merge "$pr_number" -R "$repo" --merge --delete-branch
+
+            final_state="$(gh pr view "$pr_number" -R "$repo" --json state --jq '.state')"
+            if [ "$final_state" != "MERGED" ]; then
+              echo "Falha ao confirmar merge do PR ${repo}#${pr_number}." >&2
+              exit 1
+            fi
+          done
+
   governance-summary:
     name: Governance Summary
     runs-on: ubuntu-latest
-    needs: [prepare-implementation, implement-changes, quality-gates-unit, quality-gates-mobile-ui-android, quality-gates-mobile-ui-ios]
+    needs: [prepare-implementation, implement-changes, quality-gates-unit, quality-gates-mobile-ui-android, quality-gates-mobile-ui-ios, merge-implementation-branches]
     if: ${{ always() }}
 
     steps:
@@ -1072,6 +1140,7 @@ jobs:
           SUMMARY_IMPL_PRS: ${{ needs.prepare-implementation.outputs.implementation_prs }}
           SUMMARY_UI_ANDROID: ${{ needs['quality-gates-mobile-ui-android'].result }}
           SUMMARY_UI_IOS: ${{ needs['quality-gates-mobile-ui-ios'].result }}
+          SUMMARY_MERGE_BRANCHES: ${{ needs.merge-implementation-branches.result }}
         run: |
           set -euo pipefail
           {
@@ -1106,6 +1175,7 @@ jobs:
             fi
             echo "- Mobile UI Android (Firebase Robo): ${SUMMARY_UI_ANDROID:-not_run}"
             echo "- Mobile UI iOS (Simulator crawler): ${SUMMARY_UI_IOS:-not_run}"
+            echo "- Auto-merge branches: ${SUMMARY_MERGE_BRANCHES:-not_run}"
           } >> "$GITHUB_STEP_SUMMARY"
 
   release-summary:
