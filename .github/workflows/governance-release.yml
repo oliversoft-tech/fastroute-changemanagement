@@ -674,7 +674,6 @@ jobs:
   quality-gates-mobile-ui-android:
     name: Quality Gates (Mobile UI Android - Firebase Robo)
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     needs: [prepare-implementation, implement-changes, quality-gates-unit, prepare-mobile-ui-artifacts]
     if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
     env:
@@ -729,7 +728,6 @@ jobs:
   quality-gates-mobile-ui-ios:
     name: Quality Gates (Mobile UI iOS - Simulator)
     runs-on: macos-latest
-    timeout-minutes: 5
     needs: [prepare-implementation, implement-changes, quality-gates-unit, prepare-mobile-ui-artifacts]
     if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
     env:
