@@ -91,8 +91,8 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_ACTION: ${{ github.event.action }}
-          PAYLOAD_APPROVED: ${{ github.event.client_payload.approved == true }}
-          PAYLOAD_RUN_CI: ${{ github.event.client_payload.run_ci == true }}
+          PAYLOAD_APPROVED_RAW: ${{ github.event.client_payload.approved }}
+          PAYLOAD_RUN_CI_RAW: ${{ github.event.client_payload.run_ci }}
           RUN_AUTO_IMPLEMENT: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.auto_implement != false }}
           PRECREATE_BRANCHES: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.precreate_branches == true }}
           IMPACT_JSON: ${{ toJson(github.event.client_payload.impact_analysis) }}
@@ -110,13 +110,34 @@ jobs:
           API_IMPACTED="true"
           MOBILE_IMPACTED="true"
           CI_APPROVED="false"
+          PAYLOAD_APPROVED="$(echo "${PAYLOAD_APPROVED_RAW:-}" | tr '[:upper:]' '[:lower:]')"
+          PAYLOAD_RUN_CI="$(echo "${PAYLOAD_RUN_CI_RAW:-}" | tr '[:upper:]' '[:lower:]')"
+
+          is_truthy() {
+            case "$1" in
+              true|1|yes|y|on) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          is_falsy() {
+            case "$1" in
+              false|0|no|n|off) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
 
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
             CI_APPROVED="true"
-          elif [ "${EVENT_NAME}" = "repository_dispatch" ] && [ "${EVENT_ACTION}" = "governance-ci" ] && [ "${PAYLOAD_APPROVED}" = "true" ]; then
-            CI_APPROVED="true"
-          elif [ "${EVENT_NAME}" = "repository_dispatch" ] && [ "${EVENT_ACTION}" = "governance-release" ] && [ "${PAYLOAD_RUN_CI}" = "true" ]; then
-            CI_APPROVED="true"
+          elif [ "${EVENT_NAME}" = "repository_dispatch" ] && [ "${EVENT_ACTION}" = "governance-ci" ]; then
+            # governance-ci deve rodar por padrao; bloqueia somente com approved=false explicito.
+            if ! is_falsy "${PAYLOAD_APPROVED}"; then
+              CI_APPROVED="true"
+            fi
+          elif [ "${EVENT_NAME}" = "repository_dispatch" ] && [ "${EVENT_ACTION}" = "governance-release" ]; then
+            if is_truthy "${PAYLOAD_RUN_CI}"; then
+              CI_APPROVED="true"
+            fi
           fi
 
           repo_impacted() {
