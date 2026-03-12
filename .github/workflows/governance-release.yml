@@ -912,7 +912,34 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           cd mobile
-          eas build --platform ios --profile "${{ env.RESOLVED_MOBILE_PROFILE }}" --non-interactive --wait --json > ../ios-build.json
+          set +e
+          eas build --platform ios --profile "${{ env.RESOLVED_MOBILE_PROFILE }}" --non-interactive --wait --json > ../ios-build.json 2> ../ios-build-error.log
+          IOS_BUILD_EXIT_CODE=$?
+          set -e
+
+          if [ "${IOS_BUILD_EXIT_CODE}" -ne 0 ]; then
+            cat ../ios-build-error.log >&2
+
+            if grep -qi "credentials suitable for internal distribution" ../ios-build-error.log && [ "${{ env.RESOLVED_MOBILE_PROFILE }}" = "preview" ]; then
+              echo "::warning::Falha de credenciais iOS para distribuicao interna em non-interactive. Tentando preview-simulator."
+              node - <<'NODE'
+          const fs = require('node:fs');
+          const easPath = 'eas.json';
+          const eas = JSON.parse(fs.readFileSync(easPath, 'utf8'));
+          eas.build = eas.build || {};
+          if (!eas.build['preview-simulator']) {
+            eas.build['preview-simulator'] = {
+              extends: 'preview',
+              ios: { simulator: true }
+            };
+            fs.writeFileSync(easPath, `${JSON.stringify(eas, null, 2)}\n`);
+          }
+          NODE
+              eas build --platform ios --profile "preview-simulator" --non-interactive --wait --json > ../ios-build.json
+            else
+              exit "${IOS_BUILD_EXIT_CODE}"
+            fi
+          fi
 
       - name: Capture artifact URLs
         id: urls
