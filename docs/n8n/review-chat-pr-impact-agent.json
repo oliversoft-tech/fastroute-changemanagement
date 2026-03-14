@@ -1,0 +1,330 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "id": "cf251654-5b19-4464-aa44-eaa3b0ebf36b",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1860,
+        260
+      ],
+      "webhookId": "13f48780-e9f2-499a-a8db-f1102fc3e163",
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "lastNode",
+          "showWelcomeScreen": true
+        }
+      }
+    },
+    {
+      "id": "518990e4-a4c7-42cc-9180-3d3f751f361f",
+      "name": "Normalize Chat Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1620,
+        260
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase();\n\nconst raw = $json || {};\nconst message = toStr(raw.chatInput || raw.message || raw.text || raw.input || '');\nif (!message) {\n  throw new Error('[Normalize Chat Input] mensagem vazia.');\n}\n\nconst lower = norm(message);\nconst sessionId = toStr(\n  raw.sessionId ||\n  raw.session_id ||\n  raw.chatSessionId ||\n  raw.metadata?.sessionId ||\n  'default'\n);\n\nlet store;\ntry {\n  store = this.getWorkflowStaticData('global');\n} catch (_e) {\n  store = {};\n}\nif (!store.impactDrafts) store.impactDrafts = {};\n\nconst hasDraft = !!store.impactDrafts[sessionId];\nconst startImpact = lower.startsWith('/impact') || lower === 'impact' || lower.startsWith('impact:') || lower.startsWith('impact ');\nconst cancelImpact = lower === '/cancelar' || lower === 'cancelar' || lower === '/cancel';\n\nif (cancelImpact) {\n  delete store.impactDrafts[sessionId];\n  return [{ json: { route: 'impact_collect_question', output: 'Coleta de Impact Analysis cancelada. Para reiniciar, envie /impact.' } }];\n}\n\nconst parseLabeled = (text, labels) => {\n  for (const label of labels) {\n    const re = new RegExp(label + '\\\\s*[:=]\\\\s*([^|\\\\n]+)', 'i');\n    const m = text.match(re);\n    if (m) return toStr(m[1]);\n  }\n  return '';\n};\n\nconst ensureDraft = () => {\n  if (!store.impactDrafts[sessionId]) {\n    store.impactDrafts[sessionId] = {\n      problema: '',\n      mudanca: '',\n      evidencias: '',\n      restricoes: '',\n      started_at: new Date().toISOString(),\n    };\n  }\n  return store.impactDrafts[sessionId];\n};\n\nconst nextQuestion = (draft) => {\n  if (!toStr(draft.problema)) return '1/4 Qual problema ou oportunidade essa alteracao resolve?';\n  if (!toStr(draft.mudanca)) return '2/4 Descreva a mudanca como voce espera ver no produto.';\n  if (!toStr(draft.evidencias)) return '3/4 Quais evidencias comprovam que a entrega esta pronta?';\n  if (!toStr(draft.restricoes)) return '4/4 Restricoes: limites de prazo, compliance, integracoes proibidas, etc.';\n  return '';\n};\n\nconst summaryDraft = (draft) => [\n  '- problema: ' + (toStr(draft.problema) || '(pendente)'),\n  '- mudanca: ' + (toStr(draft.mudanca) || '(pendente)'),\n  '- evidencias: ' + (toStr(draft.evidencias) || '(pendente)'),\n  '- restricoes: ' + (toStr(draft.restricoes) || '(pendente)'),\n].join('\\n');\n\nif (startImpact || hasDraft) {\n  const draft = ensureDraft();\n\n  const p = parseLabeled(message, ['problema', 'problem']);\n  const m = parseLabeled(message, ['mudanca', 'mudança', 'expected_change']);\n  const e = parseLabeled(message, ['evidencias', 'evidências', 'evidence']);\n  const r = parseLabeled(message, ['restricoes', 'restrições', 'constraints']);\n\n  if (p) draft.problema = p;\n  if (m) draft.mudanca = m;\n  if (e) draft.evidencias = e;\n  if (r) draft.restricoes = r;\n\n  const notLabeled = !(p || m || e || r);\n  if (notLabeled && !startImpact) {\n    if (!toStr(draft.problema)) draft.problema = message;\n    else if (!toStr(draft.mudanca)) draft.mudanca = message;\n    else if (!toStr(draft.evidencias)) draft.evidencias = message;\n    else if (!toStr(draft.restricoes)) draft.restricoes = message;\n  }\n\n  const next = nextQuestion(draft);\n  if (next) {\n    return [{\n      json: {\n        route: 'impact_collect_question',\n        output: [\n          'Modo Impact Analysis ativo.',\n          '',\n          summaryDraft(draft),\n          '',\n          next,\n          '',\n          'Dica: voce pode responder por partes ou enviar tudo em uma linha com rotulos: problema:, mudanca:, evidencias:, restricoes:.'\n        ].join('\\n')\n      }\n    }];\n  }\n\n  const payload = {\n    problema: toStr(draft.problema),\n    mudanca: toStr(draft.mudanca),\n    evidencias: toStr(draft.evidencias),\n    restricoes: toStr(draft.restricoes),\n  };\n\n  delete store.impactDrafts[sessionId];\n\n  return [{\n    json: {\n      route: 'impact_run',\n      impact_workflow_id: toStr(\n        ($env && $env.IMPACT_WORKFLOW_ID) ||\n        (typeof process !== 'undefined' && process.env ? process.env.IMPACT_WORKFLOW_ID : '') ||\n        ''\n      ),\n      impact_payload: payload,\n      output: [\n        'Dados coletados. Vou disparar o subflow de Impact Analysis agora.',\n        '',\n        summaryDraft(payload)\n      ].join('\\n')\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    route: 'pr_qa',\n    question: message,\n    owner: toStr(\n      ($env && $env.GITHUB_OWNER) ||\n      (typeof process !== 'undefined' && process.env ? process.env.GITHUB_OWNER : '') ||\n      'oliversoft-tech'\n    ),\n    github_token: toStr(\n      ($env && $env.GITHUB_TOKEN) ||\n      (typeof process !== 'undefined' && process.env ? process.env.GITHUB_TOKEN : '') ||\n      ''\n    ),\n    anthropic_api_key: toStr(\n      ($env && $env.ANTHROPIC_API_KEY) ||\n      (typeof process !== 'undefined' && process.env ? process.env.ANTHROPIC_API_KEY : '') ||\n      ''\n    ),\n    llm_model: toStr(($env && $env.LLM_MODEL) || 'claude-sonnet-4-5-20250929'),\n    max_tokens: 1200\n  }\n}];"
+      }
+    },
+    {
+      "id": "aef20273-1249-427b-a0da-a82038416b95",
+      "name": "Route Impact Collect",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1380,
+        260
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8de9da37-a834-4fa0-b058-bd81685d4aa4",
+              "leftValue": "={{$json.route === 'impact_collect_question'}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e25a492e-0a7c-415f-a0d0-f924c456494d",
+      "name": "Route Impact Run",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1140,
+        380
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "557d91c3-36a7-4b43-8f0d-e041cfd7b4ff",
+              "leftValue": "={{$json.route === 'impact_run'}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "93914954-8bea-497d-9797-cd6c072fbad2",
+      "name": "Prepare Impact Inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        220
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const wf = String($json.impact_workflow_id || '').trim();\nif (!wf) {\n  throw new Error('[Prepare Impact Inputs] IMPACT_WORKFLOW_ID ausente no environment.');\n}\nreturn [{\n  json: {\n    impact_workflow_id: wf,\n    problema: $json.impact_payload?.problema || '',\n    mudanca: $json.impact_payload?.mudanca || '',\n    evidencias: $json.impact_payload?.evidencias || '',\n    restricoes: $json.impact_payload?.restricoes || ''\n  }\n}];"
+      }
+    },
+    {
+      "id": "5723f06b-3887-4525-940a-fae7f7e6b610",
+      "name": "Execute Impact Analysis Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -660,
+        220
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{$json.impact_workflow_id}}"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "problema": "={{$json.problema}}",
+            "mudanca": "={{$json.mudanca}}",
+            "evidencias": "={{$json.evidencias}}",
+            "restricoes": "={{$json.restricoes}}"
+          }
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "b2565497-9ba7-47d6-be8f-35c9d0244a1f",
+      "name": "Build Impact Chat Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        220
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    output: 'Impact Analysis disparado com sucesso. Acompanhe o workflow principal para resultados e PRs.'\n  }\n}];"
+      }
+    },
+    {
+      "id": "49d11880-7a7f-439f-92e4-f4625c2f350d",
+      "name": "Load Repos Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -900,
+        540
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "a0ed09ed-c6ed-458d-838d-c281011e43fb",
+      "name": "Fetch PR Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -660,
+        540
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\n\nconst req = $json || {};\nconst question = toStr(req.question || '');\nconst owner = toStr(req.owner || 'oliversoft-tech');\nconst token = toStr(req.github_token || '');\nif (!token) {\n  throw new Error('[Fetch PR Context] GITHUB_TOKEN ausente no environment.');\n}\n\nconst reposFromTable = $items('Load Repos Table', 0, 0).map((i) => i.json || {});\nlet repos = reposFromTable\n  .map((r) => toStr(r.repo_name || r.name || r.repository || r.slug || ''))\n  .filter(Boolean)\n  .filter((n) => n.includes('fastroute-'));\n\nif (repos.length === 0) {\n  repos = ['fastroute-domain', 'fastroute-api', 'fastroute-mobile-hybrid', 'fastroute-changemanagement'];\n}\nrepos = [...new Set(repos)];\n\nconst gh = async (url) => {\n  return this.helpers.httpRequest({\n    method: 'GET',\n    url,\n    headers: {\n      Authorization: 'Bearer ' + token,\n      Accept: 'application/vnd.github+json',\n      'X-GitHub-Api-Version': '2022-11-28'\n    },\n    json: true\n  });\n};\n\nconst allPrs = [];\nfor (const repo of repos) {\n  const list = await gh('https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=all&sort=updated&direction=desc&per_page=20');\n  for (const pr of (Array.isArray(list) ? list : [])) {\n    const title = toStr(pr.title);\n    const headRef = toStr(pr.head?.ref || '');\n    const governanceLike = title.toLowerCase().includes('governance: impact analysis') || headRef.startsWith('codex/governance-');\n    if (!governanceLike) continue;\n\n    allPrs.push({\n      repo,\n      number: pr.number,\n      title,\n      state: pr.state,\n      draft: !!pr.draft,\n      created_at: pr.created_at,\n      updated_at: pr.updated_at,\n      merged_at: pr.merged_at,\n      user: toStr(pr.user?.login || ''),\n      url: toStr(pr.html_url || ''),\n      body: toStr(pr.body || '').slice(0, 7000),\n      head: toStr(pr.head?.ref || ''),\n      base: toStr(pr.base?.ref || ''),\n      changed_files: toNum(pr.changed_files) || null,\n      additions: toNum(pr.additions) || null,\n      deletions: toNum(pr.deletions) || null,\n    });\n  }\n}\n\nallPrs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());\n\nconst prRef = (() => {\n  const m = question.match(/#(\\d+)/);\n  return m ? Number(m[1]) : null;\n})();\n\nlet selected = allPrs;\nif (prRef) {\n  selected = allPrs.filter((p) => p.number === prRef);\n}\nif (selected.length === 0) {\n  selected = allPrs.slice(0, 8);\n}\nselected = selected.slice(0, 8);\n\nfor (const pr of selected) {\n  try {\n    const files = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/files?per_page=100');\n    pr.files = (Array.isArray(files) ? files : []).map((f) => ({\n      filename: toStr(f.filename),\n      status: toStr(f.status),\n      additions: toNum(f.additions) || 0,\n      deletions: toNum(f.deletions) || 0,\n      patch: toStr(f.patch || '').slice(0, 2000)\n    }));\n  } catch (_e) {\n    pr.files = [];\n  }\n}\n\nif (selected.length === 0) {\n  return [{\n    json: {\n      question,\n      pr_context: { prs: [], note: 'Nenhuma PR de governance encontrada.' },\n      anthropic_api_key: req.anthropic_api_key,\n      llm_model: req.llm_model,\n      max_tokens: req.max_tokens\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    question,\n    pr_context: {\n      owner,\n      repos,\n      total_found: allPrs.length,\n      selected_count: selected.length,\n      prs: selected\n    },\n    anthropic_api_key: req.anthropic_api_key,\n    llm_model: req.llm_model,\n    max_tokens: req.max_tokens\n  }\n}];"
+      }
+    },
+    {
+      "id": "e3ae2a1d-f49d-46db-bfdb-e360362c61cd",
+      "name": "Answer PR Questions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        540
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\n\nconst input = $json || {};\nconst question = toStr(input.question || '');\nconst context = input.pr_context || {};\n\nconst envKey = (typeof process !== 'undefined' && process.env && process.env.ANTHROPIC_API_KEY)\n  ? String(process.env.ANTHROPIC_API_KEY).trim()\n  : '';\nconst apiKey = toStr(input.anthropic_api_key || envKey);\nif (!apiKey) {\n  throw new Error('[Answer PR Questions] ANTHROPIC_API_KEY ausente.');\n}\n\nconst model = toStr(input.llm_model || 'claude-sonnet-4-5-20250929');\nconst maxTokens = toNum(input.max_tokens) || 1200;\n\nconst systemPrompt = [\n  'Voce responde perguntas sobre PRs de governance do FastRoute.',\n  'Use apenas o contexto recebido e cite links de PR e arquivos quando responder.',\n  'Se a resposta nao estiver no contexto, diga explicitamente que nao encontrou evidencia suficiente.',\n  'Responda em portugues, objetivo e tecnico.'\n].join('\\n');\n\nconst userPrompt = [\n  'Pergunta do usuario:',\n  question,\n  '',\n  'Contexto de PRs (JSON):',\n  JSON.stringify(context)\n].join('\\n');\n\nlet resp;\ntry {\n  resp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.anthropic.com/v1/messages',\n    headers: {\n      'x-api-key': apiKey,\n      'anthropic-version': '2023-06-01',\n      'content-type': 'application/json'\n    },\n    body: {\n      model,\n      max_tokens: maxTokens,\n      temperature: 0,\n      system: systemPrompt,\n      messages: [{ role: 'user', content: userPrompt }]\n    },\n    json: true\n  });\n} catch (e) {\n  const detail = e?.response?.body ? JSON.stringify(e.response.body) : String(e?.message || e);\n  throw new Error('[Answer PR Questions] erro Anthropic: ' + detail);\n}\n\nconst blocks = Array.isArray(resp?.content) ? resp.content : [];\nconst answer = blocks\n  .filter((b) => b && b.type === 'text' && typeof b.text === 'string')\n  .map((b) => b.text.trim())\n  .filter(Boolean)\n  .join('\\n')\n  .trim();\n\nif (!answer) {\n  throw new Error('[Answer PR Questions] resposta vazia do modelo.');\n}\n\nreturn [{\n  json: {\n    output: answer\n  }\n}];"
+      }
+    },
+    {
+      "id": "dc65b631-5938-4372-868d-756c3496d4b1",
+      "name": "Impact Collect Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1140,
+        120
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "return [{ json: { output: $json.output || 'Informe os dados para Impact Analysis.' } }];"
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chat Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Chat Input": {
+      "main": [
+        [
+          {
+            "node": "Route Impact Collect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Impact Collect": {
+      "main": [
+        [
+          {
+            "node": "Impact Collect Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Impact Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Impact Run": {
+      "main": [
+        [
+          {
+            "node": "Prepare Impact Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Impact Inputs": {
+      "main": [
+        [
+          {
+            "node": "Execute Impact Analysis Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Impact Analysis Workflow": {
+      "main": [
+        [
+          {
+            "node": "Build Impact Chat Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table": {
+      "main": [
+        [
+          {
+            "node": "Fetch PR Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch PR Context": {
+      "main": [
+        [
+          {
+            "node": "Answer PR Questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "tests_for_testsuite"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "testsuite_id",
+              "condition": "eq",
+              "keyValue": "={{String($json.testsuite_id)}}"
+            },
+            {
+              "keyName": "description",
+              "condition": "eq",
+              "keyValue": "={{$json.description}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "testsuite_id": "={{Number($json.testsuite_id)}}",
+            "description": "={{$json.description}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "67d75f2e-b9d4-4b23-b739-7d7298857ec4",
+      "name": "Upsert Tests For Testsuite (LLM)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        240,
+        540
+      ]
+    },
+    {
+      "id": "7322f229-0064-49e1-b689-533ec521da74",
+      "name": "Finalize Analysis Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        16
+      ],
+      "parameters": {
+        "jsCode": "const firstFromNode = (names) => {\n  for (const name of names) {\n    try {\n      const rows = $items(name, 0, 0);\n      if (Array.isArray(rows) && rows.length > 0) return rows[0].json || {};\n    } catch (_e) {}\n  }\n  return {};\n};\n\nconst allFromNode = (names) => {\n  for (const name of names) {\n    try {\n      const rows = $items(name, 0, 0);\n      if (Array.isArray(rows) && rows.length > 0) return rows.map((r) => r.json || {});\n    } catch (_e) {}\n  }\n  return [];\n};\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\nconst toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => {\n  if (v === undefined || v === null) return NaN;\n  const n = Number(String(v).replace(/^\\uFEFF/, '').trim());\n  return Number.isFinite(n) ? n : NaN;\n};\nconst uniq = (arr) => [...new Set((arr || []).map((x) => toStr(x)).filter(Boolean))];\n\nconst base = firstFromNode(['Parse LLM JSON2', 'Parse LLM JSON1', 'Parse LLM JSON']);\nconst impactInsert = firstFromNode(['Insert Impact Analysis2', 'Insert Impact Analysis1', 'Insert Impact Analysis']);\nconst analysisBase = asObj(base.analysis);\nconst existingImpacts = asObj(analysisBase.impactos || analysisBase.impacts || {});\n\nconst analysisIdCandidate = impactInsert.id ?? base.impact_analysis_id;\nconst analysisId = Number.isFinite(toNum(analysisIdCandidate)) ? toNum(analysisIdCandidate) : null;\n\nconst repoRows = allFromNode(['Load Repos Table', 'Load Repos Table1', 'Load Repos Table2']);\nconst changeRows = allFromNode(['Upsert Change In Repo', 'Upsert Change In Repo1', 'Upsert Change In Repo2']);\nconst testsuiteRows = allFromNode(['Upsert Testsuite For Change (LLM)', 'Upsert Testsuite For Change (LLM)1']);\nconst testRows = allFromNode(['Upsert Tests For Testsuite (LLM)', 'Upsert Tests For Testsuite (LLM)1']);\n\nconst repoNameById = new Map();\nfor (const row of repoRows) {\n  const id = toNum(row.repo_id ?? row.id ?? row['\\uFEFFid']);\n  const name = toStr(row.name || row.repo_name || row.repository || row.full_name);\n  if (Number.isFinite(id) && name) repoNameById.set(id, name);\n}\n\nconst defaultRepoImpact = () => ({ impacto: false, mudancas: [], riscos: [], duvidas: [] });\nconst rebuiltImpacts = {};\nfor (const repoName of repoNameById.values()) {\n  rebuiltImpacts[repoName] = defaultRepoImpact();\n}\n\nconst parseSummary = (summaryRaw) => {\n  const raw = toStr(summaryRaw);\n  const marker = '| criterios_aceite:';\n\n  let text = raw;\n  if (analysisId !== null) {\n    const specificPrefix = new RegExp('^\\\\[impact:\\\\s*' + String(analysisId) + '\\\\]\\\\s*', 'i');\n    text = text.replace(specificPrefix, '').trim();\n  }\n  text = text.replace(/^\\[impact:\\s*\\d+\\]\\s*/i, '').trim();\n\n  if (!text.includes(marker)) {\n    return { descricao: text, criterios: [] };\n  }\n\n  const parts = text.split(marker);\n  const descricao = toStr(parts.shift());\n  const criterios = parts\n    .join(marker)\n    .split('|')\n    .map((x) => toStr(x))\n    .filter(Boolean);\n\n  return { descricao, criterios };\n};\n\nconst suitesByChangeId = new Map();\nfor (const suite of testsuiteRows) {\n  const changeId = toNum(suite.change_id);\n  const suiteId = toNum(suite.id ?? suite.testsuite_id);\n  if (!Number.isFinite(changeId) || !Number.isFinite(suiteId)) continue;\n  if (!suitesByChangeId.has(changeId)) suitesByChangeId.set(changeId, new Set());\n  suitesByChangeId.get(changeId).add(suiteId);\n}\n\nconst testsBySuiteId = new Map();\nfor (const test of testRows) {\n  const suiteId = toNum(test.testsuite_id);\n  const desc = toStr(test.description);\n  if (!Number.isFinite(suiteId) || !desc) continue;\n  if (!testsBySuiteId.has(suiteId)) testsBySuiteId.set(suiteId, []);\n  testsBySuiteId.get(suiteId).push(desc);\n}\n\nfor (const change of changeRows) {\n  const repoId = toNum(change.repo_id);\n  if (!Number.isFinite(repoId)) continue;\n\n  const repoName = repoNameById.get(repoId) || ('repo-' + String(repoId));\n  if (!rebuiltImpacts[repoName]) rebuiltImpacts[repoName] = defaultRepoImpact();\n\n  const changeId = toNum(change.id ?? change.change_id);\n  const parsed = parseSummary(change.change_summary);\n  const descricao = parsed.descricao || 'Mudanca sem descricao';\n  const criterios = uniq(parsed.criterios);\n\n  let testes = [];\n  if (Number.isFinite(changeId)) {\n    const suiteIds = [...(suitesByChangeId.get(changeId) || new Set())];\n    for (const suiteId of suiteIds) {\n      testes.push(...(testsBySuiteId.get(suiteId) || []));\n    }\n  }\n\n  if (testes.length === 0) {\n    testes = toArray(change.test_steps || change.testes || change.tests)\n      .map((x) => toStr(x))\n      .filter(Boolean);\n  }\n\n  const riscos = uniq(toArray(change.change_risks || change.riscos || change.risks));\n  const duvidas = uniq(toArray(change.change_doubts || change.duvidas || change.doubts));\n\n  rebuiltImpacts[repoName].impacto = true;\n  rebuiltImpacts[repoName].mudancas.push({\n    descricao,\n    testes: uniq(testes),\n    criterios_aceite: criterios,\n  });\n  rebuiltImpacts[repoName].riscos = uniq([...(rebuiltImpacts[repoName].riscos || []), ...riscos]);\n  rebuiltImpacts[repoName].duvidas = uniq([...(rebuiltImpacts[repoName].duvidas || []), ...duvidas]);\n}\n\nconst normalizeRepoImpact = (input) => {\n  const info = asObj(input);\n  return {\n    impacto: info.impacto === true || info.impact === true || info.has_impact === true,\n    mudancas: toArray(info.mudancas || info.changes).map((c) => {\n      const x = asObj(c);\n      return {\n        descricao: toStr(x.descricao || x.description || x.desc),\n        testes: uniq(toArray(x.testes || x.tests || x.test_steps)),\n        criterios_aceite: uniq(toArray(x.criterios_aceite || x.acceptance_criteria || x.acceptance_criterias)),\n      };\n    }),\n    riscos: uniq(toArray(info.riscos || info.risks)),\n    duvidas: uniq(toArray(info.duvidas || info.doubts || info.questions)),\n    itens: uniq(toArray(info.itens || info.items)),\n  };\n};\n\nconst isSpecialKey = (key) => key === 'infra' || key === 'integracoes_externas';\nconst rebuiltHasRepoImpacts = Object.entries(rebuiltImpacts).some(([key, info]) => {\n  if (isSpecialKey(key)) return false;\n  return info.impacto === true || (Array.isArray(info.mudancas) && info.mudancas.length > 0);\n});\n\nconst finalImpacts = {};\n\nif (rebuiltHasRepoImpacts) {\n  const repoKeys = new Set([\n    ...Object.keys(rebuiltImpacts).filter((k) => !isSpecialKey(k)),\n    ...Object.keys(existingImpacts).filter((k) => !isSpecialKey(k)),\n  ]);\n\n  for (const repoKey of repoKeys) {\n    const rebuilt = rebuiltImpacts[repoKey] || defaultRepoImpact();\n    const existing = normalizeRepoImpact(existingImpacts[repoKey]);\n\n    if (rebuilt.impacto || rebuilt.mudancas.length > 0) {\n      finalImpacts[repoKey] = {\n        impacto: true,\n        mudancas: rebuilt.mudancas,\n        riscos: uniq([...(rebuilt.riscos || []), ...(existing.riscos || [])]),\n        duvidas: uniq([...(rebuilt.duvidas || []), ...(existing.duvidas || [])]),\n      };\n    } else {\n      finalImpacts[repoKey] = {\n        impacto: existing.impacto || false,\n        mudancas: existing.mudancas || [],\n        riscos: existing.riscos || [],\n        duvidas: existing.duvidas || [],\n      };\n    }\n  }\n} else {\n  for (const [key, value] of Object.entries(existingImpacts)) {\n    if (isSpecialKey(key)) continue;\n    const v = normalizeRepoImpact(value);\n    finalImpacts[key] = {\n      impacto: v.impacto,\n      mudancas: v.mudancas,\n      riscos: v.riscos,\n      duvidas: v.duvidas,\n    };\n  }\n\n  // Keep repos table coverage even when no impact exists.\n  for (const repoName of repoNameById.values()) {\n    if (!finalImpacts[repoName]) finalImpacts[repoName] = defaultRepoImpact();\n  }\n}\n\nconst infra = normalizeRepoImpact(existingImpacts.infra);\nconst integracoes = normalizeRepoImpact(existingImpacts.integracoes_externas);\nfinalImpacts.infra = { impacto: infra.impacto, itens: infra.itens || [] };\nfinalImpacts.integracoes_externas = { impacto: integracoes.impacto, itens: integracoes.itens || [] };\n\nconst criteriaMapped = [];\nconst aggregatedRiscos = [];\nconst aggregatedDuvidas = [];\nfor (const [repoName, infoRaw] of Object.entries(finalImpacts)) {\n  if (repoName === 'infra' || repoName === 'integracoes_externas') continue;\n  const info = asObj(infoRaw);\n  const mudancas = toArray(info.mudancas);\n\n  aggregatedRiscos.push(...toArray(info.riscos));\n  aggregatedDuvidas.push(...toArray(info.duvidas));\n\n  for (const m of mudancas) {\n    const c = asObj(m);\n    const criterios = toArray(c.criterios_aceite).map((x) => toStr(x)).filter(Boolean);\n    const testes = toArray(c.testes).map((x) => toStr(x)).filter(Boolean);\n    for (const criterio of criterios) {\n      criteriaMapped.push({\n        criterio,\n        repos: [repoName],\n        teste_sugerido: testes[0] || ''\n      });\n    }\n  }\n}\n\nconst existingCriteria = toArray(\n  analysisBase.criterios_aceite_mapeados ||\n  analysisBase.acceptance_criteria_mapped ||\n  analysisBase.mapped_acceptance_criteria\n);\n\nconst finalAnalysis = {\n  resumo: toStr(analysisBase.resumo || analysisBase.summary || impactInsert.change_summary || 'Sem resumo'),\n  viabilidade: {\n    nivel: toStr(analysisBase?.viabilidade?.nivel || analysisBase?.viability?.level || impactInsert.complexity_level || 'Media') || 'Media',\n    justificativa: toStr(analysisBase?.viabilidade?.justificativa || analysisBase?.viability?.justification || 'Reconstruida a partir das data-tables e contexto do fluxo.')\n  },\n  impactos: finalImpacts,\n  criterios_aceite_mapeados: criteriaMapped.length > 0 ? criteriaMapped : existingCriteria,\n  riscos: uniq([...(toArray(analysisBase.riscos || analysisBase.risks)), ...aggregatedRiscos]),\n  duvidas: uniq([...(toArray(analysisBase.duvidas || analysisBase.questions)), ...aggregatedDuvidas]),\n  source_analysis_id: analysisId,\n};\n\nreturn [{\n  json: {\n    ...base,\n    analysis: finalAnalysis,\n    impact_analysis_id: analysisId,\n    persisted_at: new Date().toISOString(),\n    analysis_rebuilt_from_tables: rebuiltHasRepoImpacts,\n    analysis_tables_stats: {\n      repos: repoRows.length,\n      changes: changeRows.length,\n      testsuites: testsuiteRows.length,\n      tests: testRows.length,\n    },\n  }\n}];"
+      },
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Upsert Tests For Testsuite (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Finalize Analysis Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

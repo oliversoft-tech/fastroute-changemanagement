@@ -1,0 +1,414 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "id": "329b38f2-e879-46bb-92ec-79265d4b1f12",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1860,
+        260
+      ],
+      "webhookId": "b21c99f1-fedc-4b50-abc6-d4b29a89373f",
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "lastNode",
+          "showWelcomeScreen": true
+        }
+      }
+    },
+    {
+      "id": "2cac6be9-0005-4fba-b6fb-219f9cbf937e",
+      "name": "Normalize Chat Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1620,
+        260
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => {\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n};\n\nconst raw = $json || {};\nconst chatInput = toStr(raw.chatInput || raw.message || raw.text || raw.input || '');\nif (!chatInput) {\n  throw new Error('[Normalize Chat Input] mensagem vazia.');\n}\n\nconst lower = chatInput.toLowerCase();\nconst isImpact = lower.startsWith('/impact') || lower.startsWith('impact:') || lower.startsWith('impact ');\n\nconst pick = (label) => {\n  const re = new RegExp(label + '\\s*[:=]\\s*([^|\\n]+)', 'i');\n  const m = chatInput.match(re);\n  return m ? toStr(m[1]) : '';\n};\n\nconst analysisIdFromText = (() => {\n  const m = chatInput.match(/analysis[_ ]?id\\s*[:=]\\s*(\\d+)/i);\n  return m ? toNum(m[1]) : null;\n})();\n\nconst changeIdFromText = (() => {\n  const m = chatInput.match(/change[_ ]?id\\s*[:=]\\s*(\\d+)/i);\n  return m ? toNum(m[1]) : null;\n})();\n\nconst repoFromText = (() => {\n  const m = chatInput.match(/repo\\s*[:=]\\s*([a-zA-Z0-9_\\-]+)/i);\n  return m ? toStr(m[1]) : '';\n})();\n\nreturn [{\n  json: {\n    action: isImpact ? 'impact_analysis' : 'ask',\n    question: chatInput,\n    analysis_id: analysisIdFromText,\n    change_id: changeIdFromText,\n    repo: repoFromText,\n\n    impact_problem: pick('problema') || (isImpact ? chatInput.replace(/^\\/impact\\s*/i, '').replace(/^impact[: ]/i, '').trim() : ''),\n    impact_expected_change: pick('mudanca') || pick('expected_change') || '',\n    impact_evidence: pick('evidencias') || pick('evidence') || '',\n    impact_constraints: pick('restricoes') || pick('constraints') || '',\n\n    anthropic_api_key: toStr(\n      ($env && $env.ANTHROPIC_API_KEY) ||\n      (typeof process !== 'undefined' && process.env ? process.env.ANTHROPIC_API_KEY : '') ||\n      ''\n    ),\n    llm_model: toStr(($env && $env.LLM_MODEL) || 'claude-sonnet-4-5-20250929'),\n    max_tokens: 1200,\n    impact_workflow_id: toStr(\n      ($env && $env.IMPACT_WORKFLOW_ID) ||\n      (typeof process !== 'undefined' && process.env ? process.env.IMPACT_WORKFLOW_ID : '') ||\n      ''\n    )\n  }\n}];"
+      }
+    },
+    {
+      "id": "c0fe1a9a-1f0f-47a1-bfd1-dd4cc9ac27e0",
+      "name": "Route Action",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1380,
+        260
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "e6410963-790e-4227-8dbc-d1f413d124ab",
+              "leftValue": "={{$json.action === 'impact_analysis'}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d5e8f16f-71a9-40f5-8a2d-58810f816584",
+      "name": "Prepare Impact Inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1140,
+        120
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nif (!toStr($json.impact_workflow_id)) {\n  throw new Error('[Prepare Impact Inputs] IMPACT_WORKFLOW_ID ausente no environment.');\n}\n\nreturn [{\n  json: {\n    impact_workflow_id: $json.impact_workflow_id,\n    problema: $json.impact_problem || '',\n    mudanca: $json.impact_expected_change || '',\n    evidencias: $json.impact_evidence || '',\n    restricoes: $json.impact_constraints || '',\n    source_chat_message: $json.question || ''\n  }\n}];"
+      }
+    },
+    {
+      "id": "662a15ce-4c1f-4520-bc1d-23ca9d19eed0",
+      "name": "Execute Impact Analysis Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -900,
+        120
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{$json.impact_workflow_id}}"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "problema": "={{$json.problema}}",
+            "mudanca": "={{$json.mudanca}}",
+            "evidencias": "={{$json.evidencias}}",
+            "restricoes": "={{$json.restricoes}}"
+          }
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "5f157d55-8f98-4e9b-9ebb-60411f7ce2d1",
+      "name": "Build Impact Chat Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -660,
+        120
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    output: [\n      'Impact Analysis acionado com sucesso.',\n      '',\n      'Resumo do pedido:',\n      '- problema: ' + String($json.problema || ''),\n      '- mudanca: ' + String($json.mudanca || ''),\n      '- evidencias: ' + String($json.evidencias || ''),\n      '- restricoes: ' + String($json.restricoes || '')\n    ].join('\\n')\n  }\n}];"
+      }
+    },
+    {
+      "id": "9c8e2b2b-d038-4a0a-bece-f8b678337d74",
+      "name": "Load Impact Analysis",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1140,
+        420
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "impact_analysis"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "0f6c234d-c9d1-44a4-8f52-64129d448ca3",
+      "name": "Load Changes In Repo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -900,
+        420
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "changes_in_repo"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "9f6ec580-0fc6-41ef-b14b-17ecefea5e5f",
+      "name": "Load Code Changes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -660,
+        420
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "code_changes"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "388bb406-6c6c-41c5-b85b-046f4ce6176c",
+      "name": "Load Testsuites For Change",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -420,
+        420
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "testsuites_for_change"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "c3425af1-c280-49f2-9819-146c19a1ca7e",
+      "name": "Load Tests For Testsuite",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -180,
+        420
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "tests_for_testsuite"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "af66b458-f91c-4449-bb94-48be2ba04854",
+      "name": "Load Repos Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        60,
+        420
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "22a7252b-da05-4a00-a548-f9f78ae535bd",
+      "name": "Build Review Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        420
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const getRows = (name) => {\n  try {\n    return $items(name, 0, 0).map((i) => i.json || {});\n  } catch (_e) {\n    return [];\n  }\n};\n\nconst req = (getRows('Normalize Chat Input')[0] || {});\nconst toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => {\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n};\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase();\n\nconst analysisRows = getRows('Load Impact Analysis');\nconst repoRows = getRows('Load Repos Table');\nconst changeRows = getRows('Load Changes In Repo');\nconst codeRows = getRows('Load Code Changes');\nconst testsuiteRows = getRows('Load Testsuites For Change');\nconst testRows = getRows('Load Tests For Testsuite');\n\nif (analysisRows.length === 0) throw new Error('[Build Review Context] impact_analysis vazio.');\nif (changeRows.length === 0) throw new Error('[Build Review Context] changes_in_repo vazio.');\nif (codeRows.length === 0) throw new Error('[Build Review Context] code_changes vazio.');\n\nconst question = toStr(req.question || '');\nif (!question) throw new Error('[Build Review Context] question vazia.');\n\nconst selectedAnalysisId = toNum(req.analysis_id) || Math.max(...analysisRows.map((r) => toNum(r.id)).filter((n) => Number.isFinite(n)));\nif (!selectedAnalysisId) throw new Error('[Build Review Context] analysis_id nao resolvido.');\n\nconst analysisRow = analysisRows.find((r) => toNum(r.id) === selectedAnalysisId);\nif (!analysisRow) throw new Error('[Build Review Context] analysis_id nao encontrado: ' + selectedAnalysisId);\n\nconst repoFilter = norm(req.repo || '');\nconst changeIdFilter = toNum(req.change_id);\n\nconst repoIdToName = new Map();\nfor (const r of repoRows) {\n  const id = toNum(r.id);\n  if (!id) continue;\n  repoIdToName.set(id, toStr(r.repo_name || r.name || 'repo-' + id));\n}\n\nconst testsBySuite = new Map();\nfor (const t of testRows) {\n  const sid = toNum(t.testsuite_id);\n  if (!sid) continue;\n  if (!testsBySuite.has(sid)) testsBySuite.set(sid, []);\n  const d = toStr(t.description || t.step || t.test_description);\n  if (d) testsBySuite.get(sid).push(d);\n}\n\nconst suitesByChange = new Map();\nfor (const s of testsuiteRows) {\n  const sid = toNum(s.id || s.testsuite_id);\n  const cid = toNum(s.change_id);\n  if (!sid || !cid) continue;\n  if (!suitesByChange.has(cid)) suitesByChange.set(cid, []);\n  suitesByChange.get(cid).push(sid);\n}\n\nconst codeByChange = new Map();\nfor (const c of codeRows) {\n  const cid = toNum(c.change_id);\n  if (!cid) continue;\n  if (!codeByChange.has(cid)) codeByChange.set(cid, []);\n  const block = toStr(c.code);\n  if (block) codeByChange.get(cid).push(block);\n}\n\nconst changes = [];\nfor (const ch of changeRows) {\n  const cid = toNum(ch.id || ch.change_id);\n  if (!cid) continue;\n\n  const repoId = toNum(ch.repo_id);\n  const repoName = toStr(ch.repo_name || repoIdToName.get(repoId) || 'repo-' + (repoId || 'na'));\n  if (repoFilter && norm(repoName) !== repoFilter) continue;\n  if (changeIdFilter && cid !== changeIdFilter) continue;\n\n  const suiteIds = suitesByChange.get(cid) || [];\n  const tests = suiteIds.flatMap((sid) => testsBySuite.get(sid) || []);\n\n  changes.push({\n    change_id: cid,\n    repo_name: repoName,\n    change_summary: toStr(ch.change_summary || ''),\n    code_changes: (codeByChange.get(cid) || []).slice(0, 20),\n    tests: tests.slice(0, 80)\n  });\n}\n\nif (changes.length === 0) {\n  throw new Error('[Build Review Context] nenhum change encontrado para os filtros informados.');\n}\n\nconst payload = {\n  analysis_id: selectedAnalysisId,\n  question,\n  analysis_summary: toStr(analysisRow.change_summary || ''),\n  analysis_complexity: toStr(analysisRow.complexity_level || ''),\n  filters: {\n    repo: repoFilter || null,\n    change_id: changeIdFilter || null\n  },\n  changes\n};\n\nreturn [{\n  json: {\n    analysis_id: selectedAnalysisId,\n    question,\n    review_context_text: JSON.stringify(payload, null, 2),\n    anthropic_api_key: toStr(req.anthropic_api_key || ''),\n    llm_model: toStr(req.llm_model || 'claude-sonnet-4-5-20250929'),\n    max_tokens: 1200\n  }\n}];"
+      }
+    },
+    {
+      "id": "4f9304d0-3206-4e89-b458-ed0cd1dd886b",
+      "name": "Answer Review Question",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        420
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => {\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n};\n\nconst extractText = (resp) => {\n  const blocks = Array.isArray(resp?.content) ? resp.content : [];\n  return blocks\n    .filter((b) => b && b.type === 'text' && typeof b.text === 'string')\n    .map((b) => b.text.trim())\n    .filter(Boolean)\n    .join('\\n')\n    .trim();\n};\n\nconst tryParseJson = (raw) => {\n  try { return JSON.parse(raw); } catch (_e) {}\n  const s = raw.indexOf('{');\n  const e = raw.lastIndexOf('}');\n  if (s >= 0 && e > s) {\n    try { return JSON.parse(raw.slice(s, e + 1)); } catch (_e) {}\n  }\n  return null;\n};\n\nconst input = $json || {};\nconst question = toStr(input.question || '');\nconst contextText = toStr(input.review_context_text || '');\nif (!question) throw new Error('[Answer Review Question] question vazia.');\nif (!contextText) throw new Error('[Answer Review Question] review_context_text vazio.');\n\nconst envKey = (typeof process !== 'undefined' && process.env && process.env.ANTHROPIC_API_KEY)\n  ? String(process.env.ANTHROPIC_API_KEY).trim()\n  : '';\nconst apiKey = toStr(input.anthropic_api_key || envKey);\nif (!apiKey) throw new Error('[Answer Review Question] ANTHROPIC_API_KEY ausente.');\n\nconst model = toStr(input.llm_model || 'claude-sonnet-4-5-20250929');\nconst maxTokens = toNum(input.max_tokens) || 1200;\n\nconst systemPrompt = [\n  'Voce e revisor tecnico de changes do FastRoute.',\n  'Responda SOMENTE JSON valido sem markdown.',\n  'Use exclusivamente o contexto recebido.',\n  'Formato:',\n  '{',\n  '  \"resposta\": \"string\",',\n  '  \"evidencias\": [\"string\"],',\n  '  \"sugestao_correcao\": \"string\"',\n  '}'\n].join('\\n');\n\nconst userPrompt = ['Pergunta:', question, '', 'Contexto:', contextText].join('\\n');\n\nlet resp;\ntry {\n  resp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.anthropic.com/v1/messages',\n    headers: {\n      'x-api-key': apiKey,\n      'anthropic-version': '2023-06-01',\n      'content-type': 'application/json'\n    },\n    body: {\n      model,\n      max_tokens: maxTokens,\n      temperature: 0,\n      system: systemPrompt,\n      messages: [{ role: 'user', content: userPrompt }]\n    },\n    json: true\n  });\n} catch (e) {\n  const detail = e?.response?.body ? JSON.stringify(e.response.body) : String(e?.message || e);\n  throw new Error('[Answer Review Question] erro Anthropic: ' + detail);\n}\n\nconst raw = extractText(resp);\nif (!raw) throw new Error('[Answer Review Question] resposta vazia do modelo.');\n\nconst parsed = tryParseJson(raw);\nif (!parsed || typeof parsed !== 'object') {\n  throw new Error('[Answer Review Question] JSON invalido do modelo. raw=' + raw.slice(0, 1000));\n}\n\nreturn [{\n  json: {\n    output: [\n      toStr(parsed.resposta || ''),\n      '',\n      'Evidencias:',\n      ...(Array.isArray(parsed.evidencias) ? parsed.evidencias.map((e) => '- ' + String(e)) : []),\n      '',\n      'Sugestao de correcao:',\n      toStr(parsed.sugestao_correcao || '(sem sugestao)'),\n      '',\n      '[meta] model=' + model + ' | analysis_id=' + String(input.analysis_id || '')\n    ].join('\\n')\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chat Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Chat Input": {
+      "main": [
+        [
+          {
+            "node": "Route Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Action": {
+      "main": [
+        [
+          {
+            "node": "Prepare Impact Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Impact Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Impact Inputs": {
+      "main": [
+        [
+          {
+            "node": "Execute Impact Analysis Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Impact Analysis Workflow": {
+      "main": [
+        [
+          {
+            "node": "Build Impact Chat Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Impact Analysis": {
+      "main": [
+        [
+          {
+            "node": "Load Changes In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Changes In Repo": {
+      "main": [
+        [
+          {
+            "node": "Load Code Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Code Changes": {
+      "main": [
+        [
+          {
+            "node": "Load Testsuites For Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Testsuites For Change": {
+      "main": [
+        [
+          {
+            "node": "Load Tests For Testsuite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Tests For Testsuite": {
+      "main": [
+        [
+          {
+            "node": "Load Repos Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table": {
+      "main": [
+        [
+          {
+            "node": "Build Review Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Review Context": {
+      "main": [
+        [
+          {
+            "node": "Answer Review Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

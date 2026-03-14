@@ -1,0 +1,481 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "review-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-chat-trigger",
+      "name": "Webhook Chat Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1860,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const inJson = $json || {};\nconst body = (inJson.body && typeof inJson.body === 'object') ? inJson.body : inJson;\n\nconst toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => {\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n};\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase();\n\nconst actionRaw = norm(body.action || body.acao || 'ask');\nconst action = ['impact_analysis', 'run_impact_analysis'].includes(actionRaw) ? 'impact_analysis' : 'ask';\n\nconst question = toStr(body.question || body.pergunta || body.message || body.ask || '');\nconst analysisId = toNum(body.analysis_id || body.impact_analysis_id || '');\nconst changeId = toNum(body.change_id || '');\nconst repo = toStr(body.repo || body.repo_name || '');\n\nconst impactWebhookUrl = toStr(\n  body.impact_webhook_url ||\n  (($env && $env.IMPACT_ANALYSIS_WEBHOOK_URL) ||\n  '')\n);\n\nconst anthKey = toStr(\n  body.anthropic_api_key ||\n  (($env && $env.ANTHROPIC_API_KEY) ||\n  (typeof process !== 'undefined' && process.env ? process.env.ANTHROPIC_API_KEY : ''))\n);\n\nreturn [{\n  json: {\n    action,\n    question,\n    analysis_id: analysisId,\n    change_id: changeId,\n    repo,\n    llm_model: toStr(body.llm_model || 'claude-sonnet-4-5-20250929'),\n    max_tokens: toNum(body.max_tokens) || 1400,\n    anthropic_api_key: anthKey,\n    impact_webhook_url: impactWebhookUrl,\n    impact_payload: {\n      problema: toStr(body.problema || body.problem || ''),\n      mudanca: toStr(body.mudanca || body.expected_change || ''),\n      evidencias: toStr(body.evidencias || body.evidence || ''),\n      restricoes: toStr(body.restricoes || body.constraints || ''),\n      raw: body\n    }\n  }\n}];"
+      },
+      "id": "normalize-chat-request",
+      "name": "Normalize Chat Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1640,
+        220
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-impact-action",
+              "leftValue": "={{$json.action === 'impact_analysis'}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "route-action",
+      "name": "Route Action",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1420,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nconst url = toStr($json.impact_webhook_url);\nif (!url) {\n  throw new Error('[Prepare Impact Dispatch] impact_webhook_url ausente. Envie no body ou configure IMPACT_ANALYSIS_WEBHOOK_URL.');\n}\n\nreturn [{\n  json: {\n    url,\n    body: {\n      problema: $json.impact_payload?.problema || '',\n      mudanca: $json.impact_payload?.mudanca || '',\n      evidencias: $json.impact_payload?.evidencias || '',\n      restricoes: $json.impact_payload?.restricoes || ''\n    },\n    action: 'impact_analysis'\n  }\n}];"
+      },
+      "id": "prepare-impact-dispatch",
+      "name": "Prepare Impact Dispatch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        80
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.url}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json.body)}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "autodetect",
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "call-impact-flow",
+      "name": "Call Impact Analysis Flow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -980,
+        80
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    status: 'queued',\n    action: 'impact_analysis',\n    message: 'Fluxo Impact Analysis acionado com sucesso.',\n    impact_dispatch_response: $json\n  }\n}];"
+      },
+      "id": "build-impact-response",
+      "name": "Build Impact Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -760,
+        80
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "impact_analysis"
+        },
+        "returnAll": true
+      },
+      "id": "load-impact-analysis",
+      "name": "Load Impact Analysis",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1200,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "changes_in_repo"
+        },
+        "returnAll": true
+      },
+      "id": "load-changes-repo",
+      "name": "Load Changes In Repo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -980,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "code_changes"
+        },
+        "returnAll": true
+      },
+      "id": "load-code-changes",
+      "name": "Load Code Changes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -760,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "testsuites_for_change"
+        },
+        "returnAll": true
+      },
+      "id": "load-testsuites",
+      "name": "Load Testsuites For Change",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -540,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "tests_for_testsuite"
+        },
+        "returnAll": true
+      },
+      "id": "load-tests",
+      "name": "Load Tests For Testsuite",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true
+      },
+      "id": "load-repos",
+      "name": "Load Repos Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -100,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const getRows = (name) => {\n  try {\n    return $items(name, 0, 0).map((i) => i.json || {});\n  } catch (_e) {\n    return [];\n  }\n};\n\nconst req = (getRows('Normalize Chat Request')[0] || {});\n\nconst toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => {\n  const n = Number(v);\n  return Number.isFinite(n) ? n : null;\n};\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase();\n\nconst analysisRows = getRows('Load Impact Analysis');\nconst repoRows = getRows('Load Repos Table');\nconst changeRows = getRows('Load Changes In Repo');\nconst codeRows = getRows('Load Code Changes');\nconst testsuiteRows = getRows('Load Testsuites For Change');\nconst testRows = getRows('Load Tests For Testsuite');\n\nif (analysisRows.length === 0) throw new Error('[Build Review Context] impact_analysis vazio.');\nif (changeRows.length === 0) throw new Error('[Build Review Context] changes_in_repo vazio.');\nif (codeRows.length === 0) throw new Error('[Build Review Context] code_changes vazio.');\n\nconst selectedAnalysisId = toNum(req.analysis_id) || Math.max(...analysisRows.map((r) => toNum(r.id)).filter((n) => Number.isFinite(n)));\nif (!selectedAnalysisId) throw new Error('[Build Review Context] analysis_id nao resolvido.');\n\nconst analysisRow = analysisRows.find((r) => toNum(r.id) === selectedAnalysisId);\nif (!analysisRow) throw new Error('[Build Review Context] analysis_id nao encontrado: ' + selectedAnalysisId);\n\nconst repoFilter = norm(req.repo || '');\nconst changeIdFilter = toNum(req.change_id);\nconst question = toStr(req.question);\nif (!question) throw new Error('[Build Review Context] question/pergunta obrigatoria.');\n\nconst repoIdToName = new Map();\nfor (const r of repoRows) {\n  const id = toNum(r.id);\n  if (!id) continue;\n  repoIdToName.set(id, toStr(r.repo_name || r.name || 'repo-' + id));\n}\n\nconst testsBySuite = new Map();\nfor (const t of testRows) {\n  const sid = toNum(t.testsuite_id);\n  if (!sid) continue;\n  if (!testsBySuite.has(sid)) testsBySuite.set(sid, []);\n  const d = toStr(t.description || t.step || t.test_description);\n  if (d) testsBySuite.get(sid).push(d);\n}\n\nconst suitesByChange = new Map();\nfor (const s of testsuiteRows) {\n  const sid = toNum(s.id || s.testsuite_id);\n  const cid = toNum(s.change_id);\n  if (!sid || !cid) continue;\n  if (!suitesByChange.has(cid)) suitesByChange.set(cid, []);\n  suitesByChange.get(cid).push(sid);\n}\n\nconst codeByChange = new Map();\nfor (const c of codeRows) {\n  const cid = toNum(c.change_id);\n  if (!cid) continue;\n  if (!codeByChange.has(cid)) codeByChange.set(cid, []);\n  const block = toStr(c.code);\n  if (block) codeByChange.get(cid).push(block);\n}\n\nconst changes = [];\nfor (const ch of changeRows) {\n  const cid = toNum(ch.id || ch.change_id);\n  if (!cid) continue;\n\n  const repoId = toNum(ch.repo_id);\n  const repoName = toStr(ch.repo_name || repoIdToName.get(repoId) || 'repo-' + (repoId || 'na'));\n  if (repoFilter && norm(repoName) !== repoFilter) continue;\n  if (changeIdFilter && cid !== changeIdFilter) continue;\n\n  const suiteIds = suitesByChange.get(cid) || [];\n  const tests = suiteIds.flatMap((sid) => testsBySuite.get(sid) || []);\n\n  changes.push({\n    change_id: cid,\n    repo_name: repoName,\n    change_summary: toStr(ch.change_summary || ''),\n    code_changes: (codeByChange.get(cid) || []).slice(0, 20),\n    tests: tests.slice(0, 80)\n  });\n}\n\nif (changes.length === 0) {\n  throw new Error('[Build Review Context] nenhum change encontrado para os filtros informados.');\n}\n\nconst payload = {\n  analysis_id: selectedAnalysisId,\n  action: 'ask',\n  question,\n  analysis_summary: toStr(analysisRow.change_summary || ''),\n  analysis_complexity: toStr(analysisRow.complexity_level || ''),\n  filters: { repo: repoFilter || null, change_id: changeIdFilter || null },\n  changes\n};\n\nreturn [{\n  json: {\n    analysis_id: selectedAnalysisId,\n    action: 'ask',\n    question,\n    review_context_text: JSON.stringify(payload, null, 2),\n    llm_model: toStr(req.llm_model || 'claude-sonnet-4-5-20250929'),\n    max_tokens: toNum(req.max_tokens) || 1400,\n    anthropic_api_key: toStr(req.anthropic_api_key || ''),\n  }\n}];"
+      },
+      "id": "build-review-context",
+      "name": "Build Review Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        340
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\n\nconst extractText = (resp) => {\n  const blocks = Array.isArray(resp?.content) ? resp.content : [];\n  return blocks\n    .filter((b) => b && b.type === 'text' && typeof b.text === 'string')\n    .map((b) => b.text.trim())\n    .filter(Boolean)\n    .join('\n')\n    .trim();\n};\n\nconst tryParseJson = (raw) => {\n  try { return JSON.parse(raw); } catch (_e) {}\n  const s = raw.indexOf('{');\n  const e = raw.lastIndexOf('}');\n  if (s >= 0 && e > s) {\n    try { return JSON.parse(raw.slice(s, e + 1)); } catch (_e) {}\n  }\n  return null;\n};\n\nconst input = $json || {};\nconst question = toStr(input.question);\nconst contextText = toStr(input.review_context_text);\nif (!question) throw new Error('[Answer Or Request Fix] question ausente.');\nif (!contextText) throw new Error('[Answer Or Request Fix] review_context_text ausente.');\n\nconst envKey = (typeof process !== 'undefined' && process.env && process.env.ANTHROPIC_API_KEY)\n  ? String(process.env.ANTHROPIC_API_KEY).trim()\n  : '';\nconst apiKey = toStr(input.anthropic_api_key || envKey);\nif (!apiKey) throw new Error('[Answer Or Request Fix] ANTHROPIC_API_KEY ausente.');\n\nconst model = toStr(input.llm_model || 'claude-sonnet-4-5-20250929');\nconst maxTokens = toNum(input.max_tokens) || 1400;\n\nconst systemPrompt = [\n  'Voce e revisor tecnico de changes do FastRoute.',\n  'Responda SOMENTE JSON valido sem markdown.',\n  'Use apenas o contexto recebido.',\n  'Formato:',\n  '{',\n  '  \"resposta\": \"string\",',\n  '  \"evidencias\": [\"string\"],',\n  '  \"sugestao_correcao\": \"string\"',\n  '}'\n].join('\n');\n\nconst userPrompt = [\n  'Pergunta:', question, '',\n  'Contexto:', contextText\n].join('\n');\n\nlet resp;\ntry {\n  resp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.anthropic.com/v1/messages',\n    headers: {\n      'x-api-key': apiKey,\n      'anthropic-version': '2023-06-01',\n      'content-type': 'application/json'\n    },\n    body: {\n      model,\n      max_tokens: maxTokens,\n      temperature: 0,\n      system: systemPrompt,\n      messages: [{ role: 'user', content: userPrompt }]\n    },\n    json: true\n  });\n} catch (e) {\n  const detail = e?.response?.body ? JSON.stringify(e.response.body) : String(e?.message || e);\n  throw new Error('[Answer Or Request Fix] erro Anthropic: ' + detail);\n}\n\nconst raw = extractText(resp);\nif (!raw) throw new Error('[Answer Or Request Fix] resposta vazia do modelo.');\n\nconst parsed = tryParseJson(raw);\nif (!parsed || typeof parsed !== 'object') {\n  throw new Error('[Answer Or Request Fix] modelo nao retornou JSON valido. raw=' + raw.slice(0, 1000));\n}\n\nreturn [{\n  json: {\n    status: 'ok',\n    action: 'ask',\n    analysis_id: input.analysis_id || null,\n    question,\n    resposta: toStr(parsed.resposta || ''),\n    evidencias: Array.isArray(parsed.evidencias) ? parsed.evidencias : [],\n    sugestao_correcao: toStr(parsed.sugestao_correcao || ''),\n    llm_model: model,\n    llm_usage: resp?.usage || null,\n    generated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "answer-or-request-fix",
+      "name": "Answer Or Request Fix",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        340
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    ok: true,\n    action: $json.action || 'ask',\n    analysis_id: $json.analysis_id || null,\n    question: $json.question || '',\n    resposta: $json.resposta || '',\n    evidencias: Array.isArray($json.evidencias) ? $json.evidencias : [],\n    sugestao_correcao: $json.sugestao_correcao || '',\n    meta: {\n      llm_model: $json.llm_model || '',\n      llm_usage: $json.llm_usage || null,\n      generated_at: $json.generated_at || ''\n    }\n  }\n}];"
+      },
+      "id": "build-chat-json-response",
+      "name": "Build Chat JSON Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        340
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{JSON.stringify($json)}}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-chat-json",
+      "name": "Respond Chat JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        780,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chat Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Chat Request": {
+      "main": [
+        [
+          {
+            "node": "Route Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Action": {
+      "main": [
+        [
+          {
+            "node": "Prepare Impact Dispatch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Impact Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Impact Dispatch": {
+      "main": [
+        [
+          {
+            "node": "Call Impact Analysis Flow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Impact Analysis Flow": {
+      "main": [
+        [
+          {
+            "node": "Build Impact Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Impact Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Chat JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Impact Analysis": {
+      "main": [
+        [
+          {
+            "node": "Load Changes In Repo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Changes In Repo": {
+      "main": [
+        [
+          {
+            "node": "Load Code Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Code Changes": {
+      "main": [
+        [
+          {
+            "node": "Load Testsuites For Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Testsuites For Change": {
+      "main": [
+        [
+          {
+            "node": "Load Tests For Testsuite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Tests For Testsuite": {
+      "main": [
+        [
+          {
+            "node": "Load Repos Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table": {
+      "main": [
+        [
+          {
+            "node": "Build Review Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Review Context": {
+      "main": [
+        [
+          {
+            "node": "Answer Or Request Fix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer Or Request Fix": {
+      "main": [
+        [
+          {
+            "node": "Build Chat JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Chat JSON Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Chat JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

@@ -1,0 +1,167 @@
+{
+  "name": "Chat with Fastroute - nodes fix loop v15",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "impact_ready",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-impact-ready"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "correction_propose",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-correction"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "pr_qa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-prqa"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        400
+      ],
+      "id": "058ea3ed-4642-45d4-9b64-81c49bbef181",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst getStore = () => {\n  try {\n    if (typeof $getWorkflowStaticData === 'function') return $getWorkflowStaticData('global');\n  } catch (_e) {}\n  try {\n    if (this && typeof this.getWorkflowStaticData === 'function') return this.getWorkflowStaticData('global');\n  } catch (_e) {}\n  const root = (typeof globalThis !== 'undefined') ? globalThis : {};\n  if (!root.__frChatFallbackStore) root.__frChatFallbackStore = {};\n  return root.__frChatFallbackStore;\n};\n\nconst raw = $json || {};\n\nconst deepFindMessage = (obj) => {\n  const exactKeys = new Set(['chatInput', 'message', 'text', 'input']);\n\n  const direct = [\n    obj?.chatInput,\n    obj?.message,\n    obj?.text,\n    obj?.input,\n    obj?.body?.chatInput,\n    obj?.body?.message,\n    obj?.body?.text,\n    obj?.body?.input,\n    obj?.payload?.chatInput,\n    obj?.payload?.message,\n    obj?.payload?.text,\n    obj?.payload?.input,\n    obj?.data?.chatInput,\n    obj?.data?.message,\n    obj?.data?.text,\n    obj?.data?.input,\n  ];\n  for (const c of direct) {\n    const s = toStr(c);\n    if (s) return s;\n  }\n\n  const queue = [obj];\n  const seen = new Set();\n  while (queue.length) {\n    const cur = queue.shift();\n    if (!cur || typeof cur !== 'object') continue;\n    if (seen.has(cur)) continue;\n    seen.add(cur);\n    for (const [k, v] of Object.entries(cur)) {\n      if (typeof v === 'string' && exactKeys.has(String(k))) {\n        const s = toStr(v);\n        if (s) return s;\n      } else if (v && typeof v === 'object') {\n        queue.push(v);\n      }\n    }\n  }\n\n  return '';\n};\n\nconst message = deepFindMessage(raw);\nconst sessionId = toStr(\n  raw.chatId ||\n  raw.chat_id ||\n  raw.conversationId ||\n  raw.conversation_id ||\n  raw.metadata?.chatId ||\n  raw.metadata?.chat_id ||\n  raw.metadata?.conversationId ||\n  raw.metadata?.conversation_id ||\n  raw.sessionId ||\n  raw.session_id ||\n  raw.chatSessionId ||\n  raw.metadata?.sessionId ||\n  'default'\n);\n\nconst store = getStore();\nif (!store.chatMemoryBySession) store.chatMemoryBySession = {};\nif (!store.modeBySession) store.modeBySession = {};\nif (!store.menuShownBySession) store.menuShownBySession = {};\nif (!store.impactIntakeBySession) store.impactIntakeBySession = {};\n\nif (!Array.isArray(store.chatMemoryBySession[sessionId])) {\n  store.chatMemoryBySession[sessionId] = [];\n}\n\nconst pushMemory = (role, content) => {\n  const text = toStr(content);\n  if (!text) return;\n  store.chatMemoryBySession[sessionId].push({ role, content: text, at: new Date().toISOString() });\n  if (store.chatMemoryBySession[sessionId].length > 40) {\n    store.chatMemoryBySession[sessionId] = store.chatMemoryBySession[sessionId].slice(-40);\n  }\n};\n\nconst chatHistory = () =>\n  store.chatMemoryBySession[sessionId]\n    .slice(-12)\n    .map((t) => ({ role: t.role, content: toStr(t.content) }));\n\nconst menuText = [\n  'Escolha uma opcao para continuar (envie apenas 1, 2 ou 3):',\n  '1) Nova analise de Impacto',\n  '2) Duvida sobre funcionalidade ja implementada',\n  '3) Correcao de PRs abertas',\n  '',\n  'Comandos uteis:',\n  '/menu: voltar ao menu',\n  '/reset: limpar estado da conversa'\n].join('\\n');\n\nconst questions = [\n  { field: 'problema', text: 'Qual problema ou oportunidade essa alteracao resolve?' },\n  { field: 'mudanca', text: 'Descreva a mudanca como voce espera ver no produto.' },\n  { field: 'evidencias', text: 'Quais evidencias/criterios de aceite comprovam que a entrega esta pronta? (lista: uma por linha, ou separadas por \";\")' },\n  { field: 'restricoes', text: 'Limites de prazo, compliance, integracoes proibidas, etc. (lista: uma por linha, ou separadas por \";\")' },\n];\nconst questionNorms = questions.map((q) => norm(q.text));\n\nconst emptyIntake = () => ({\n  step: 0,\n  problema: '',\n  mudanca: '',\n  evidencias: [],\n  restricoes: [],\n  status: '',\n  diagnostico: '',\n  evidencias_lista: [],\n});\n\nconst askQuestion = (step) => {\n  const idx = Math.max(0, Math.min(Number(step || 0), questions.length - 1));\n  return questions[idx].text;\n};\n\nconst parseList = (input) =>\n  toStr(input)\n    .split(/\\n|;|\\|/g)\n    .map((s) => toStr(s).replace(/^[-*\\d.)\\s]+/, ''))\n    .filter(Boolean);\n\nconst inferLastAskedStepFromRaw = (obj) => {\n  let blob = '';\n  try { blob = norm(JSON.stringify(obj || {})); } catch (_e) { blob = ''; }\n  if (!blob) return -1;\n  let last = -1;\n  for (let i = 0; i < questionNorms.length; i++) {\n    if (blob.includes(questionNorms[i])) last = i;\n  }\n  return last;\n};\n\nconst resetSession = () => {\n  delete store.modeBySession[sessionId];\n  delete store.impactIntakeBySession[sessionId];\n  store.menuShownBySession[sessionId] = true;\n};\n\nconst currentMode = toStr(store.modeBySession[sessionId] || '');\n\nif (!message) {\n  store.menuShownBySession[sessionId] = true;\n  const output = menuText;\n  pushMemory('assistant', output);\n  return [{ json: { option: 'invalid', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n}\n\nconst lower = norm(message);\nif (lower === '/reset' || lower === '/menu') {\n  resetSession();\n  const output = menuText;\n  pushMemory('assistant', output);\n  return [{ json: { option: 'invalid', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n}\n\npushMemory('user', message);\n\nconst optionMatch = toStr(message).match(/^\\s*([123])\\s*$/);\n\n// Primeira interacao: mostra menu apenas quando nao for opcao valida.\nif (!store.menuShownBySession[sessionId] && !currentMode && !optionMatch) {\n  store.menuShownBySession[sessionId] = true;\n  const output = menuText;\n  pushMemory('assistant', output);\n  return [{ json: { option: 'invalid', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n}\n\nif (currentMode === 'impact_intake') {\n  const state = store.impactIntakeBySession[sessionId] || emptyIntake();\n  const idx = Math.max(0, Math.min(Number(state.step || 0), questions.length - 1));\n  const field = questions[idx].field;\n\n  if (field === 'evidencias' || field === 'restricoes') state[field] = parseList(message);\n  else state[field] = toStr(message);\n\n  state.step = idx + 1;\n\n  if (state.step >= questions.length) {\n    const evidenciasLista = Array.isArray(state.evidencias) ? state.evidencias : [];\n    const restricoesLista = Array.isArray(state.restricoes) ? state.restricoes : [];\n\n    delete store.modeBySession[sessionId];\n    delete store.impactIntakeBySession[sessionId];\n\n    return [{\n      json: {\n        option: '1',\n        route: 'impact_ready',\n        ready_for_impact: true,\n        session_id: sessionId,\n        chat_history: chatHistory(),\n        problema: toStr(state.problema),\n        mudanca: toStr(state.mudanca),\n        evidencias: evidenciasLista.join('; '),\n        restricoes: restricoesLista.join('; '),\n        status: toStr(state.status),\n        diagnostico: toStr(state.diagnostico),\n        evidencias_lista: evidenciasLista,\n        restricoes_lista: restricoesLista,\n      }\n    }];\n  }\n\n  store.impactIntakeBySession[sessionId] = state;\n  const output = askQuestion(state.step);\n  pushMemory('assistant', output);\n  return [{ json: { option: '1', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n}\n\nif (currentMode === 'pr_qa') {\n  return [{\n    json: {\n      option: '2',\n      route: 'pr_qa',\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      question: message,\n      owner: toStr(getEnv('GITHUB_OWNER') || 'oliversoft-tech'),\n      github_token: toStr(getEnv('GITHUB_TOKEN') || ''),\n      llm_model: toStr(getEnv('LLM_MODEL') || 'claude-3-5-sonnet-20241022')\n    }\n  }];\n}\n\nif (currentMode === 'correction_propose') {\n  return [{\n    json: {\n      option: '3',\n      route: 'correction_propose',\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      question: message,\n      owner: toStr(getEnv('GITHUB_OWNER') || 'oliversoft-tech'),\n      github_token: toStr(getEnv('GITHUB_TOKEN') || ''),\n      llm_model: toStr(getEnv('LLM_MODEL') || 'claude-3-5-sonnet-20241022')\n    }\n  }];\n}\n\n// Fallback sem memoria persistida: infere a pergunta atual pelo payload.\nif (!currentMode && !optionMatch) {\n  const inferredStep = inferLastAskedStepFromRaw(raw);\n  if (inferredStep >= 0) {\n    const st = store.impactIntakeBySession[sessionId] || emptyIntake();\n    const idx = Math.max(0, Math.min(inferredStep, questions.length - 1));\n    const field = questions[idx].field;\n    if (field === 'evidencias' || field === 'restricoes') st[field] = parseList(message);\n    else st[field] = toStr(message);\n    st.step = idx + 1;\n\n    if (st.step >= questions.length) {\n      const evidenciasLista = Array.isArray(st.evidencias) ? st.evidencias : [];\n      const restricoesLista = Array.isArray(st.restricoes) ? st.restricoes : [];\n      delete store.modeBySession[sessionId];\n      delete store.impactIntakeBySession[sessionId];\n      return [{\n        json: {\n          option: '1',\n          route: 'impact_ready',\n          ready_for_impact: true,\n          session_id: sessionId,\n          chat_history: chatHistory(),\n          problema: toStr(st.problema),\n          mudanca: toStr(st.mudanca),\n          evidencias: evidenciasLista.join('; '),\n          restricoes: restricoesLista.join('; '),\n          status: toStr(st.status),\n          diagnostico: toStr(st.diagnostico),\n          evidencias_lista: evidenciasLista,\n          restricoes_lista: restricoesLista,\n        }\n      }];\n    }\n\n    store.modeBySession[sessionId] = 'impact_intake';\n    store.impactIntakeBySession[sessionId] = st;\n    const output = askQuestion(st.step);\n    pushMemory('assistant', output);\n    return [{ json: { option: '1', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n  }\n}\n\nif (!optionMatch) {\n  const output = 'Opcao invalida! Escolha 1, 2 ou 3.\\n\\n' + menuText;\n  pushMemory('assistant', output);\n  return [{ json: { option: 'invalid', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n}\n\nconst opt = optionMatch[1];\nif (opt === '1') {\n  store.modeBySession[sessionId] = 'impact_intake';\n  const st = emptyIntake();\n  store.impactIntakeBySession[sessionId] = st;\n  const output = askQuestion(0);\n  pushMemory('assistant', output);\n  return [{ json: { option: '1', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n}\n\nif (opt === '2') {\n  store.modeBySession[sessionId] = 'pr_qa';\n  const output = 'Opcao 2 selecionada. Agora descreva sua duvida sobre funcionalidade ja implementada.';\n  pushMemory('assistant', output);\n  return [{ json: { option: '2', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n}\n\nstore.modeBySession[sessionId] = 'correction_propose';\nconst output = 'Opcao 3 selecionada. Agora descreva a correcao desejada nas PRs abertas.';\npushMemory('assistant', output);\nreturn [{ json: { option: '3', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output } }];\n"
+      },
+      "id": "d31c28c9-05c1-4e3e-bed1-618828f89cd9",
+      "name": "Normalize Chat Input1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        416
+      ],
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chat Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Call 'Impact Analysis'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table (PR QA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Menu Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Chat Input1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "pinData": {}
+}

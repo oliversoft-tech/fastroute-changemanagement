@@ -1,0 +1,915 @@
+18:46:26.804 [ INFO] maestro.cli.report.TestDebugReporter.logSystemInfo: Debug output path: /Users/william/vscode-projects/fastroute-changemanagement/.maestro/debug/sync-all-operations-20260305-184625/.maestro/tests/2026-03-05_184626
+18:46:26.805 [ INFO] MAESTRO.logSystemInfo: ---- System Info ----
+18:46:26.805 [ INFO] MAESTRO.logSystemInfo: Maestro Version: 2.2.0
+18:46:26.806 [ INFO] MAESTRO.logSystemInfo: CI: Undefined
+18:46:26.806 [ INFO] MAESTRO.logSystemInfo: OS Name: Mac OS X
+18:46:26.806 [ INFO] MAESTRO.logSystemInfo: OS Version: 15.6.1
+18:46:26.806 [ INFO] MAESTRO.logSystemInfo: Architecture: aarch64
+18:46:26.806 [ INFO] MAESTRO.logSystemInfo: Java Version: 17
+18:46:26.865 [ INFO] MAESTRO.logSystemInfo: Xcode Version: 26.3
+18:46:26.868 [ INFO] MAESTRO.logSystemInfo: Flutter Version: Undefined
+18:46:26.870 [ INFO] MAESTRO.logSystemInfo: Flutter Channel: Undefined
+18:46:26.871 [ INFO] MAESTRO.logSystemInfo: ---------------------
+18:46:27.086 [DEBUG] io.micrometer.common.util.internal.logging.InternalLoggerFactory.newDefaultFactory: Using SLF4J as the default logging framework
+18:46:27.357 [ INFO] maestro.cli.command.TestCommand.runShardSuite: [shard 1] Selected device 269FCCBD-3899-4AAF-B00D-4DE616487ECE using port 7001 with execution plan ExecutionPlan(flowsToRun=[/Users/william/vscode-projects/fastroute-changemanagement/./.maestro/flows/flow-sync-all-operations.yaml], sequence=FlowSequence(flows=[], continueOnFailure=true), workspaceConfig=WorkspaceConfig(flows=null, includeTags=null, excludeTags=null, executionOrder=null, baselineBranch=null, notifications=null, disableRetries=false, platform=PlatformConfiguration(android=AndroidConfiguration(disableAnimations=false), ios=IOSConfiguration(disableAnimations=false, snapshotKeyHonorModalViews=null)), testOutputDir=null))
+18:46:27.496 [TRACE] ios.xctest.XCTestIOSDevice.open: Opening a connection
+18:46:27.496 [TRACE] xcuitest.XCTestDriverClient.restartXCTestRunner: Restarting XCTest Runner (uninstalling, installing and starting)
+18:46:27.496 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:27.498 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:27.498 [TRACE] xcuitest.XCTestDriverClient.restartXCTestRunner: XCTest Runner uninstalled, will install and start it
+18:46:27.498 [ INFO] xcuitest.installer.LocalXCTestInstaller.start$lambda$3: start()
+18:46:27.498 [ INFO] xcuitest.installer.LocalXCTestInstaller.start$lambda$3: [Start] Install XCUITest runner on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:27.498 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:27.498 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:27.498 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Start] Writing build products
+18:46:27.527 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Done] Writing build products
+18:46:27.527 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Start] Writing maestro-driver-iosUITests-Runner app
+18:46:27.629 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Done] Writing maestro-driver-iosUITests-Runner app
+18:46:27.629 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Start] Writing maestro-driver-ios app
+18:46:27.633 [ INFO] xcuitest.installer.IOSBuildProductsExtractor.extract: [Done] Writing maestro-driver-ios app
+18:46:27.633 [ INFO] xcuitest.installer.LocalXCTestInstaller.startXCTestRunner: Installing driver with xcodebuild
+18:46:27.634 [ INFO] xcuitest.installer.LocalXCTestInstaller.startXCTestRunner: [Start] Running XcUITest with `xcodebuild test-without-building` with 7001 and config: IOSDriverConfig(prebuiltRunner=false, sourceDirectory=driver-iPhoneSimulator, context=CLI, snapshotKeyHonorModalViews=null)
+18:46:27.635 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [xcodebuild, test-without-building, -xctestrun, /var/folders/f5/2lwxlwyx5yj2z89301k4q3j40000gn/T/269FCCBD-3899-4AAF-B00D-4DE616487ECE10412918417817506160/maestro-driver-ios-config.xctestrun, -destination, id=269FCCBD-3899-4AAF-B00D-4DE616487ECE, -derivedDataPath, /var/folders/f5/2lwxlwyx5yj2z89301k4q3j40000gn/T/maestro_xctestrunner_xcodebuild_output7119522570804801842] with {TEST_RUNNER_PORT=7001}
+18:46:27.638 [ INFO] xcuitest.installer.LocalXCTestInstaller.startXCTestRunner: [Done] Running XcUITest with `xcodebuild test-without-building`
+18:46:27.638 [ INFO] xcuitest.installer.LocalXCTestInstaller.start$lambda$3: [Done] Install XCUITest runner on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:27.638 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:27.639 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:28.144 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:28.145 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:28.650 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:28.651 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:29.156 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:29.157 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:29.663 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:29.663 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:30.169 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:30.170 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:30.674 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:30.675 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Failed] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE, exception: java.net.ConnectException: Failed to connect to /127.0.0.1:7001
+18:46:31.181 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Start] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:31.192 [ INFO] xcuitest.installer.LocalXCTestInstaller.xcTestDriverStatusCheck: [Done] Perform XCUITest driver status check on 269FCCBD-3899-4AAF-B00D-4DE616487ECE
+18:46:31.220 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow:  Running flow flow-sync-all-operations
+18:46:31.226 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Getting device info
+18:46:31.275 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:31.277 [ INFO] maestro.Maestro.cachedDeviceInfo_delegate$lambda$0: Got device info: DeviceInfo(platform=IOS, widthPixels=1320, heightPixels=2868, widthGrid=440, heightGrid=956)
+18:46:31.309 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Define variables RUNNING
+18:46:31.311 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Define variables COMPLETED
+18:46:31.311 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Apply configuration RUNNING
+18:46:31.311 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Apply configuration COMPLETED
+18:46:31.311 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Launch app "com.oliverbill.fastroutemobile" with clear state RUNNING
+18:46:31.311 [ INFO] maestro.Maestro.clearAppState: Clearing app state com.oliverbill.fastroutemobile
+18:46:31.312 [ INFO] util.LocalSimulatorUtils.clearAppState: Clearing app com.oliverbill.fastroutemobile state
+18:46:31.312 [ INFO] util.LocalSimulatorUtils.terminate: [Start] Terminating app com.oliverbill.fastroutemobile
+18:46:31.312 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [xcrun, simctl, terminate, 269FCCBD-3899-4AAF-B00D-4DE616487ECE, com.oliverbill.fastroutemobile] with {}
+18:46:31.409 [ INFO] util.LocalSimulatorUtils.terminate: [Done] Terminating app com.oliverbill.fastroutemobile
+18:46:31.791 [ INFO] util.LocalSimulatorUtils.reinstallApp: Copying app binary from /Users/william/Library/Developer/CoreSimulator/Devices/269FCCBD-3899-4AAF-B00D-4DE616487ECE/data/Containers/Bundle/Application/AE4D036E-6B1A-4C84-AE0E-62AAB7F10CB4/com.oliverbill.fastroutemobile-1772736328020.app to /var/folders/f5/2lwxlwyx5yj2z89301k4q3j40000gn/T/12440757395849194678/com.oliverbill.fastroutemobile-1772736391790.app
+18:46:31.834 [ INFO] util.LocalSimulatorUtils.reinstallApp: Reinstalling and launching com.oliverbill.fastroutemobile
+18:46:31.834 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [xcrun, simctl, uninstall, 269FCCBD-3899-4AAF-B00D-4DE616487ECE, com.oliverbill.fastroutemobile] with {}
+18:46:31.953 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [xcrun, simctl, install, 269FCCBD-3899-4AAF-B00D-4DE616487ECE, /var/folders/f5/2lwxlwyx5yj2z89301k4q3j40000gn/T/12440757395849194678/com.oliverbill.fastroutemobile-1772736391790.app] with {}
+18:46:32.185 [ INFO] util.LocalSimulatorUtils.reinstallApp: App com.oliverbill.fastroutemobile reinstalled and launched
+18:46:32.185 [ INFO] device.SimctlIOSDevice.setPermissions: [Start] Setting permissions all=allow through applesimutils
+18:46:32.186 [ INFO] util.LocalSimulatorUtils.setAppleSimutilsPermissions: [Start] Setting permissions via pinned applesimutils
+18:46:32.186 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [/Users/william/.maestro/deps/applesimutils, --byId, 269FCCBD-3899-4AAF-B00D-4DE616487ECE, --bundle, com.oliverbill.fastroutemobile, --setPermissions, calendar=YES,camera=YES,contacts=YES,faceid=YES,homekit=YES,medialibrary=YES,microphone=YES,motion=YES,photos=YES,reminders=YES,siri=YES,speech=YES,userTracking=YES] with {}
+18:46:32.326 [ INFO] util.LocalSimulatorUtils.setAppleSimutilsPermissions: [Done] Setting permissions pinned applesimutils
+18:46:32.326 [ INFO] device.SimctlIOSDevice.setPermissions: [Done] Setting permissions through applesimutils
+18:46:32.327 [ INFO] device.SimctlIOSDevice.setPermissions: [Start] Setting Permissions all=allow through simctl
+18:46:32.327 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [xcrun, simctl, privacy, 269FCCBD-3899-4AAF-B00D-4DE616487ECE, grant, location-always, com.oliverbill.fastroutemobile] with {}
+18:46:32.403 [ INFO] device.SimctlIOSDevice.setPermissions: [Done] Setting Permissions all=allow through simctl
+18:46:32.413 [ INFO] maestro.Maestro.launchApp: Launching app com.oliverbill.fastroutemobile
+18:46:32.413 [ INFO] maestro.Maestro.launchApp: Stopping com.oliverbill.fastroutemobile app during launch
+18:46:32.419 [ INFO] util.CommandLineUtils.runCommand: Running command line operation: [xcrun, simctl, launch, 269FCCBD-3899-4AAF-B00D-4DE616487ECE, com.oliverbill.fastroutemobile] with {}
+18:46:32.577 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Launch app "com.oliverbill.fastroutemobile" with clear state COMPLETED
+18:46:32.577 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Run flow when "Entrar no Sistema" is visible RUNNING
+18:46:32.626 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:32.626 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.198 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.198 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.210 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.210 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.301 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.301 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.308 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.309 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.401 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.402 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.410 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.410 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.497 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.497 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.504 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.504 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.589 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.589 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.596 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.596 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.682 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.682 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.689 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.689 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.774 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.774 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.780 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.781 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.866 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.866 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.873 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.873 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:34.961 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:34.961 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:34.967 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:34.967 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.063 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.063 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.069 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.069 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.159 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.159 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.165 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.166 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.266 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.266 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.272 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.272 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.362 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.362 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.368 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.368 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.456 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.456 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.462 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.462 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.549 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.549 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.555 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.555 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.644 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.644 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.651 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.651 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.751 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.751 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.757 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.757 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.848 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.849 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.860 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.860 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:35.948 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:35.948 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:35.956 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:35.956 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.045 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.045 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.052 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.052 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.144 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.144 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.152 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.152 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.243 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.243 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.251 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.251 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.336 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.336 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.348 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.349 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.436 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.436 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.448 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.449 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.534 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.534 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.544 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.544 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.631 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.631 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.640 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.641 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.726 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.726 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.737 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.737 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.825 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.826 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.833 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.833 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:36.919 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:36.920 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:36.929 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:36.930 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.014 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.015 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.023 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.024 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.111 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.111 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.120 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.120 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.214 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.214 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.223 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.223 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.314 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.314 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.323 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.323 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.413 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.414 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.422 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.423 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.511 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.511 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.520 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.521 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.608 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.608 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.615 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.615 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.701 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.701 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.709 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.709 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.796 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.796 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.803 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.803 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.891 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.892 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:37.900 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:37.900 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:37.998 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:37.998 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.005 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.005 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.095 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.095 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.102 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.102 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.190 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.191 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.202 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.202 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.290 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.291 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.297 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.297 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.385 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.385 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.392 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.393 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.481 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.481 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.488 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.488 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.577 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.577 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.588 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.588 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.679 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.679 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.684 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.684 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.774 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.774 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.780 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.780 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.870 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.870 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.877 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.877 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:38.965 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:38.966 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:38.973 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:38.973 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.058 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.058 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.065 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:39.065 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.151 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.151 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.158 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:39.159 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.251 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.252 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.258 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:39.258 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.346 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.347 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.456 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:39.457 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.550 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.550 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.556 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:39.556 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.646 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.646 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.652 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:39.652 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.737 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.738 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.741 [ INFO] maestro.orchestra.Orchestra.executeCommands: [Command execution] CommandSkipped: null
+18:46:39.743 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$13: Run flow when "Entrar no Sistema" is visible SKIPPED
+18:46:39.749 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Assert that "Minhas Rotas" is visible RUNNING
+18:46:39.756 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:39.756 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.842 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.842 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.852 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Assert that "Minhas Rotas" is visible COMPLETED
+18:46:39.852 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Tap on "Criar Rota" RUNNING
+18:46:39.858 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:39.858 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:39.945 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 22
+18:46:39.945 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 22
+18:46:39.948 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={accessibilityText=Criar Rota, title=, value=, text=, hintText=, resource-id=, bounds=[31,408][409,454], enabled=true, focused=false, selected=false, checked=false}, children=[], clickable=null, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=31, y=408, width=378, height=46))
+18:46:39.948 [ INFO] device.IOSDevice.invoke-F9mIFpk: Waiting for animation to end with timeout 3000
+18:46:40.096 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = true
+18:46:40.098 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = true
+18:46:40.098 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+18:46:40.101 [ INFO] maestro.Maestro.screenshotBasedTap-hbl3e4M: Try tapping at (220, 431) using hierarchy based logic for wait
+18:46:40.102 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:46:40.102 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:46:40.660 [ INFO] device.IOSDevice.invoke-F9mIFpk: Waiting for animation to end with timeout 3000
+18:46:40.813 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:40.814 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:40.953 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:40.953 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:41.095 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:41.095 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:41.232 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:41.233 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:41.371 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:41.371 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:41.508 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:41.508 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:41.648 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:41.648 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:41.794 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = true
+18:46:41.795 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = true
+18:46:41.795 [ INFO] maestro.Maestro.screenshotBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+18:46:41.795 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Tap on "Criar Rota" COMPLETED
+18:46:41.796 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Assert that "Importar arquivo de rota" is visible RUNNING
+18:46:41.805 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:41.805 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:41.907 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 23
+18:46:41.907 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 23
+18:46:41.909 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Assert that "Importar arquivo de rota" is visible COMPLETED
+18:46:41.910 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Tap on "EPS (METROS)" RUNNING
+18:46:41.916 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:41.916 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:42.011 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 23
+18:46:42.012 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 23
+18:46:42.013 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={accessibilityText=EPS (METROS), title=, value=, text=, hintText=, resource-id=, bounds=[31,403][409,418], enabled=true, focused=false, selected=false, checked=false}, children=[], clickable=null, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=31, y=403, width=378, height=15))
+18:46:42.013 [ INFO] device.IOSDevice.invoke-F9mIFpk: Waiting for animation to end with timeout 3000
+18:46:42.153 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:42.153 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:42.294 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:42.294 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:42.431 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:42.431 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:42.567 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = true
+18:46:42.568 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = true
+18:46:42.568 [ INFO] maestro.Maestro.screenshotBasedTap-hbl3e4M: Try tapping at (220, 410) using hierarchy based logic for wait
+18:46:42.568 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:46:42.568 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:46:43.019 [ INFO] device.IOSDevice.invoke-F9mIFpk: Waiting for animation to end with timeout 3000
+18:46:43.190 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = true
+18:46:43.190 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = true
+18:46:43.191 [ INFO] maestro.Maestro.screenshotBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+18:46:43.191 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Tap on "EPS (METROS)" COMPLETED
+18:46:43.191 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Erase text RUNNING
+18:46:43.193 [ INFO] maestro.Maestro.eraseText: Erasing 50 characters
+18:46:46.825 [ INFO] device.IOSDevice.invoke-F9mIFpk: Waiting for animation to end with timeout 3000
+18:46:47.014 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = true
+18:46:47.015 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = true
+18:46:47.015 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Erase text COMPLETED
+18:46:47.016 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Input text 120 RUNNING
+18:46:47.016 [ INFO] maestro.Maestro.inputText: Inputting text: 120
+18:46:49.073 [ INFO] device.IOSDevice.invoke-F9mIFpk: Waiting for animation to end with timeout 3000
+18:46:49.258 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = true
+18:46:49.259 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = true
+18:46:49.259 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Input text 120 COMPLETED
+18:46:49.259 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Tap on "Confirmar importação" RUNNING
+18:46:49.265 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:49.266 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:49.358 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 23
+18:46:49.358 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 23
+18:46:49.360 [ INFO] maestro.Maestro.tap-BUbHBYE: Tapping on element:  UiElement(treeNode=TreeNode(attributes={accessibilityText=Confirmar importação, title=, value=, text=, hintText=, resource-id=, bounds=[31,472][409,518], enabled=true, focused=false, selected=false, checked=false}, children=[], clickable=null, enabled=true, focused=false, checked=false, selected=false), bounds=Bounds(x=31, y=472, width=378, height=46))
+18:46:49.361 [ INFO] device.IOSDevice.invoke-F9mIFpk: Waiting for animation to end with timeout 3000
+18:46:49.501 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = true
+18:46:49.502 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = true
+18:46:49.502 [ INFO] maestro.Maestro.tap-BUbHBYE: Refreshed element
+18:46:49.502 [ INFO] maestro.Maestro.screenshotBasedTap-hbl3e4M: Try tapping at (220, 495) using hierarchy based logic for wait
+18:46:49.502 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to byte array
+18:46:49.502 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:46:49.950 [ INFO] device.IOSDevice.invoke-F9mIFpk: Waiting for animation to end with timeout 3000
+18:46:50.099 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:50.100 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:50.244 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:50.245 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:50.373 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:50.373 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:50.520 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = false
+18:46:50.521 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = false
+18:46:50.656 [ INFO] ios.xctest.XCTestIOSDevice.isScreenStatic$lambda$15: Screen diff request finished with isScreenStatic = true
+18:46:50.656 [ INFO] device.IOSDevice.waitUntilScreenIsStatic$lambda$54$lambda$53: screen static = true
+18:46:50.656 [ INFO] maestro.Maestro.screenshotBasedTap-hbl3e4M: Something have changed in the UI judging by view hierarchy. Proceed.
+18:46:50.656 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$7: Tap on "Confirmar importação" COMPLETED
+18:46:50.656 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$5: Assert that "Importação (" is visible RUNNING
+18:46:50.663 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:50.663 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:50.798 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 27
+18:46:50.799 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 27
+18:46:50.806 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:50.806 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:50.908 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 27
+18:46:50.908 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 27
+18:46:50.914 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:50.914 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:51.132 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:51.132 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:51.139 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:51.139 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:51.303 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:51.303 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:51.315 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:51.315 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:51.456 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:51.456 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:51.465 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:51.465 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:51.605 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:51.606 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:51.615 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:51.615 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:51.751 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:51.751 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:51.764 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:51.765 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:51.893 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:51.893 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:51.902 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:51.903 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:52.034 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:52.035 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:52.043 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:52.043 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:52.173 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:52.173 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:52.182 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:52.182 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:52.313 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:52.315 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:52.324 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:52.324 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:52.457 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:52.457 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:52.463 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:52.463 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:52.589 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:52.589 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:52.601 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:52.601 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:52.727 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:52.727 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:52.736 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:52.736 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:52.864 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:52.864 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:52.874 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:52.874 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:53.001 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:53.001 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:53.012 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:53.012 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:53.141 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:53.141 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:53.152 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:53.152 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:53.281 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:53.281 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:53.291 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:53.291 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:53.424 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:53.424 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:53.430 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:53.430 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:53.559 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:53.559 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:53.566 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:53.566 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:53.693 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:53.693 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:53.706 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:53.706 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:53.834 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:53.834 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:53.948 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:53.948 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:54.090 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:54.090 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:54.099 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:54.099 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:54.225 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:54.226 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:54.235 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:54.235 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:54.362 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:54.363 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:54.375 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:54.375 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:54.504 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:54.506 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:54.515 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:54.515 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:54.640 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:54.641 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:54.652 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:54.652 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:54.777 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:54.778 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:54.788 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:54.789 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:54.915 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:54.916 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:54.924 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:54.925 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:55.053 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:55.053 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:55.061 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:55.061 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:55.188 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:55.190 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:55.202 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:55.202 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:55.331 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:55.331 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:55.339 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:55.339 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:55.466 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:55.466 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:55.474 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:55.474 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:55.601 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:55.601 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:55.610 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:55.611 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:55.738 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:55.738 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:55.749 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:55.749 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:55.875 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:55.876 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:55.886 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:55.886 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:56.017 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:56.017 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:56.023 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:56.023 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:56.154 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:56.154 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:56.161 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:56.161 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:56.291 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:56.291 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:56.298 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:56.298 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:56.429 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:56.429 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:56.436 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:56.436 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:56.565 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:56.566 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:56.575 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:56.576 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:56.706 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:56.707 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:56.717 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:56.717 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:56.848 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:56.848 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:56.856 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:56.856 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:56.983 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:56.983 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:56.991 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:56.991 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:57.119 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:57.119 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:57.131 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:57.131 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:57.257 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:57.257 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:57.266 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:57.266 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:57.393 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:57.394 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:57.405 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:57.405 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:57.533 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:57.534 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:57.545 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:57.546 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:57.676 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:57.676 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:57.683 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:57.683 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:57.814 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:57.815 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:57.824 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:57.825 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:57.950 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:57.950 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:57.961 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:57.961 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:58.099 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:58.099 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:58.106 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:58.106 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:58.232 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:58.233 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:58.241 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:58.241 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:58.370 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:58.370 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:58.381 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:58.381 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:58.508 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:58.509 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:58.519 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:58.519 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:58.650 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:58.650 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:58.660 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:58.660 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:58.787 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:58.787 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:58.800 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:58.800 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:58.926 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:58.926 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:58.939 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:58.939 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:59.067 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:59.068 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:59.179 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:59.180 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:59.325 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:59.325 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:59.335 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:59.335 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:59.466 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:59.466 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:59.475 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:59.475 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:59.603 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:59.603 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:59.611 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:59.611 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:59.740 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:59.740 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:59.749 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:59.749 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:46:59.876 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:46:59.876 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:46:59.886 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:46:59.886 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:00.015 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:00.017 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:00.025 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:00.025 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:00.156 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:00.157 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:00.164 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:00.164 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:00.299 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:00.299 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:00.306 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:00.306 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:00.436 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:00.436 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:00.447 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:00.447 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:00.576 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:00.576 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:00.587 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:00.587 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:00.715 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:00.715 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:00.723 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:00.723 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:00.850 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:00.850 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:00.859 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:00.859 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:00.991 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:00.991 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:01.000 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:01.000 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:01.129 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:01.130 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:01.138 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:01.138 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:01.266 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:01.267 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:01.276 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:01.277 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:01.403 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:01.403 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:01.411 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:01.412 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:01.543 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:01.543 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:01.553 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:01.554 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:01.681 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:01.681 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:01.688 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:01.688 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:01.813 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:01.814 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:01.822 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:01.823 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:01.950 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:01.950 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:01.959 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:01.960 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:02.088 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:02.088 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:02.101 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:02.101 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:02.232 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:02.232 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:02.240 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:02.240 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:02.366 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:02.366 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:02.374 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:02.374 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:02.501 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:02.501 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:02.511 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:02.512 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:02.639 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:02.641 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:02.651 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:02.651 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:02.780 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:02.780 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:02.788 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:02.788 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:02.915 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:02.915 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:02.922 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:02.922 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:03.050 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:03.050 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:03.061 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:03.061 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:03.190 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:03.190 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:03.199 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:03.199 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:03.324 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:03.324 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:03.332 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:03.332 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:03.461 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:03.461 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:03.471 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:03.471 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:03.599 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:03.599 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:03.610 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:03.610 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:03.741 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:03.741 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:03.751 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:03.751 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:03.877 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:03.877 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:03.889 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:03.889 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:04.017 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:04.018 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:04.026 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:04.026 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:04.154 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:04.154 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:04.163 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:04.163 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:04.296 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:04.296 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:04.305 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:04.305 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:04.436 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:04.437 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:04.447 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:04.448 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:04.575 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:04.575 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:04.584 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:04.585 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:04.711 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:04.712 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:04.722 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:04.722 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:04.850 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:04.850 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:04.860 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:04.860 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:04.990 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:04.990 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:05.002 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:05.002 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:05.132 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:05.132 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:05.142 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:05.142 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:05.269 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:05.270 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:05.280 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:05.280 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:05.408 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:05.408 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:05.417 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:05.417 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:05.545 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:05.545 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:05.556 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:05.556 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:05.682 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:05.683 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:05.692 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:05.692 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:05.817 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:05.817 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:05.828 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:05.828 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:05.957 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:05.957 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:05.968 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:05.968 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:06.099 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:06.099 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:06.108 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:06.108 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:06.236 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:06.236 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:06.247 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:06.248 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:06.374 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:06.374 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:06.383 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:06.383 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:06.511 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:06.511 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:06.521 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:06.521 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:06.648 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:06.648 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:06.658 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:06.658 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:06.785 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:06.786 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:06.796 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:06.796 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:06.923 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:06.923 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:06.932 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:06.932 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:07.059 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:07.059 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:07.067 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:07.067 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:07.197 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:07.198 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:07.206 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:07.206 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:07.333 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:07.333 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:07.341 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:07.341 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:07.468 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:07.468 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:07.477 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:07.477 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:07.608 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:07.608 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:07.618 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:07.618 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:07.747 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:07.747 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:07.755 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:07.755 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:07.882 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:07.882 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:07.890 [ INFO] ios.xctest.XCTestIOSDevice.deviceInfo$lambda$0: Device info DeviceInfo(widthPixels=1320, heightPixels=2868, widthPoints=440, heightPoints=956)
+18:47:07.890 [ INFO] device.IOSDevice.viewHierarchy: Requesting view hierarchy of the screen
+18:47:08.022 [TRACE] ios.xctest.XCTestIOSDevice.viewHierarchy$lambda$1: Depth received: 33
+18:47:08.022 [ INFO] device.IOSDevice.viewHierarchy: Depth of the screen is 33
+18:47:08.022 [ERROR] maestro.orchestra.Orchestra.executeCommands: [Command execution] CommandFailed: Assertion is false: "Importação (" is visible
+18:47:08.023 [ INFO] maestro.cli.runner.TestSuiteInteractor.runFlow$lambda$17$lambda$9: Assert that "Importação (" is visible FAILED
+18:47:08.027 [ INFO] maestro.Maestro.takeScreenshot: Taking screenshot
+18:47:08.027 [TRACE] maestro.utils.ScreenshotUtils.takeScreenshot: Taking screenshot to output sink
+18:47:08.335 [ INFO] maestro.cli.report.TestDebugReporter.deleteOldFiles: Performing purge of logs older than 14 days from /Users/william/vscode-projects/fastroute-changemanagement/.maestro/debug/sync-all-operations-20260305-184625/.maestro/tests

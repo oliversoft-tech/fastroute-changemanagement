@@ -1,0 +1,2496 @@
+[ {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Criar Rota",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736484209,
+    "duration" : 1760,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar importação",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736493661,
+    "duration" : 1741,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "defineVariablesCommand" : {
+      "env" : {
+        "MAESTRO_FILENAME" : "flow-sync-all-operations",
+        "MAESTRO_DEVICE_UDID" : "269FCCBD-3899-4AAF-B00D-4DE616487ECE",
+        "MAESTRO_SHARD_ID" : "1",
+        "MAESTRO_SHARD_INDEX" : "0"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736475685,
+    "duration" : 2,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "eraseTextCommand" : {
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736487597,
+    "duration" : 3810,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Confirmar ordem",
+            "optional" : true
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : true
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Paradas",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Rota #",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "SKIPPED",
+    "timestamp" : 1772736502667,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Confirmar",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Rotas da Importação",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      }, {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "(?s).*Rota #.*2 waypoints.*",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Paradas",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Importação (",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "SKIPPED",
+    "timestamp" : 1772736495402,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Importar arquivo de rota",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736485969,
+    "duration" : 209,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Senha",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "inputTextCommand" : {
+          "text" : "12345",
+          "optional" : false
+        }
+      }, {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Entrar no Sistema",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Entrar no Sistema",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "SKIPPED",
+    "timestamp" : 1772736476922,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "applyConfigurationCommand" : {
+      "config" : {
+        "appId" : "com.oliverbill.fastroutemobile"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736475687,
+    "duration" : 0,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "launchAppCommand" : {
+      "appId" : "com.oliverbill.fastroutemobile",
+      "clearState" : true,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736475687,
+    "duration" : 1234,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Minhas Rotas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736484063,
+    "duration" : 146,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "EPS (METROS)",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736486178,
+    "duration" : 1419,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "inputTextCommand" : {
+      "text" : "120",
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736491407,
+    "duration" : 2254,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Ver no mapa",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "FAILED",
+    "timestamp" : 1772736502943,
+    "duration" : 9677,
+    "error" : {
+      "message" : "Element not found: Text matching regex: Ver no mapa",
+      "hierarchyRoot" : {
+        "attributes" : {
+          "bounds" : "[0,0][0,0]",
+          "enabled" : "false",
+          "focused" : "false",
+          "selected" : "false",
+          "checked" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "accessibilityText" : "FastRoute",
+            "bounds" : "[0,0][440,956]",
+            "enabled" : "true",
+            "focused" : "false",
+            "selected" : "false",
+            "checked" : "false"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,0][440,956]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "children" : [ {
+              "attributes" : {
+                "bounds" : "[0,0][440,956]",
+                "enabled" : "true",
+                "focused" : "false",
+                "selected" : "false",
+                "checked" : "false"
+              },
+              "children" : [ {
+                "attributes" : {
+                  "bounds" : "[0,0][440,956]",
+                  "enabled" : "true",
+                  "focused" : "false",
+                  "selected" : "false",
+                  "checked" : "false"
+                },
+                "children" : [ {
+                  "attributes" : {
+                    "bounds" : "[0,0][440,956]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "children" : [ {
+                    "attributes" : {
+                      "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Importação (6 rotas) EPS (m) Atual: 50m Confirmar Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real. Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page Mapa da Rota",
+                      "bounds" : "[0,0][440,956]",
+                      "enabled" : "true",
+                      "focused" : "false",
+                      "selected" : "false",
+                      "checked" : "false"
+                    },
+                    "children" : [ {
+                      "attributes" : {
+                        "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Importação (6 rotas) EPS (m) Atual: 50m Confirmar Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real. Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page Mapa da Rota",
+                        "bounds" : "[0,0][440,956]",
+                        "enabled" : "true",
+                        "focused" : "false",
+                        "selected" : "false",
+                        "checked" : "false"
+                      },
+                      "children" : [ {
+                        "attributes" : {
+                          "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Importação (6 rotas) EPS (m) Atual: 50m Confirmar Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real. Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page Mapa da Rota",
+                          "bounds" : "[0,0][440,956]",
+                          "enabled" : "true",
+                          "focused" : "false",
+                          "selected" : "false",
+                          "checked" : "false"
+                        },
+                        "children" : [ {
+                          "attributes" : {
+                            "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Importação (6 rotas) EPS (m) Atual: 50m Confirmar Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real. Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page Mapa da Rota",
+                            "bounds" : "[0,0][440,956]",
+                            "enabled" : "true",
+                            "focused" : "false",
+                            "selected" : "false",
+                            "checked" : "false"
+                          },
+                          "children" : [ {
+                            "attributes" : {
+                              "bounds" : "[0,0][440,956]",
+                              "enabled" : "true",
+                              "focused" : "false",
+                              "selected" : "false",
+                              "checked" : "false"
+                            },
+                            "children" : [ {
+                              "attributes" : {
+                                "bounds" : "[0,0][440,956]",
+                                "enabled" : "true",
+                                "focused" : "false",
+                                "selected" : "false",
+                                "checked" : "false"
+                              },
+                              "children" : [ {
+                                "attributes" : {
+                                  "resource-id" : "Mapa da Rota",
+                                  "bounds" : "[0,62][440,116]",
+                                  "enabled" : "true",
+                                  "focused" : "false",
+                                  "selected" : "false",
+                                  "checked" : "false"
+                                },
+                                "children" : [ {
+                                  "attributes" : {
+                                    "accessibilityText" : "Minhas Rotas",
+                                    "resource-id" : "BackButton",
+                                    "bounds" : "[20,62][64,106]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                }, {
+                                  "attributes" : {
+                                    "accessibilityText" : "Mapa da Rota",
+                                    "bounds" : "[165,73][274,94]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                } ],
+                                "enabled" : true,
+                                "focused" : false,
+                                "checked" : false,
+                                "selected" : false
+                              }, {
+                                "attributes" : {
+                                  "bounds" : "[0,0][440,956]",
+                                  "enabled" : "true",
+                                  "focused" : "false",
+                                  "selected" : "false",
+                                  "checked" : "false"
+                                },
+                                "children" : [ {
+                                  "attributes" : {
+                                    "bounds" : "[0,0][440,956]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "children" : [ {
+                                    "attributes" : {
+                                      "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Importação (6 rotas) EPS (m) Atual: 50m Confirmar Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real. Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page",
+                                      "bounds" : "[0,116][440,956]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "children" : [ {
+                                      "attributes" : {
+                                        "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Importação (6 rotas) EPS (m) Atual: 50m Confirmar Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real. Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page",
+                                        "bounds" : "[0,116][440,956]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Importação (6 rotas) EPS (m) Atual: 50m Confirmar Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real. Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page",
+                                          "bounds" : "[0,116][440,956]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "children" : [ {
+                                          "attributes" : {
+                                            "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page",
+                                            "bounds" : "[0,116][440,956]",
+                                            "enabled" : "true",
+                                            "focused" : "false",
+                                            "selected" : "false",
+                                            "checked" : "false"
+                                          },
+                                          "children" : [ {
+                                            "attributes" : {
+                                              "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page",
+                                              "bounds" : "[0,116][440,956]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "accessibilityText" : "Vertical scroll bar, 1 page Horizontal scroll bar, 1 page",
+                                                "bounds" : "[0,116][440,956]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "children" : [ {
+                                                "attributes" : {
+                                                  "bounds" : "[0,116][440,956]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "bounds" : "[0,116][440,956]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "bounds" : "[0,116][440,956]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "children" : [ {
+                                                      "attributes" : {
+                                                        "bounds" : "[0,0][440,840]",
+                                                        "enabled" : "true",
+                                                        "focused" : "false",
+                                                        "selected" : "false",
+                                                        "checked" : "false"
+                                                      },
+                                                      "children" : [ {
+                                                        "attributes" : {
+                                                          "bounds" : "[0,0][440,840]",
+                                                          "enabled" : "true",
+                                                          "focused" : "false",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "bounds" : "[0,116][440,956]",
+                                                            "enabled" : "true",
+                                                            "focused" : "false",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "bounds" : "[0,116][440,956]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "children" : [ {
+                                                              "attributes" : {
+                                                                "bounds" : "[0,116][440,956]",
+                                                                "enabled" : "true",
+                                                                "focused" : "true",
+                                                                "selected" : "false",
+                                                                "checked" : "false"
+                                                              },
+                                                              "children" : [ {
+                                                                "attributes" : {
+                                                                  "bounds" : "[0,116][440,126]",
+                                                                  "enabled" : "true",
+                                                                  "focused" : "true",
+                                                                  "selected" : "false",
+                                                                  "checked" : "false"
+                                                                },
+                                                                "children" : [ {
+                                                                  "attributes" : {
+                                                                    "bounds" : "[0,116][440,126]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "children" : [ {
+                                                                    "attributes" : {
+                                                                      "bounds" : "[0,116][440,126]",
+                                                                      "enabled" : "true",
+                                                                      "focused" : "true",
+                                                                      "selected" : "false",
+                                                                      "checked" : "false"
+                                                                    },
+                                                                    "enabled" : true,
+                                                                    "focused" : true,
+                                                                    "checked" : false,
+                                                                    "selected" : false
+                                                                  } ],
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                } ],
+                                                                "enabled" : true,
+                                                                "focused" : true,
+                                                                "checked" : false,
+                                                                "selected" : false
+                                                              }, {
+                                                                "attributes" : {
+                                                                  "bounds" : "[0,116][440,126]",
+                                                                  "enabled" : "true",
+                                                                  "focused" : "true",
+                                                                  "selected" : "false",
+                                                                  "checked" : "false"
+                                                                },
+                                                                "enabled" : true,
+                                                                "focused" : true,
+                                                                "checked" : false,
+                                                                "selected" : false
+                                                              }, {
+                                                                "attributes" : {
+                                                                  "bounds" : "[0,116][440,126]",
+                                                                  "enabled" : "true",
+                                                                  "focused" : "true",
+                                                                  "selected" : "false",
+                                                                  "checked" : "false"
+                                                                },
+                                                                "enabled" : true,
+                                                                "focused" : true,
+                                                                "checked" : false,
+                                                                "selected" : false
+                                                              }, {
+                                                                "attributes" : {
+                                                                  "bounds" : "[0,116][440,126]",
+                                                                  "enabled" : "true",
+                                                                  "focused" : "true",
+                                                                  "selected" : "false",
+                                                                  "checked" : "false"
+                                                                },
+                                                                "children" : [ {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "1",
+                                                                    "bounds" : "[77,569][111,603]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "2",
+                                                                    "bounds" : "[164,506][198,540]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "3",
+                                                                    "bounds" : "[162,524][196,558]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "4",
+                                                                    "bounds" : "[148,476][182,510]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "5",
+                                                                    "bounds" : "[206,501][240,535]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "6",
+                                                                    "bounds" : "[168,476][202,510]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "7",
+                                                                    "bounds" : "[242,433][276,467]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "8",
+                                                                    "bounds" : "[223,532][257,566]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "9",
+                                                                    "bounds" : "[165,575][199,609]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "10",
+                                                                    "bounds" : "[165,531][199,565]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "11",
+                                                                    "bounds" : "[139,524][173,558]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "12",
+                                                                    "bounds" : "[114,484][148,518]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "13",
+                                                                    "bounds" : "[136,590][170,624]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "14",
+                                                                    "bounds" : "[163,494][197,528]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "15",
+                                                                    "bounds" : "[272,386][306,420]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "16",
+                                                                    "bounds" : "[117,482][151,516]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "17",
+                                                                    "bounds" : "[229,494][263,528]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "18",
+                                                                    "bounds" : "[162,623][196,657]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "19",
+                                                                    "bounds" : "[158,623][192,657]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "20",
+                                                                    "bounds" : "[200,413][234,447]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "21",
+                                                                    "bounds" : "[60,498][94,532]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "22",
+                                                                    "bounds" : "[171,594][205,628]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "23",
+                                                                    "bounds" : "[350,656][384,690]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "24",
+                                                                    "bounds" : "[244,441][278,475]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "25",
+                                                                    "bounds" : "[71,549][105,583]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "26",
+                                                                    "bounds" : "[90,563][124,597]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "27",
+                                                                    "bounds" : "[185,554][219,588]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "28",
+                                                                    "bounds" : "[126,520][160,554]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "29",
+                                                                    "bounds" : "[175,537][209,571]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "30",
+                                                                    "bounds" : "[184,576][218,610]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "31",
+                                                                    "bounds" : "[216,538][250,572]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "32",
+                                                                    "bounds" : "[178,475][212,509]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "33",
+                                                                    "bounds" : "[233,502][267,536]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "34",
+                                                                    "bounds" : "[224,409][258,443]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "35",
+                                                                    "bounds" : "[129,496][163,530]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "36",
+                                                                    "bounds" : "[158,516][192,550]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "37",
+                                                                    "bounds" : "[170,530][204,564]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "38",
+                                                                    "bounds" : "[147,626][181,660]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "39",
+                                                                    "bounds" : "[270,399][304,433]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "40",
+                                                                    "bounds" : "[106,520][140,554]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "1",
+                                                                    "bounds" : "[92,487][126,521]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "2",
+                                                                    "bounds" : "[92,487][126,521]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "1",
+                                                                    "bounds" : "[158,471][192,505]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "2",
+                                                                    "bounds" : "[158,471][192,505]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "1",
+                                                                    "bounds" : "[162,470][196,504]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "2",
+                                                                    "bounds" : "[162,469][196,503]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "1",
+                                                                    "bounds" : "[153,613][187,647]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "2",
+                                                                    "bounds" : "[154,612][188,646]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "1",
+                                                                    "bounds" : "[176,504][210,538]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "accessibilityText" : "2",
+                                                                    "bounds" : "[178,506][212,540]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                } ],
+                                                                "enabled" : true,
+                                                                "focused" : true,
+                                                                "checked" : false,
+                                                                "selected" : false
+                                                              }, {
+                                                                "attributes" : {
+                                                                  "bounds" : "[0,116][440,126]",
+                                                                  "enabled" : "true",
+                                                                  "focused" : "true",
+                                                                  "selected" : "false",
+                                                                  "checked" : "false"
+                                                                },
+                                                                "enabled" : true,
+                                                                "focused" : true,
+                                                                "checked" : false,
+                                                                "selected" : false
+                                                              }, {
+                                                                "attributes" : {
+                                                                  "bounds" : "[0,116][440,126]",
+                                                                  "enabled" : "true",
+                                                                  "focused" : "true",
+                                                                  "selected" : "false",
+                                                                  "checked" : "false"
+                                                                },
+                                                                "enabled" : true,
+                                                                "focused" : true,
+                                                                "checked" : false,
+                                                                "selected" : false
+                                                              }, {
+                                                                "attributes" : {
+                                                                  "bounds" : "[0,116][440,126]",
+                                                                  "enabled" : "true",
+                                                                  "focused" : "true",
+                                                                  "selected" : "false",
+                                                                  "checked" : "false"
+                                                                },
+                                                                "enabled" : true,
+                                                                "focused" : true,
+                                                                "checked" : false,
+                                                                "selected" : false
+                                                              }, {
+                                                                "attributes" : {
+                                                                  "bounds" : "[0,116][440,126]",
+                                                                  "enabled" : "true",
+                                                                  "focused" : "true",
+                                                                  "selected" : "false",
+                                                                  "checked" : "false"
+                                                                },
+                                                                "children" : [ {
+                                                                  "attributes" : {
+                                                                    "bounds" : "[0,116][44,191]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "children" : [ {
+                                                                    "attributes" : {
+                                                                      "accessibilityText" : "Zoom in",
+                                                                      "bounds" : "[12,128][42,159]",
+                                                                      "enabled" : "true",
+                                                                      "focused" : "true",
+                                                                      "selected" : "false",
+                                                                      "checked" : "false"
+                                                                    },
+                                                                    "enabled" : true,
+                                                                    "focused" : true,
+                                                                    "checked" : false,
+                                                                    "selected" : false
+                                                                  }, {
+                                                                    "attributes" : {
+                                                                      "accessibilityText" : "Zoom out",
+                                                                      "bounds" : "[12,159][42,189]",
+                                                                      "enabled" : "true",
+                                                                      "focused" : "true",
+                                                                      "selected" : "false",
+                                                                      "checked" : "false"
+                                                                    },
+                                                                    "enabled" : true,
+                                                                    "focused" : true,
+                                                                    "checked" : false,
+                                                                    "selected" : false
+                                                                  } ],
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "bounds" : "[0,116][440,126]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "bounds" : "[0,116][440,126]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                }, {
+                                                                  "attributes" : {
+                                                                    "bounds" : "[202,940][441,956]",
+                                                                    "enabled" : "true",
+                                                                    "focused" : "true",
+                                                                    "selected" : "false",
+                                                                    "checked" : "false"
+                                                                  },
+                                                                  "children" : [ {
+                                                                    "attributes" : {
+                                                                      "bounds" : "[202,940][441,956]",
+                                                                      "enabled" : "true",
+                                                                      "focused" : "true",
+                                                                      "selected" : "false",
+                                                                      "checked" : "false"
+                                                                    },
+                                                                    "children" : [ {
+                                                                      "attributes" : {
+                                                                        "accessibilityText" : "Leaflet",
+                                                                        "bounds" : "[219,940][260,955]",
+                                                                        "enabled" : "true",
+                                                                        "focused" : "true",
+                                                                        "selected" : "false",
+                                                                        "checked" : "false"
+                                                                      },
+                                                                      "children" : [ {
+                                                                        "attributes" : {
+                                                                          "accessibilityText" : "Leaflet",
+                                                                          "value" : " Leaflet",
+                                                                          "text" : " Leaflet",
+                                                                          "bounds" : "[219,940][260,955]",
+                                                                          "enabled" : "true",
+                                                                          "focused" : "true",
+                                                                          "selected" : "false",
+                                                                          "checked" : "false"
+                                                                        },
+                                                                        "enabled" : true,
+                                                                        "focused" : true,
+                                                                        "checked" : false,
+                                                                        "selected" : false
+                                                                      } ],
+                                                                      "enabled" : true,
+                                                                      "focused" : true,
+                                                                      "checked" : false,
+                                                                      "selected" : false
+                                                                    }, {
+                                                                      "attributes" : {
+                                                                        "accessibilityText" : "© OpenStreetMap contributors",
+                                                                        "value" : " © OpenStreetMap contributors",
+                                                                        "text" : " © OpenStreetMap contributors",
+                                                                        "bounds" : "[265,940][435,955]",
+                                                                        "enabled" : "true",
+                                                                        "focused" : "true",
+                                                                        "selected" : "false",
+                                                                        "checked" : "false"
+                                                                      },
+                                                                      "enabled" : true,
+                                                                      "focused" : true,
+                                                                      "checked" : false,
+                                                                      "selected" : false
+                                                                    } ],
+                                                                    "enabled" : true,
+                                                                    "focused" : true,
+                                                                    "checked" : false,
+                                                                    "selected" : false
+                                                                  } ],
+                                                                  "enabled" : true,
+                                                                  "focused" : true,
+                                                                  "checked" : false,
+                                                                  "selected" : false
+                                                                } ],
+                                                                "enabled" : true,
+                                                                "focused" : true,
+                                                                "checked" : false,
+                                                                "selected" : false
+                                                              } ],
+                                                              "enabled" : true,
+                                                              "focused" : true,
+                                                              "checked" : false,
+                                                              "selected" : false
+                                                            } ],
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : false,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : false,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      } ],
+                                                      "enabled" : true,
+                                                      "focused" : false,
+                                                      "checked" : false,
+                                                      "selected" : false
+                                                    } ],
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Vertical scroll bar, 1 page",
+                                                      "value" : "0%",
+                                                      "text" : "0%",
+                                                      "bounds" : "[407,116][437,894]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "children" : [ {
+                                                      "attributes" : {
+                                                        "bounds" : "[434,77][437,113]",
+                                                        "enabled" : "true",
+                                                        "focused" : "false",
+                                                        "selected" : "false",
+                                                        "checked" : "false"
+                                                      },
+                                                      "enabled" : true,
+                                                      "focused" : false,
+                                                      "checked" : false,
+                                                      "selected" : false
+                                                    } ],
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Horizontal scroll bar, 1 page",
+                                                      "value" : "0%",
+                                                      "text" : "0%",
+                                                      "bounds" : "[62,923][378,953]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Vertical scroll bar, 1 page",
+                                                      "value" : "0%",
+                                                      "text" : "0%",
+                                                      "bounds" : "[407,116][437,894]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "children" : [ {
+                                                      "attributes" : {
+                                                        "bounds" : "[434,77][437,113]",
+                                                        "enabled" : "true",
+                                                        "focused" : "false",
+                                                        "selected" : "false",
+                                                        "checked" : "false"
+                                                      },
+                                                      "enabled" : true,
+                                                      "focused" : false,
+                                                      "checked" : false,
+                                                      "selected" : false
+                                                    } ],
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Horizontal scroll bar, 1 page",
+                                                      "value" : "0%",
+                                                      "text" : "0%",
+                                                      "bounds" : "[62,923][378,953]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              } ],
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          } ],
+                                          "enabled" : true,
+                                          "focused" : false,
+                                          "checked" : false,
+                                          "selected" : false
+                                        }, {
+                                          "attributes" : {
+                                            "accessibilityText" : "Importação (6 rotas) EPS (m) Atual: 50m Confirmar",
+                                            "bounds" : "[14,130][426,266]",
+                                            "enabled" : "true",
+                                            "focused" : "false",
+                                            "selected" : "false",
+                                            "checked" : "false"
+                                          },
+                                          "children" : [ {
+                                            "attributes" : {
+                                              "accessibilityText" : "Importação (6 rotas)",
+                                              "bounds" : "[27,139][413,156]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "EPS (m) Atual: 50m",
+                                              "bounds" : "[27,166][413,201]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[83,166][161,201]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "children" : [ {
+                                                "attributes" : {
+                                                  "value" : "50",
+                                                  "text" : "50",
+                                                  "hintText" : "Ex: 50",
+                                                  "bounds" : "[84,167][160,200]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              } ],
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            }, {
+                                              "attributes" : {
+                                                "accessibilityText" : "EPS (m)",
+                                                "bounds" : "[27,176][75,190]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            }, {
+                                              "attributes" : {
+                                                "accessibilityText" : "Atual: 50m",
+                                                "bounds" : "[169,176][236,190]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Confirmar",
+                                              "bounds" : "[27,211][413,257]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          } ],
+                                          "enabled" : true,
+                                          "focused" : false,
+                                          "checked" : false,
+                                          "selected" : false
+                                        }, {
+                                          "attributes" : {
+                                            "accessibilityText" : "Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real. Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page",
+                                            "bounds" : "[0,866][440,956]",
+                                            "enabled" : "true",
+                                            "focused" : "false",
+                                            "selected" : "false",
+                                            "checked" : "false"
+                                          },
+                                          "children" : [ {
+                                            "attributes" : {
+                                              "accessibilityText" : "Rotas da importação por cor. Altere o EPS para recalcular os agrupamentos no mapa em tempo real.",
+                                              "bounds" : "[12,879][428,908]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2) Vertical scroll bar, 1 page",
+                                              "bounds" : "[12,915][428,944]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[12,915][428,944]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "children" : [ {
+                                                "attributes" : {
+                                                  "accessibilityText" : "Rota #727 (40) Rota #728 (2) Rota #729 (2) Rota #730 (2) Rota #731 (2) Rota #732 (2)",
+                                                  "bounds" : "[12,915][793,944]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Rota #727 (40)",
+                                                    "bounds" : "[12,915][141,944]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "bounds" : "[23,925][33,935]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Rota #727 (40)",
+                                                      "bounds" : "[39,922][130,937]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                }, {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Rota #728 (2)",
+                                                    "bounds" : "[149,915][270,944]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "bounds" : "[160,925][170,935]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Rota #728 (2)",
+                                                      "bounds" : "[176,922][259,937]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                }, {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Rota #729 (2)",
+                                                    "bounds" : "[278,915][399,944]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "bounds" : "[289,925][299,935]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Rota #729 (2)",
+                                                      "bounds" : "[305,922][389,937]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                }, {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Rota #730 (2)",
+                                                    "bounds" : "[407,915][529,944]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "bounds" : "[418,925][428,935]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              }, {
+                                                "attributes" : {
+                                                  "accessibilityText" : "Vertical scroll bar, 1 page",
+                                                  "value" : "0%",
+                                                  "text" : "0%",
+                                                  "bounds" : "[392,915][422,929]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "bounds" : "[419,898][422,934]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              }, {
+                                                "attributes" : {
+                                                  "accessibilityText" : "Vertical scroll bar, 1 page",
+                                                  "value" : "0%",
+                                                  "text" : "0%",
+                                                  "bounds" : "[392,915][422,929]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "bounds" : "[419,898][422,934]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              } ],
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          } ],
+                                          "enabled" : true,
+                                          "focused" : false,
+                                          "checked" : false,
+                                          "selected" : false
+                                        } ],
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    } ],
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  } ],
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                } ],
+                                "enabled" : true,
+                                "focused" : false,
+                                "checked" : false,
+                                "selected" : false
+                              }, {
+                                "attributes" : {
+                                  "bounds" : "[0,0][440,956]",
+                                  "enabled" : "true",
+                                  "focused" : "false",
+                                  "selected" : "false",
+                                  "checked" : "false"
+                                },
+                                "children" : [ {
+                                  "attributes" : {
+                                    "bounds" : "[0,0][440,956]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                } ],
+                                "enabled" : true,
+                                "focused" : false,
+                                "checked" : false,
+                                "selected" : false
+                              } ],
+                              "enabled" : true,
+                              "focused" : false,
+                              "checked" : false,
+                              "selected" : false
+                            } ],
+                            "enabled" : true,
+                            "focused" : false,
+                            "checked" : false,
+                            "selected" : false
+                          } ],
+                          "enabled" : true,
+                          "focused" : false,
+                          "checked" : false,
+                          "selected" : false
+                        } ],
+                        "enabled" : true,
+                        "focused" : false,
+                        "checked" : false,
+                        "selected" : false
+                      } ],
+                      "enabled" : true,
+                      "focused" : false,
+                      "checked" : false,
+                      "selected" : false
+                    } ],
+                    "enabled" : true,
+                    "focused" : false,
+                    "checked" : false,
+                    "selected" : false
+                  } ],
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                } ],
+                "enabled" : true,
+                "focused" : false,
+                "checked" : false,
+                "selected" : false
+              } ],
+              "enabled" : true,
+              "focused" : false,
+              "checked" : false,
+              "selected" : false
+            } ],
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,0][0,0]",
+            "enabled" : "false",
+            "focused" : "false",
+            "selected" : "false",
+            "checked" : "false"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,0][440,54]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          }, {
+            "attributes" : {
+              "bounds" : "[0,0][440,54]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "children" : [ {
+              "attributes" : {
+                "bounds" : "[0,0][440,54]",
+                "enabled" : "true",
+                "focused" : "false",
+                "selected" : "false",
+                "checked" : "false"
+              },
+              "children" : [ {
+                "attributes" : {
+                  "bounds" : "[0,0][440,54]",
+                  "enabled" : "true",
+                  "focused" : "false",
+                  "selected" : "false",
+                  "checked" : "false"
+                },
+                "children" : [ {
+                  "attributes" : {
+                    "accessibilityText" : "18:48",
+                    "bounds" : "[59,22][107,43]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "accessibilityText" : "Cellular",
+                    "value" : "No signal",
+                    "text" : "No signal",
+                    "bounds" : "[312,25][334,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "value" : "SSID, 3 of 3 Wi-Fi bars",
+                    "text" : "SSID, 3 of 3 Wi-Fi bars",
+                    "resource-id" : "3 of 3 Wi-Fi bars",
+                    "bounds" : "[341,25][361,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "accessibilityText" : "100% battery power",
+                    "value" : "Not charging",
+                    "text" : "Not charging",
+                    "bounds" : "[368,25][399,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                } ],
+                "enabled" : true,
+                "focused" : false,
+                "checked" : false,
+                "selected" : false
+              } ],
+              "enabled" : true,
+              "focused" : false,
+              "checked" : false,
+              "selected" : false
+            } ],
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "enabled" : false,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "enabled" : false,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      },
+      "debugMessage" : "Element with Text matching regex: Ver no mapa not found. Check the UI hierarchy in debug artifacts to verify if the element exists.\n\nPossible causes:\n- Element selector may be incorrect - check if there are similar elements with slightly different names/properties.\n- Element may be temporarily unavailable due to loading state.\n- This could be a real regression that needs to be addressed.",
+      "stackTrace" : [ {
+        "classLoaderName" : "app",
+        "methodName" : "findElement",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 1329,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "findElement$default",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 1281,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "tapOnElement",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 1190,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeCommand",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 330,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeCommands",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 263,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runFlow",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 181,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runFlow",
+        "fileName" : "TestSuiteInteractor.kt",
+        "lineNumber" : 243,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.runner.TestSuiteInteractor"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runTestSuite",
+        "fileName" : "TestSuiteInteractor.kt",
+        "lineNumber" : 98,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.runner.TestSuiteInteractor"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runMultipleFlows",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 619,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "access$runMultipleFlows",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 80,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "invokeSuspend",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 502,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand$runShardSuite$1$1"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "resumeWith",
+        "fileName" : "ContinuationImpl.kt",
+        "lineNumber" : 34,
+        "nativeMethod" : false,
+        "className" : "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "DispatchedTask.kt",
+        "lineNumber" : 104,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.DispatchedTask"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "processNextEvent",
+        "fileName" : "EventLoop.common.kt",
+        "lineNumber" : 277,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.EventLoopImplBase"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "joinBlocking",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 95,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BlockingCoroutine"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 69,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt__BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking",
+        "lineNumber" : 1,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking$default",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 48,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt__BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking$default",
+        "lineNumber" : 1,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runShardSuite$lambda$10",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 501,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "newSession",
+        "fileName" : "MaestroSessionManager.kt",
+        "lineNumber" : 132,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.session.MaestroSessionManager"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "newSession$default",
+        "fileName" : "MaestroSessionManager.kt",
+        "lineNumber" : 66,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.session.MaestroSessionManager"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runShardSuite",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 476,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "access$runShardSuite",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 80,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "invokeSuspend",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 435,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand$handleSessions$1$results$1$1"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "resumeWith",
+        "fileName" : "ContinuationImpl.kt",
+        "lineNumber" : 34,
+        "nativeMethod" : false,
+        "className" : "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "DispatchedTask.kt",
+        "lineNumber" : 104,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.DispatchedTask"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "LimitedDispatcher.kt",
+        "lineNumber" : 111,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.internal.LimitedDispatcher$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "Tasks.kt",
+        "lineNumber" : 99,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.TaskImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runSafely",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 585,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeTask",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 802,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runWorker",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 706,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 693,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      } ],
+      "localizedMessage" : "Element not found: Text matching regex: Ver no mapa"
+    },
+    "sequenceNumber" : 0
+  }
+} ]

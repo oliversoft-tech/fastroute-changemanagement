@@ -5,9 +5,6 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-5-20250929';
-const DEFAULT_FALLBACK_MODELS = ['claude-3-5-sonnet-20241022'];
-
 function parseArgs(argv) {
   const args = {};
   for (let i = 2; i < argv.length; i += 1) {
@@ -64,8 +61,46 @@ function norm(v) {
     .trim();
 }
 
+function loadJsonFile(filePath, fallback) {
+  if (!filePath) return fallback;
+  if (!fs.existsSync(filePath)) return fallback;
+  const raw = fs.readFileSync(filePath, 'utf8').trim();
+  if (!raw) return fallback;
+  return JSON.parse(raw);
+}
+
+function isRepoMatch(repo, repoKey, repoName) {
+  const r = norm(repo);
+  const k = norm(repoKey);
+  const n = norm(repoName);
+  if (!n) return false;
+
+  if (n === r) return true;
+  if (n === k) return true;
+
+  if (k === 'domain') {
+    return n.includes('domain') || n === 'fastroute-domain';
+  }
+  if (k === 'api') {
+    return n === 'api' || n.includes('fastroute-api') || n.includes('fastroute_api') || n.endsWith('-api');
+  }
+  if (k === 'mobile') {
+    return n.includes('mobile') || n.includes('fastroute-mobile-hybrid');
+  }
+
+  return false;
+}
+
+function normalizeGroupedChanges(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object' && Array.isArray(raw.grouped_changes)) return raw.grouped_changes;
+  return [];
+}
+
 function readImpact(repo, repoKey, impact) {
-  const impacts = impact.impactos || impact.impacts || {};
+  const impacts = (impact && (impact.impactos || impact.impacts)) || {};
+  const entries = Object.entries(impacts || {});
+
   const aliases = [
     repo,
     repoKey,
@@ -74,7 +109,6 @@ function readImpact(repo, repoKey, impact) {
     repo === 'fastroute-mobile-hybrid' ? 'mobile' : ''
   ].filter(Boolean);
 
-  const entries = Object.entries(impacts);
   let info = {};
   for (const alias of aliases) {
     const hit = entries.find(([k]) => norm(k) === norm(alias));
@@ -84,165 +118,149 @@ function readImpact(repo, repoKey, impact) {
     }
   }
 
-  const impacted = info.impacto === true || info.impact === true || info.has_impact === true;
-  const changesRaw = Array.isArray(info.mudancas || info.changes) ? (info.mudancas || info.changes) : [];
-  const changes = changesRaw.map((change) => {
-    if (typeof change === 'string') {
-      return { descricao: change, testes: [], criterios_aceite: [] };
-    }
-    const c = change && typeof change === 'object' ? change : {};
-    return {
-      descricao: String(c.descricao || c.desc || c.description || '').trim(),
-      testes: Array.isArray(c.testes || c.tests || c.test_steps) ? (c.testes || c.tests || c.test_steps) : [],
-      criterios_aceite: Array.isArray(c.criterios_aceite || c.acceptance_criterias || c.acceptance_criteria)
-        ? (c.criterios_aceite || c.acceptance_criterias || c.acceptance_criteria)
-        : []
-    };
-  });
-
   return {
-    impacted,
-    changes,
-    risks: Array.isArray(info.riscos || info.change_risks || info.risks) ? (info.riscos || info.change_risks || info.risks) : [],
-    doubts: Array.isArray(info.duvidas || info.change_doubts || info.doubts) ? (info.duvidas || info.change_doubts || info.doubts) : []
+    impacted: info.impacto === true || info.impact === true || info.has_impact === true,
+    raw: info,
   };
 }
 
-function pickContextFiles(repoKey, allFiles, changes) {
-  const baseByRepo = {
-    domain: ['src/index.ts', 'src/types.ts'],
-    api: ['src/index.ts', 'src/app.ts'],
-    mobile: ['src/screens/MapScreen.tsx', 'src/api/ordersApi.ts', 'package.json']
-  };
-
-  const keywords = new Set();
-  const addWords = (text) => {
-    String(text || '')
-      .split(/[^a-zA-Z0-9_./-]+/)
-      .map((w) => w.trim().toLowerCase())
-      .filter((w) => w.length >= 4)
-      .forEach((w) => keywords.add(w));
-  };
-
-  for (const c of changes) {
-    addWords(c.descricao);
-    for (const t of c.testes || []) addWords(t);
-    for (const a of c.criterios_aceite || []) addWords(a);
+function parseSnippet(snippet, idx) {
+  const raw = String(snippet || '').replace(/\r\n/g, '\n').trim();
+  if (!raw) {
+    throw new Error(`code_change[${idx}] is empty`);
   }
 
-  const weighted = allFiles.map((file) => {
-    const lower = file.toLowerCase();
-    let score = 0;
-    if (lower.startsWith('src/')) score += 2;
-    if (lower.includes('test') || lower.endsWith('.test.ts') || lower.endsWith('.spec.ts')) score += 2;
-    for (const kw of keywords) {
-      if (lower.includes(kw)) score += 3;
-    }
-    return { file, score };
-  });
-
-  weighted.sort((a, b) => b.score - a.score);
-
-  const selected = [];
-  for (const f of baseByRepo[repoKey] || []) {
-    if (allFiles.includes(f)) selected.push(f);
-  }
-  for (const item of weighted) {
-    if (item.score <= 0) break;
-    if (!selected.includes(item.file)) selected.push(item.file);
-    if (selected.length >= 10) break;
+  const lines = raw.split('\n');
+  const first = String(lines[0] || '').trim();
+  const fileMatch = first.match(/^\/\/\s*file:\s*(.+)$/i);
+  if (!fileMatch) {
+    throw new Error(`code_change[${idx}] missing required header "// file: <path>"`);
   }
 
-  if (selected.length === 0) {
-    for (const file of allFiles) {
-      if (file.startsWith('src/') || file.endsWith('package.json') || file.includes('test')) {
-        selected.push(file);
+  const filePath = String(fileMatch[1] || '').trim().replace(/^['"]|['"]$/g, '');
+  if (!filePath || path.isAbsolute(filePath) || filePath.includes('..')) {
+    throw new Error(`code_change[${idx}] has invalid file path: ${filePath}`);
+  }
+
+  const content = lines.slice(1).join('\n').replace(/^\n+/, '');
+  if (!content.trim()) {
+    throw new Error(`code_change[${idx}] has no file content for ${filePath}`);
+  }
+
+  return { filePath, content };
+}
+
+function firstText(...values) {
+  for (const value of values) {
+    const text = String(value || '').trim();
+    if (text) return text;
+  }
+  return '';
+}
+
+function summaryFromRow(row) {
+  if (!row || typeof row !== 'object') return '';
+  return firstText(
+    row.change_summary,
+    row.changeSummary,
+    row.summary,
+    row.descricao,
+    row.description,
+    row.desc,
+    row.titulo,
+    row.title,
+    row.change_title,
+    row.changeTitle
+  );
+}
+
+function summariesFromImpact(repoImpact) {
+  const raw = (repoImpact && repoImpact.raw) || {};
+  const changes = Array.isArray(raw.mudancas)
+    ? raw.mudancas
+    : Array.isArray(raw.changes)
+      ? raw.changes
+      : [];
+
+  return changes
+    .map((change) => {
+      if (typeof change === 'string') return String(change).trim();
+      if (!change || typeof change !== 'object') return '';
+      return firstText(
+        change.descricao,
+        change.description,
+        change.desc,
+        change.change_summary,
+        change.summary,
+        change.titulo,
+        change.title
+      );
+    })
+    .filter(Boolean);
+}
+
+function buildChangeMap(rowsForRepo, impactSummaries) {
+  const bySummary = new Map();
+  let impactSummaryCursor = 0;
+
+  for (let rowIndex = 0; rowIndex < rowsForRepo.length; rowIndex += 1) {
+    const row = rowsForRepo[rowIndex] || {};
+    const rowSnippets = Array.isArray(row.code_changes) ? row.code_changes : [];
+    const files = new Set();
+
+    for (let snippetIndex = 0; snippetIndex < rowSnippets.length; snippetIndex += 1) {
+      const rawSnippet = String(rowSnippets[snippetIndex] || '').trim();
+      if (!rawSnippet) continue;
+      try {
+        files.add(parseSnippet(rawSnippet, snippetIndex).filePath);
+      } catch (_err) {
+        // Invalid snippet is already handled by applyCodeChanges.
       }
-      if (selected.length >= 8) break;
+    }
+
+    if (files.size === 0) continue;
+
+    let summary = summaryFromRow(row);
+    if (!summary && impactSummaryCursor < impactSummaries.length) {
+      summary = impactSummaries[impactSummaryCursor];
+      impactSummaryCursor += 1;
+    }
+    if (!summary) {
+      summary = `Mudanca tecnica ${rowIndex + 1}`;
+    }
+
+    if (!bySummary.has(summary)) {
+      bySummary.set(summary, new Set());
+    }
+    const summaryFiles = bySummary.get(summary);
+    for (const filePath of files) {
+      summaryFiles.add(filePath);
     }
   }
 
-  return selected.slice(0, 12);
+  return Array.from(bySummary.entries()).map(([summary, files]) => ({
+    summary,
+    files: Array.from(files).sort(),
+  }));
 }
 
-function buildPrompt(payload, repoTree, fileContexts) {
-  const system = [
-    'You are a senior software engineer working in a production monorepo context.',
-    'Return ONLY a valid unified git diff patch.',
-    'Do not return markdown fences.',
-    'Modify only files that belong to this repository.',
-    'Implement the requested changes with real code, including tests where appropriate.',
-    'Keep changes minimal and coherent.'
-  ].join('\n');
+function applyCodeChanges(repoDir, snippets) {
+  const planned = new Map();
 
-  const user = [
-    'Implement the following repository-scoped impact request.',
-    '',
-    'REQUEST_PAYLOAD_JSON:',
-    JSON.stringify(payload, null, 2),
-    '',
-    'REPOSITORY_TREE (truncated):',
-    repoTree,
-    '',
-    'RELEVANT_FILE_CONTEXT:',
-    fileContexts,
-    '',
-    'Output format requirements:',
-    '- Standard unified diff with headers (diff --git / --- / +++ / @@).',
-    '- Include test updates when behavior changes.',
-    '- Do not include prose.'
-  ].join('\n');
-
-  return { system, user };
-}
-
-function extractDiff(text) {
-  let out = String(text || '').trim();
-  if (!out) return '';
-  out = out.replace(/^```(?:diff)?/i, '').replace(/```$/i, '').trim();
-  const idx = out.indexOf('diff --git');
-  if (idx >= 0) {
-    out = out.slice(idx).trim();
-  }
-  return out;
-}
-
-async function callAnthropic({ apiKey, model, system, user }) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      system,
-      temperature: 0,
-      max_tokens: 6000,
-      messages: [{ role: 'user', content: user }],
-    }),
-  });
-
-  const body = await response.text();
-  if (!response.ok) {
-    throw new Error(`Anthropic request failed (${response.status}): ${body.slice(0, 800)}`);
+  for (let i = 0; i < snippets.length; i += 1) {
+    const parsed = parseSnippet(snippets[i], i);
+    planned.set(parsed.filePath, parsed.content);
   }
 
-  let parsed = {};
-  try {
-    parsed = JSON.parse(body);
-  } catch (_e) {
-    throw new Error(`Anthropic returned non-JSON body: ${body.slice(0, 800)}`);
+  for (const [filePath, content] of planned.entries()) {
+    const abs = path.join(repoDir, filePath);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, content.endsWith('\n') ? content : `${content}\n`, 'utf8');
   }
 
-  const content = Array.isArray(parsed?.content)
-    ? parsed.content
-      .filter((item) => item?.type === 'text' && typeof item?.text === 'string')
-      .map((item) => item.text)
-      .join('\n')
-    : '';
-  return String(content || '').trim();
+  run('git add -A', repoDir);
+  const hasDiff = runAllowFail('git diff --cached --quiet', repoDir);
+  return { changed: !hasDiff.ok, files: [...planned.keys()] };
 }
 
 async function main() {
@@ -253,25 +271,36 @@ async function main() {
   const ref = args.ref || process.env.REF;
   const runId = args.run_id || process.env.RUN_ID || 'manual';
   const impactPath = args.impact_json_file || process.env.IMPACT_JSON_FILE;
+  const codeChangesPath = args.code_changes_json_file || process.env.CODE_CHANGES_JSON_FILE;
   const token = args.token || process.env.TOKEN;
-  const model = args.model || process.env.ANTHROPIC_MODEL || DEFAULT_ANTHROPIC_MODEL;
-  const fallbackModelsRaw = args.fallback_models || process.env.ANTHROPIC_FALLBACK_MODELS || '';
-  const apiKey = args.anthropic_api_key || process.env.ANTHROPIC_API_KEY;
 
-  if (!owner || !repo || !repoKey || !ref || !impactPath || !token) {
-    throw new Error('Missing required arguments: owner, repo, repo_key, ref, impact_json_file, token');
+  if (!owner || !repo || !repoKey || !ref || !token) {
+    throw new Error('Missing required arguments: owner, repo, repo_key, ref, token');
   }
 
-  const rawImpact = fs.readFileSync(impactPath, 'utf8');
-  const impact = rawImpact && rawImpact.trim() ? JSON.parse(rawImpact) : {};
+  const impact = loadJsonFile(impactPath, {});
   const repoImpact = readImpact(repo, repoKey, impact);
+  const groupedChanges = normalizeGroupedChanges(loadJsonFile(codeChangesPath, []));
 
-  if (!repoImpact.impacted) {
-    process.stdout.write(JSON.stringify({ status: 'skipped_not_impacted', repo }) + '\n');
+  const rowsForRepo = groupedChanges.filter((row) => isRepoMatch(repo, repoKey, row && row.repo_name));
+  const impactSummaries = summariesFromImpact(repoImpact);
+  const changeMap = buildChangeMap(rowsForRepo, impactSummaries);
+  const snippets = rowsForRepo
+    .flatMap((row) => (Array.isArray(row?.code_changes) ? row.code_changes : []))
+    .map((s) => String(s || '').trim())
+    .filter(Boolean);
+
+  if (snippets.length === 0) {
+    if (repoImpact.impacted) {
+      throw new Error(
+        `Repo ${repo} marked as impacted, but no code_changes were provided in dispatch payload. ` +
+        `Expected client_payload.code_changes grouped by repo_name.`
+      );
+    }
+
+    process.stdout.write(JSON.stringify({ status: 'skipped_not_impacted', repo, reason: 'no_code_changes' }) + '\n');
     return;
   }
-
-  if (!apiKey) throw new Error(`ANTHROPIC_API_KEY is required to auto-implement impacted repo ${repo}.`);
 
   const workdir = fs.mkdtempSync(path.join(os.tmpdir(), `fastroute-impl-${repoKey}-`));
   const repoDir = path.join(workdir, 'repo');
@@ -300,148 +329,36 @@ async function main() {
   }
 
   const branch = run('git rev-parse --abbrev-ref HEAD', repoDir);
-  const allFiles = run('git ls-files', repoDir).split('\n').map((f) => f.trim()).filter(Boolean);
-  const selectedFiles = pickContextFiles(repoKey, allFiles, repoImpact.changes);
+  const result = applyCodeChanges(repoDir, snippets);
 
-  const fileContexts = [];
-  for (const file of selectedFiles) {
-    const filePath = path.join(repoDir, file);
-    try {
-      const content = fs.readFileSync(filePath, 'utf8');
-      const truncated = content.length > 12000 ? `${content.slice(0, 12000)}\n/* [truncated] */` : content;
-      fileContexts.push(`FILE: ${file}\n${truncated}\n`);
-    } catch (_e) {
-      // best effort
-    }
-  }
-
-  const repoTree = run('git ls-files | head -n 500', repoDir);
-  const payload = {
-    run_id: runId,
-    repo,
-    repo_key: repoKey,
-    ref,
-    summary: impact.resumo || impact.summary || '',
-    viability: impact.viabilidade || impact.viability || {},
-    repo_impact: repoImpact
-  };
-  const { system, user } = buildPrompt(payload, repoTree, fileContexts.join('\n'));
-
-  const modelCandidates = [];
-  const addModel = (value) => {
-    const m = String(value || '').trim();
-    if (!m || modelCandidates.includes(m)) return;
-    modelCandidates.push(m);
-  };
-
-  addModel(model);
-  for (const item of String(fallbackModelsRaw).split(',').map((s) => s.trim()).filter(Boolean)) {
-    addModel(item);
-  }
-  for (const m of DEFAULT_FALLBACK_MODELS) addModel(m);
-
-  let llmText = '';
-  let resolvedModel = '';
-  let lastModelError = null;
-
-  for (const candidateModel of modelCandidates) {
-    try {
-      llmText = await callAnthropic({ apiKey, model: candidateModel, system, user });
-      resolvedModel = candidateModel;
-      break;
-    } catch (err) {
-      const msg = String(err?.message || err);
-      const isModelNotFound =
-        msg.includes('(404)') ||
-        msg.includes('not_found_error') ||
-        (msg.includes('model:') && msg.toLowerCase().includes('anthropic request failed'));
-
-      if (isModelNotFound) {
-        console.error(`Model unavailable for ${repo}: ${candidateModel}. Trying next fallback...`);
-        lastModelError = err;
-        continue;
-      }
-      throw err;
-    }
-  }
-
-  if (!llmText) {
-    const details = lastModelError ? String(lastModelError.message || lastModelError) : 'unknown model error';
-    throw new Error(
-      `No valid Anthropic model available for ${repo}. Tried: ${modelCandidates.join(', ')}. Last error: ${details}`
-    );
-  }
-
-  const patchPath = path.join(workdir, 'changes.diff');
-  let applyError = '';
-  let applied = false;
-  let diffText = '';
-
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    if (attempt > 1) {
-      const retryHint = [
-        user,
-        '',
-        'PREVIOUS_ATTEMPT_FAILED:',
-        applyError || 'unknown apply error',
-        '',
-        'Regenerate the FULL unified diff from scratch.',
-        'Return ONLY valid unified diff. No prose. No markdown fences.',
-      ].join('\n');
-      llmText = await callAnthropic({ apiKey, model: resolvedModel, system, user: retryHint });
-    }
-
-    diffText = extractDiff(llmText);
-    if (!diffText || !diffText.includes('diff --git')) {
-      applyError = `missing diff --git header (attempt ${attempt})`;
-      continue;
-    }
-
-    fs.writeFileSync(patchPath, diffText, 'utf8');
-
-    // Validate patch before applying to avoid corrupt patch failures.
-    const check = runAllowFail(`git apply --check --whitespace=nowarn "${patchPath}"`, repoDir);
-    if (!check.ok) {
-      applyError = `git apply --check failed (attempt ${attempt}): ${(check.stderr || check.stdout || '').slice(0, 800)}`;
-      continue;
-    }
-
-    const applyStrict = runAllowFail(`git apply --index --whitespace=nowarn "${patchPath}"`, repoDir);
-    if (applyStrict.ok) {
-      applied = true;
-      break;
-    }
-
-    const applyRelaxed = runAllowFail(`git apply --recount --reject --whitespace=nowarn "${patchPath}"`, repoDir);
-    if (applyRelaxed.ok) {
-      run('git add -A', repoDir);
-      applied = true;
-      break;
-    }
-
-    applyError = [
-      `strict: ${(applyStrict.stderr || applyStrict.stdout || '').slice(0, 600)}`,
-      `relaxed: ${(applyRelaxed.stderr || applyRelaxed.stdout || '').slice(0, 600)}`
-    ].join(' | ');
-  }
-
-  if (!applied) {
-    throw new Error(`Could not apply generated patch for ${repo} after retries. Last error: ${applyError}`);
-  }
-
-  const hasDiff = runAllowFail('git diff --cached --quiet', repoDir);
-  if (hasDiff.ok) {
-    process.stdout.write(JSON.stringify({ status: 'skipped_no_changes', repo, branch }) + '\n');
+  if (!result.changed) {
+    process.stdout.write(JSON.stringify({
+      status: 'skipped_no_changes',
+      repo,
+      branch,
+      files: result.files,
+      snippets: snippets.length,
+      change_map: changeMap,
+    }) + '\n');
     return;
   }
 
   run('git config user.name "FastRoute Governance Bot"', repoDir);
   run('git config user.email "governance-bot@users.noreply.github.com"', repoDir);
-  run(`git commit -m "feat(governance): implement impact changes (${repoKey}) run ${runId}"`, repoDir);
+  run(`git commit -m "feat(governance): apply precomputed code changes (${repoKey}) run ${runId}"`, repoDir);
   run(`git push -u origin "${branch}"`, repoDir);
 
   const commit = run('git rev-parse HEAD', repoDir);
-  process.stdout.write(JSON.stringify({ status: 'implemented', repo, branch, commit, model: resolvedModel }) + '\n');
+  process.stdout.write(JSON.stringify({
+    status: 'implemented',
+    repo,
+    branch,
+    commit,
+    files: result.files,
+    snippets: snippets.length,
+    rows: rowsForRepo.length,
+    change_map: changeMap,
+  }) + '\n');
 }
 
 main().catch((err) => {

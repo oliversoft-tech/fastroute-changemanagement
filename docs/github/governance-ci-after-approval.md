@@ -56,3 +56,6 @@ jobs:
 Notes:
 - Keep existing push-triggered governance dispatch disabled for `codex/governance-*` branches.
 - Central workflow now expects `client_payload.approved=true` for `governance-ci` runs.
+- For `fastroute-mobile-hybrid`, `governance-ci` also runs mobile UI gates:
+  - Android Robo (Firebase Test Lab)
+  - iOS simulator crawler (`test:ui:ios:crawler`)

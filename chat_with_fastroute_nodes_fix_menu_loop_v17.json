@@ -1,0 +1,286 @@
+{
+  "name": "Chat with Fastroute - state persistence fix v17",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "showWelcomeScreen": true,
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "578ae8fc-af6b-4d6a-8e8f-e2ef9a6ebad2",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -928,
+        416
+      ],
+      "webhookId": "a9d43452-7c4c-4d5b-89f1-199d337586ff"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "impact_ready",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-impact-ready"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "correction_propose",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-correction"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "pr_qa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-prqa"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        400
+      ],
+      "id": "058ea3ed-4642-45d4-9b64-81c49bbef181",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst deepFindMessage = (obj) => {\n  const direct = [\n    obj?.chatInput,\n    obj?.message,\n    obj?.text,\n    obj?.input,\n    obj?.body?.chatInput,\n    obj?.body?.message,\n    obj?.body?.text,\n    obj?.body?.input,\n    obj?.payload?.chatInput,\n    obj?.payload?.message,\n    obj?.payload?.text,\n    obj?.payload?.input,\n    obj?.data?.chatInput,\n    obj?.data?.message,\n    obj?.data?.text,\n    obj?.data?.input,\n  ];\n  for (const c of direct) {\n    const s = toStr(c);\n    if (s) return s;\n  }\n  return '';\n};\n\nconst parseList = (input) =>\n  toStr(input)\n    .split(/\\n|;|\\|/g)\n    .map((s) => toStr(s).replace(/^[-*\\d.)\\s]+/, ''))\n    .filter(Boolean);\n\nconst menuText = [\n  'Escolha uma opcao para continuar (envie apenas 1, 2 ou 3):',\n  '1) Nova analise de Impacto',\n  '2) Duvida sobre funcionalidade ja implementada',\n  '3) Correcao de PRs abertas',\n  '',\n  'Comandos uteis:',\n  '/menu: voltar ao menu',\n  '/reset: limpar estado da conversa'\n].join('\\n');\n\nconst questions = [\n  { field: 'problema', text: 'Qual problema ou oportunidade essa alteracao resolve?' },\n  { field: 'mudanca', text: 'Descreva a mudanca como voce espera ver no produto.' },\n  { field: 'evidencias', text: 'Quais evidencias/criterios de aceite comprovam que a entrega esta pronta? (lista: uma por linha, ou separadas por \";\")' },\n  { field: 'restricoes', text: 'Limites de prazo, compliance, integracoes proibidas, etc. (lista: uma por linha, ou separadas por \";\")' },\n];\n\nconst emptyIntake = () => ({\n  step: 0,\n  problema: '',\n  mudanca: '',\n  evidencias: [],\n  restricoes: [],\n  status: '',\n  diagnostico: '',\n  evidencias_lista: [],\n});\n\nconst askQuestion = (step) => {\n  const idx = Math.max(0, Math.min(Number(step || 0), questions.length - 1));\n  return questions[idx].text;\n};\n\nconst raw = $json || {};\nconst message = deepFindMessage(raw);\nconst sessionId = toStr(\n  raw.chatId ||\n  raw.chat_id ||\n  raw.conversationId ||\n  raw.conversation_id ||\n  raw.metadata?.chatId ||\n  raw.metadata?.chat_id ||\n  raw.metadata?.conversationId ||\n  raw.metadata?.conversation_id ||\n  raw.sessionId ||\n  raw.session_id ||\n  raw.chatSessionId ||\n  raw.metadata?.sessionId ||\n  'default'\n);\n\nconst defaultState = {\n  mode: '',\n  menuShown: false,\n  intake: null,\n  history: []\n};\n\nlet state = { ...defaultState };\ntry {\n  const rows = $items('Load Chat State', 0, 0).map((i) => i.json || {});\n  const marker = rows.find((r) => toStr(r.complexity_level) === '__chat_state__');\n  if (marker && marker.change_summary) {\n    const parsed = JSON.parse(String(marker.change_summary));\n    if (parsed && typeof parsed === 'object') {\n      state = {\n        mode: toStr(parsed.mode),\n        menuShown: !!parsed.menuShown,\n        intake: parsed.intake && typeof parsed.intake === 'object' ? parsed.intake : null,\n        history: Array.isArray(parsed.history) ? parsed.history.slice(-20) : []\n      };\n    }\n  }\n} catch (_e) {}\n\nconst pushHistory = (role, content) => {\n  const c = toStr(content);\n  if (!c) return;\n  state.history.push({ role, content: c });\n  if (state.history.length > 20) state.history = state.history.slice(-20);\n};\n\nconst emit = (payload, nextState) => {\n  const s = nextState || state;\n  return [{\n    json: {\n      ...payload,\n      session_id: sessionId,\n      chat_history: Array.isArray(s.history) ? s.history.slice(-12) : [],\n      _chat_state_json: JSON.stringify({\n        mode: toStr(s.mode),\n        menuShown: !!s.menuShown,\n        intake: s.intake && typeof s.intake === 'object' ? s.intake : null,\n        history: Array.isArray(s.history) ? s.history.slice(-20) : []\n      })\n    }\n  }];\n};\n\nif (!message) {\n  state.menuShown = true;\n  pushHistory('assistant', menuText);\n  return emit({ option: 'invalid', route: 'impact_collect_question', output: menuText }, state);\n}\n\nconst lower = norm(message);\nif (lower === '/reset' || lower === '/menu') {\n  state = { ...defaultState, menuShown: true, history: [] };\n  pushHistory('assistant', menuText);\n  return emit({ option: 'invalid', route: 'impact_collect_question', output: menuText }, state);\n}\n\npushHistory('user', message);\n\nif (state.mode === 'impact_intake') {\n  const intake = state.intake && typeof state.intake === 'object' ? state.intake : emptyIntake();\n  const idx = Math.max(0, Math.min(Number(intake.step || 0), questions.length - 1));\n  const field = questions[idx].field;\n\n  if (field === 'evidencias' || field === 'restricoes') intake[field] = parseList(message);\n  else intake[field] = toStr(message);\n\n  intake.step = idx + 1;\n\n  if (intake.step >= questions.length) {\n    const evidenciasLista = Array.isArray(intake.evidencias) ? intake.evidencias : [];\n    const restricoesLista = Array.isArray(intake.restricoes) ? intake.restricoes : [];\n    state.mode = '';\n    state.intake = null;\n\n    return emit({\n      option: '1',\n      route: 'impact_ready',\n      ready_for_impact: true,\n      problema: toStr(intake.problema),\n      mudanca: toStr(intake.mudanca),\n      evidencias: evidenciasLista.join('; '),\n      restricoes: restricoesLista.join('; '),\n      status: toStr(intake.status),\n      diagnostico: toStr(intake.diagnostico),\n      evidencias_lista: evidenciasLista,\n      restricoes_lista: restricoesLista,\n    }, state);\n  }\n\n  state.intake = intake;\n  const output = askQuestion(intake.step);\n  pushHistory('assistant', output);\n  return emit({ option: '1', route: 'impact_collect_question', output }, state);\n}\n\nif (state.mode === 'pr_qa') {\n  return emit({\n    option: '2',\n    route: 'pr_qa',\n    question: message,\n    owner: toStr(getEnv('GITHUB_OWNER') || 'oliversoft-tech'),\n    github_token: toStr(getEnv('GITHUB_TOKEN') || ''),\n    llm_model: toStr(getEnv('LLM_MODEL') || 'claude-3-5-sonnet-20241022')\n  }, state);\n}\n\nif (state.mode === 'correction_propose') {\n  return emit({\n    option: '3',\n    route: 'correction_propose',\n    question: message,\n    owner: toStr(getEnv('GITHUB_OWNER') || 'oliversoft-tech'),\n    github_token: toStr(getEnv('GITHUB_TOKEN') || ''),\n    llm_model: toStr(getEnv('LLM_MODEL') || 'claude-3-5-sonnet-20241022')\n  }, state);\n}\n\nconst optionMatch = toStr(message).match(/^\\s*([123])\\s*$/);\nif (!optionMatch) {\n  state.menuShown = true;\n  const output = menuText;\n  pushHistory('assistant', output);\n  return emit({ option: 'invalid', route: 'impact_collect_question', output }, state);\n}\n\nconst opt = optionMatch[1];\nstate.menuShown = true;\nif (opt === '1') {\n  state.mode = 'impact_intake';\n  state.intake = emptyIntake();\n  const output = askQuestion(0);\n  pushHistory('assistant', output);\n  return emit({ option: '1', route: 'impact_collect_question', output }, state);\n}\n\nif (opt === '2') {\n  state.mode = 'pr_qa';\n  const output = 'Opcao 2 selecionada. Agora descreva sua duvida sobre funcionalidade ja implementada.';\n  pushHistory('assistant', output);\n  return emit({ option: '2', route: 'impact_collect_question', output }, state);\n}\n\nstate.mode = 'correction_propose';\nconst output = 'Opcao 3 selecionada. Agora descreva a correcao desejada nas PRs abertas.';\npushHistory('assistant', output);\nreturn emit({ option: '3', route: 'impact_collect_question', output }, state);\n"
+      },
+      "id": "d31c28c9-05c1-4e3e-bed1-618828f89cd9",
+      "name": "Normalize Chat Input1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        416
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "impact_analysis"
+        },
+        "returnAll": true
+      },
+      "id": "b7be5d4e-6d63-4c82-9f6c-6f1f0f8b12a1",
+      "name": "Load Chat State",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -140,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "impact_analysis"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "complexity_level",
+              "keyValue": "__chat_state__"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "change_summary": "={{String($json._chat_state_json || \"{}\")}}",
+            "complexity_level": "__chat_state__"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "change_summary",
+              "displayName": "change_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "complexity_level",
+              "displayName": "complexity_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "5b0b57f7-0ef5-4af7-b5f4-50d6cf7bc3c6",
+      "name": "Save Chat State",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        336
+      ]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Load Chat State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Call 'Impact Analysis'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table (PR QA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Menu Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Chat Input1": {
+      "main": [
+        [
+          {
+            "node": "Save Chat State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Chat State": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chat Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Chat State": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "pinData": {}
+}

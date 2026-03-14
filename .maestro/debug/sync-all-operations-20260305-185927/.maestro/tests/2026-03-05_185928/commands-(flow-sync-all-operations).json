@@ -1,0 +1,2596 @@
+[ {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737192448,
+    "duration" : 1599,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "defineVariablesCommand" : {
+      "env" : {
+        "MAESTRO_FILENAME" : "flow-sync-all-operations",
+        "MAESTRO_DEVICE_UDID" : "269FCCBD-3899-4AAF-B00D-4DE616487ECE",
+        "MAESTRO_SHARD_ID" : "1",
+        "MAESTRO_SHARD_INDEX" : "0"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737172807,
+    "duration" : 1,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "inputTextCommand" : {
+      "text" : "120",
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737188547,
+    "duration" : 2253,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Confirmar",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Rotas da Importação",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      }, {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "(?s).*Rota #.*2 waypoints.*",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Paradas",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "(?s).*Importação.*",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737192322,
+    "duration" : 3541,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "eraseTextCommand" : {
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737184728,
+    "duration" : 3819,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "OK",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Erro ao iniciar rota",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "SKIPPED",
+    "timestamp" : 1772737215330,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnPointV2Command" : {
+      "point" : "50%,43%",
+      "retryIfNoChange" : false,
+      "longPress" : true,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737205242,
+    "duration" : 3987,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar ordem",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737210649,
+    "duration" : 1353,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Importar arquivo de rota",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737183316,
+    "duration" : 127,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Minhas Rotas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737181297,
+    "duration" : 111,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Confirmar ordem",
+            "optional" : true
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : true
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Paradas",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "(?s).*Rota #.*",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737195863,
+    "duration" : 7271,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "EPS (METROS)",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737183443,
+    "duration" : 1285,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "waitForAnimationToEndCommand" : {
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737204767,
+    "duration" : 475,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Ver no mapa",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737203134,
+    "duration" : 1366,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar ordem",
+        "optional" : true
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : true
+    }
+  },
+  "metadata" : {
+    "status" : "WARNED",
+    "timestamp" : 1772737195979,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "launchAppCommand" : {
+      "appId" : "com.oliverbill.fastroutemobile",
+      "clearState" : true,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737172808,
+    "duration" : 1299,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Paradas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737195744,
+    "duration" : 119,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Paradas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737203018,
+    "duration" : 116,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "swipeCommand" : {
+      "startRelative" : "50%,43%",
+      "endRelative" : "62%,34%",
+      "duration" : 400,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737209233,
+    "duration" : 1415,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Iniciar",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737212121,
+    "duration" : 3208,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Paradas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737212002,
+    "duration" : 119,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Iniciar",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "runFlowCommand" : {
+          "commands" : [ {
+            "tapOnElement" : {
+              "selector" : {
+                "textRegex" : "OK",
+                "optional" : false
+              },
+              "retryIfNoChange" : false,
+              "waitUntilVisible" : false,
+              "longPress" : false,
+              "optional" : false
+            }
+          } ],
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Erro ao iniciar rota",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "CRIADA",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "SKIPPED",
+    "timestamp" : 1772737222606,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "applyConfigurationCommand" : {
+      "config" : {
+        "appId" : "com.oliverbill.fastroutemobile"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737172808,
+    "duration" : 0,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "EM ANDAMENTO",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "FAILED",
+    "timestamp" : 1772737222888,
+    "duration" : 9755,
+    "error" : {
+      "message" : "Assertion is false: \"EM ANDAMENTO\" is visible",
+      "hierarchyRoot" : {
+        "attributes" : {
+          "bounds" : "[0,0][0,0]",
+          "enabled" : "false",
+          "focused" : "false",
+          "selected" : "false",
+          "checked" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "accessibilityText" : "Safari",
+            "bounds" : "[0,0][440,956]",
+            "enabled" : "true",
+            "focused" : "false",
+            "selected" : "false",
+            "checked" : "false"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,0][440,956]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "children" : [ {
+              "attributes" : {
+                "bounds" : "[0,0][440,956]",
+                "enabled" : "true",
+                "focused" : "false",
+                "selected" : "false",
+                "checked" : "false"
+              },
+              "children" : [ {
+                "attributes" : {
+                  "bounds" : "[0,0][440,956]",
+                  "enabled" : "true",
+                  "focused" : "false",
+                  "selected" : "false",
+                  "checked" : "false"
+                },
+                "children" : [ {
+                  "attributes" : {
+                    "bounds" : "[0,0][440,956]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "children" : [ {
+                    "attributes" : {
+                      "bounds" : "[0,0][440,956]",
+                      "enabled" : "true",
+                      "focused" : "false",
+                      "selected" : "false",
+                      "checked" : "false"
+                    },
+                    "children" : [ {
+                      "attributes" : {
+                        "bounds" : "[0,0][440,956]",
+                        "enabled" : "true",
+                        "focused" : "false",
+                        "selected" : "false",
+                        "checked" : "false"
+                      },
+                      "children" : [ {
+                        "attributes" : {
+                          "bounds" : "[0,0][440,956]",
+                          "enabled" : "true",
+                          "focused" : "false",
+                          "selected" : "false",
+                          "checked" : "false"
+                        },
+                        "children" : [ {
+                          "attributes" : {
+                            "bounds" : "[0,0][440,956]",
+                            "enabled" : "true",
+                            "focused" : "false",
+                            "selected" : "false",
+                            "checked" : "false"
+                          },
+                          "children" : [ {
+                            "attributes" : {
+                              "bounds" : "[0,0][440,956]",
+                              "enabled" : "true",
+                              "focused" : "false",
+                              "selected" : "false",
+                              "checked" : "false"
+                            },
+                            "children" : [ {
+                              "attributes" : {
+                                "resource-id" : "SafariWindow?View=Narrow&BarsKeptMinimized=false&UUID=639E6BB0-23DA-45DF-9AD7-08D0179012E0&UsingLoweredBar=true&IsSecure=true&IsTabBarAvailable=true",
+                                "bounds" : "[0,0][440,956]",
+                                "enabled" : "true",
+                                "focused" : "false",
+                                "selected" : "false",
+                                "checked" : "false"
+                              },
+                              "children" : [ {
+                                "attributes" : {
+                                  "bounds" : "[0,0][440,956]",
+                                  "enabled" : "true",
+                                  "focused" : "false",
+                                  "selected" : "false",
+                                  "checked" : "false"
+                                },
+                                "children" : [ {
+                                  "attributes" : {
+                                    "bounds" : "[0,0][440,956]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "children" : [ {
+                                    "attributes" : {
+                                      "bounds" : "[0,0][440,49]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "children" : [ {
+                                      "attributes" : {
+                                        "bounds" : "[0,0][440,49]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    }, {
+                                      "attributes" : {
+                                        "bounds" : "[0,0][440,49]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    } ],
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  }, {
+                                    "attributes" : {
+                                      "bounds" : "[0,0][440,62]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  }, {
+                                    "attributes" : {
+                                      "bounds" : "[0,0][440,956]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "children" : [ {
+                                      "attributes" : {
+                                        "resource-id" : "TabDocument?IsLoadedUsingDesktopUserAgent=false&InReaderMode=false&UUID=887C6EAA-13EF-4EDC-932A-F7652323E526&IsPrivate=false&IsPageLoaded=true&WebViewProcessID=4996",
+                                        "bounds" : "[0,0][440,956]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "resource-id" : "WebView",
+                                          "bounds" : "[0,0][440,956]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "children" : [ {
+                                          "attributes" : {
+                                            "bounds" : "[0,0][440,956]",
+                                            "enabled" : "true",
+                                            "focused" : "false",
+                                            "selected" : "false",
+                                            "checked" : "false"
+                                          },
+                                          "children" : [ {
+                                            "attributes" : {
+                                              "bounds" : "[0,0][440,956]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "bounds" : "[0,0][440,956]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[0,0][440,956]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "children" : [ {
+                                                "attributes" : {
+                                                  "bounds" : "[0,0][440,956]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "bounds" : "[0,62][440,1018]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Antes de continuar para o Google Maps",
+                                                      "bounds" : "[0,62][440,1338]",
+                                                      "enabled" : "true",
+                                                      "focused" : "true",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "children" : [ {
+                                                      "attributes" : {
+                                                        "accessibilityText" : "main",
+                                                        "bounds" : "[0,62][440,1338]",
+                                                        "enabled" : "true",
+                                                        "focused" : "true",
+                                                        "selected" : "false",
+                                                        "checked" : "false"
+                                                      },
+                                                      "children" : [ {
+                                                        "attributes" : {
+                                                          "bounds" : "[24,92][92,120]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Google",
+                                                            "bounds" : "[24,92][92,120]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "bounds" : "[161,82][270,130]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Idioma: Português",
+                                                            "bounds" : "[161,86][270,126]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "bounds" : "[277,82][416,130]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Iniciar sessão",
+                                                            "bounds" : "[277,82][416,130]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "accessibilityText" : "Antes de continuar para a Google",
+                                                          "value" : "1",
+                                                          "text" : "1",
+                                                          "bounds" : "[24,153][416,182]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Antes de continuar para a Google",
+                                                            "value" : "Antes de continuar para a Google",
+                                                            "text" : "Antes de continuar para a Google",
+                                                            "bounds" : "[54,153][386,182]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "bounds" : "[24,206][416,226]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Usamos",
+                                                            "value" : "Usamos ",
+                                                            "text" : "Usamos ",
+                                                            "bounds" : "[24,206][81,225]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        }, {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "cookies",
+                                                            "bounds" : "[80,206][131,225]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "accessibilityText" : "cookies",
+                                                              "value" : "cookies",
+                                                              "text" : "cookies",
+                                                              "bounds" : "[80,206][131,225]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        }, {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "e dados para",
+                                                            "value" : " e dados para",
+                                                            "text" : " e dados para",
+                                                            "bounds" : "[130,206][221,225]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "bounds" : "[24,240][416,380]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Fornecer e manter os serviços Google",
+                                                            "bounds" : "[24,240][416,260]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "accessibilityText" : "Fornecer e manter os serviços Google",
+                                                              "value" : "Fornecer e manter os serviços Google",
+                                                              "text" : "Fornecer e manter os serviços Google",
+                                                              "bounds" : "[58,240][308,259]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        }, {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Monitorizar interrupções de serviço e proteger contra spam, fraudes e abusos",
+                                                            "bounds" : "[24,270][416,310]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "accessibilityText" : "Monitorizar interrupções de serviço e proteger contra spam, fraudes e abusos",
+                                                              "value" : "Monitorizar interrupções de serviço e proteger contra spam, fraudes e abusos",
+                                                              "text" : "Monitorizar interrupções de serviço e proteger contra spam, fraudes e abusos",
+                                                              "bounds" : "[58,270][410,309]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        }, {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Medir a interação com o público-alvo e as estatísticas dos sites para compreender como são utilizados os nossos serviços e melhorar a qualidade dos mesmos",
+                                                            "bounds" : "[24,320][416,380]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "accessibilityText" : "Medir a interação com o público-alvo e as estatísticas dos sites para compreender como são utilizados os nossos serviços e melhorar a qualidade dos mesmos",
+                                                              "value" : "Medir a interação com o público-alvo e as estatísticas dos sites para compreender como são utilizados os nossos serviços e melhorar a qualidade dos mesmos",
+                                                              "text" : "Medir a interação com o público-alvo e as estatísticas dos sites para compreender como são utilizados os nossos serviços e melhorar a qualidade dos mesmos",
+                                                              "bounds" : "[58,320][412,379]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "bounds" : "[24,404][416,444]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Se optar por \"Aceitar tudo\", também vamos usar cookies e dados para",
+                                                            "value" : "Se optar por \"Aceitar tudo\", também vamos usar cookies e dados para",
+                                                            "text" : "Se optar por \"Aceitar tudo\", também vamos usar cookies e dados para",
+                                                            "bounds" : "[24,404][411,443]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "bounds" : "[24,458][416,608]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Desenvolver e melhorar novos serviços",
+                                                            "bounds" : "[24,458][416,478]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "accessibilityText" : "Desenvolver e melhorar novos serviços",
+                                                              "value" : "Desenvolver e melhorar novos serviços",
+                                                              "text" : "Desenvolver e melhorar novos serviços",
+                                                              "bounds" : "[58,458][314,477]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        }, {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Publicar e medir a eficácia de anúncios",
+                                                            "bounds" : "[24,488][416,508]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "accessibilityText" : "Publicar e medir a eficácia de anúncios",
+                                                              "value" : "Publicar e medir a eficácia de anúncios",
+                                                              "text" : "Publicar e medir a eficácia de anúncios",
+                                                              "bounds" : "[58,488][315,507]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        }, {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Mostrar conteúdos personalizados, consoante as suas definições",
+                                                            "bounds" : "[24,518][416,558]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "accessibilityText" : "Mostrar conteúdos personalizados, consoante as suas definições",
+                                                              "value" : "Mostrar conteúdos personalizados, consoante as suas definições",
+                                                              "text" : "Mostrar conteúdos personalizados, consoante as suas definições",
+                                                              "bounds" : "[58,518][413,557]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        }, {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Mostrar anúncios personalizados, consoante as suas definições",
+                                                            "bounds" : "[24,568][416,608]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "children" : [ {
+                                                            "attributes" : {
+                                                              "accessibilityText" : "Mostrar anúncios personalizados, consoante as suas definições",
+                                                              "value" : "Mostrar anúncios personalizados, consoante as suas definições",
+                                                              "text" : "Mostrar anúncios personalizados, consoante as suas definições",
+                                                              "bounds" : "[58,568][403,607]",
+                                                              "enabled" : "true",
+                                                              "focused" : "true",
+                                                              "selected" : "false",
+                                                              "checked" : "false"
+                                                            },
+                                                            "enabled" : true,
+                                                            "focused" : true,
+                                                            "checked" : false,
+                                                            "selected" : false
+                                                          } ],
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "bounds" : "[24,622][416,662]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "Se optar por \"Rejeitar tudo\", não vamos usar cookies para estes fins adicionais.",
+                                                            "value" : "Se optar por \"Rejeitar tudo\", não vamos usar cookies para estes fins adicionais.",
+                                                            "text" : "Se optar por \"Rejeitar tudo\", não vamos usar cookies para estes fins adicionais.",
+                                                            "bounds" : "[24,622][407,661]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      }, {
+                                                        "attributes" : {
+                                                          "bounds" : "[24,686][416,926]",
+                                                          "enabled" : "true",
+                                                          "focused" : "true",
+                                                          "selected" : "false",
+                                                          "checked" : "false"
+                                                        },
+                                                        "children" : [ {
+                                                          "attributes" : {
+                                                            "accessibilityText" : "O conteúdo não personalizado é influenciado por coisas como o conteúdo que está atualmente a ver, a atividade na sua sessão de pesquisa ativa e a sua localização. Os anúncios não personalizados são influenciados pelo conteúdo que está atualmente a ver e a sua localização geral. Os anúncios e os conteúdos personalizados também podem incluir resultados mais relevantes, recomendações e anúncios personalizados com base na atividade anterior deste navegador, como pesquisas anteriores no Google. Também utilizamos cookies e dados para personalizar a experiência de forma a ser adequada para a idade, se tal for relevante.",
+                                                            "value" : "O conteúdo não personalizado é influenciado por coisas como o conteúdo que está atualmente a ver, a atividade na sua sessão de pesquisa ativa e a sua localização. Os anúncios não personalizados são influenciados pelo conteúdo que está atualmente a ver e a sua localização geral. Os anúncios e os conteúdos personalizados também podem incluir resultados mais relevantes, recomendações e anúncios personalizados com base na atividade anterior deste navegador, como pesquisas anteriores no Google. Também utilizamos",
+                                                            "text" : "O conteúdo não personalizado é influenciado por coisas como o conteúdo que está atualmente a ver, a atividade na sua sessão de pesquisa ativa e a sua localização. Os anúncios não personalizados são influenciados pelo conteúdo que está atualmente a ver e a sua localização geral. Os anúncios e os conteúdos personalizados também podem incluir resultados mais relevantes, recomendações e anúncios personalizados com base na atividade anterior deste navegador, como pesquisas anteriores no Google. Também utilizamos",
+                                                            "bounds" : "[24,686][416,925]",
+                                                            "enabled" : "true",
+                                                            "focused" : "true",
+                                                            "selected" : "false",
+                                                            "checked" : "false"
+                                                          },
+                                                          "enabled" : true,
+                                                          "focused" : true,
+                                                          "checked" : false,
+                                                          "selected" : false
+                                                        } ],
+                                                        "enabled" : true,
+                                                        "focused" : true,
+                                                        "checked" : false,
+                                                        "selected" : false
+                                                      } ],
+                                                      "enabled" : true,
+                                                      "focused" : true,
+                                                      "checked" : false,
+                                                      "selected" : false
+                                                    } ],
+                                                    "enabled" : true,
+                                                    "focused" : true,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              } ],
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "bounds" : "[0,0][440,956]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[0,809][440,956]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "children" : [ {
+                                                "attributes" : {
+                                                  "resource-id" : "AdditionalDimmingOverlay",
+                                                  "bounds" : "[-120,814][560,1098]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              }, {
+                                                "attributes" : {
+                                                  "bounds" : "[0,809][440,956]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "bounds" : "[0,809][440,956]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              }, {
+                                                "attributes" : {
+                                                  "bounds" : "[0,809][440,956]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "bounds" : "[0,809][440,956]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                }, {
+                                                  "attributes" : {
+                                                    "bounds" : "[0,809][440,956]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              } ],
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Vertical scroll bar, 2 pages",
+                                              "value" : "0%",
+                                              "text" : "0%",
+                                              "bounds" : "[407,62][437,894]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[434,65][437,615]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Horizontal scroll bar, 1 page",
+                                              "value" : "0%",
+                                              "text" : "0%",
+                                              "bounds" : "[62,923][378,953]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[65,950][375,953]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Vertical scroll bar, 2 pages",
+                                              "value" : "0%",
+                                              "text" : "0%",
+                                              "bounds" : "[407,62][437,894]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[434,65][437,615]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Horizontal scroll bar, 1 page",
+                                              "value" : "0%",
+                                              "text" : "0%",
+                                              "bounds" : "[62,923][378,953]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[65,950][375,953]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          } ],
+                                          "enabled" : true,
+                                          "focused" : false,
+                                          "checked" : false,
+                                          "selected" : false
+                                        } ],
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    }, {
+                                      "attributes" : {
+                                        "accessibilityText" : "Horizontal scroll bar, 1 page",
+                                        "value" : "0%",
+                                        "text" : "0%",
+                                        "bounds" : "[62,923][378,953]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "bounds" : "[65,950][375,953]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    }, {
+                                      "attributes" : {
+                                        "accessibilityText" : "Horizontal scroll bar, 1 page",
+                                        "value" : "0%",
+                                        "text" : "0%",
+                                        "bounds" : "[62,923][378,953]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "bounds" : "[65,950][375,953]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    } ],
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  } ],
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                } ],
+                                "enabled" : true,
+                                "focused" : false,
+                                "checked" : false,
+                                "selected" : false
+                              }, {
+                                "attributes" : {
+                                  "resource-id" : "CapsuleViewController",
+                                  "bounds" : "[0,0][440,956]",
+                                  "enabled" : "true",
+                                  "focused" : "false",
+                                  "selected" : "false",
+                                  "checked" : "false"
+                                },
+                                "children" : [ {
+                                  "attributes" : {
+                                    "bounds" : "[0,0][440,62]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "children" : [ {
+                                    "attributes" : {
+                                      "bounds" : "[0,0][440,62]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  } ],
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                }, {
+                                  "attributes" : {
+                                    "bounds" : "[0,858][440,956]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "children" : [ {
+                                    "attributes" : {
+                                      "bounds" : "[0,858][440,956]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "children" : [ {
+                                      "attributes" : {
+                                        "bounds" : "[0,858][440,956]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "bounds" : "[0,858][440,956]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "children" : [ {
+                                          "attributes" : {
+                                            "bounds" : "[0,858][440,956]",
+                                            "enabled" : "true",
+                                            "focused" : "false",
+                                            "selected" : "false",
+                                            "checked" : "false"
+                                          },
+                                          "children" : [ {
+                                            "attributes" : {
+                                              "bounds" : "[0,858][440,956]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[0,858][440,956]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          } ],
+                                          "enabled" : true,
+                                          "focused" : false,
+                                          "checked" : false,
+                                          "selected" : false
+                                        }, {
+                                          "attributes" : {
+                                            "bounds" : "[0,858][440,956]",
+                                            "enabled" : "true",
+                                            "focused" : "false",
+                                            "selected" : "false",
+                                            "checked" : "false"
+                                          },
+                                          "children" : [ {
+                                            "attributes" : {
+                                              "bounds" : "[0,858][440,956]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          } ],
+                                          "enabled" : true,
+                                          "focused" : false,
+                                          "checked" : false,
+                                          "selected" : false
+                                        } ],
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    } ],
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  }, {
+                                    "attributes" : {
+                                      "bounds" : "[34,874][82,922]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "children" : [ {
+                                      "attributes" : {
+                                        "bounds" : "[34,874][82,922]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "accessibilityText" : "Back",
+                                          "bounds" : "[34,874][82,922]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    } ],
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  }, {
+                                    "attributes" : {
+                                      "bounds" : "[90,874][350,922]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "children" : [ {
+                                      "attributes" : {
+                                        "bounds" : "[90,874][350,922]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "bounds" : "[90,874][350,922]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "children" : [ {
+                                          "attributes" : {
+                                            "resource-id" : "CapsuleNavigationBar?isSelected=true&isDistractionControlOverlayUp=false",
+                                            "bounds" : "[90,874][350,922]",
+                                            "enabled" : "true",
+                                            "focused" : "false",
+                                            "selected" : "true",
+                                            "checked" : "false"
+                                          },
+                                          "children" : [ {
+                                            "attributes" : {
+                                              "accessibilityText" : "Page Menu",
+                                              "resource-id" : "PageFormatMenuButton",
+                                              "bounds" : "[94,878][134,918]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Address",
+                                              "value" : "‎consent.google.com",
+                                              "text" : "‎consent.google.com",
+                                              "resource-id" : "TabBarItemTitle",
+                                              "bounds" : "[140,888][299,908]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "refresh",
+                                              "resource-id" : "ReloadButton",
+                                              "bounds" : "[317,887][335,908]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          } ],
+                                          "enabled" : true,
+                                          "focused" : false,
+                                          "checked" : false,
+                                          "selected" : true
+                                        } ],
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    } ],
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  }, {
+                                    "attributes" : {
+                                      "bounds" : "[358,874][406,922]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "children" : [ {
+                                      "attributes" : {
+                                        "bounds" : "[358,874][406,922]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "accessibilityText" : "More",
+                                          "bounds" : "[358,874][406,922]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    } ],
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  } ],
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                } ],
+                                "enabled" : true,
+                                "focused" : false,
+                                "checked" : false,
+                                "selected" : false
+                              } ],
+                              "enabled" : true,
+                              "focused" : false,
+                              "checked" : false,
+                              "selected" : false
+                            } ],
+                            "enabled" : true,
+                            "focused" : false,
+                            "checked" : false,
+                            "selected" : false
+                          } ],
+                          "enabled" : true,
+                          "focused" : false,
+                          "checked" : false,
+                          "selected" : false
+                        }, {
+                          "attributes" : {
+                            "bounds" : "[0,0][440,956]",
+                            "enabled" : "true",
+                            "focused" : "false",
+                            "selected" : "false",
+                            "checked" : "false"
+                          },
+                          "children" : [ {
+                            "attributes" : {
+                              "bounds" : "[0,0][440,956]",
+                              "enabled" : "true",
+                              "focused" : "false",
+                              "selected" : "false",
+                              "checked" : "false"
+                            },
+                            "enabled" : true,
+                            "focused" : false,
+                            "checked" : false,
+                            "selected" : false
+                          } ],
+                          "enabled" : true,
+                          "focused" : false,
+                          "checked" : false,
+                          "selected" : false
+                        } ],
+                        "enabled" : true,
+                        "focused" : false,
+                        "checked" : false,
+                        "selected" : false
+                      } ],
+                      "enabled" : true,
+                      "focused" : false,
+                      "checked" : false,
+                      "selected" : false
+                    } ],
+                    "enabled" : true,
+                    "focused" : false,
+                    "checked" : false,
+                    "selected" : false
+                  }, {
+                    "attributes" : {
+                      "bounds" : "[0,0][440,956]",
+                      "enabled" : "true",
+                      "focused" : "false",
+                      "selected" : "false",
+                      "checked" : "false"
+                    },
+                    "children" : [ {
+                      "attributes" : {
+                        "bounds" : "[0,0][440,956]",
+                        "enabled" : "true",
+                        "focused" : "false",
+                        "selected" : "false",
+                        "checked" : "false"
+                      },
+                      "enabled" : true,
+                      "focused" : false,
+                      "checked" : false,
+                      "selected" : false
+                    } ],
+                    "enabled" : true,
+                    "focused" : false,
+                    "checked" : false,
+                    "selected" : false
+                  } ],
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                } ],
+                "enabled" : true,
+                "focused" : false,
+                "checked" : false,
+                "selected" : false
+              } ],
+              "enabled" : true,
+              "focused" : false,
+              "checked" : false,
+              "selected" : false
+            } ],
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          }, {
+            "attributes" : {
+              "bounds" : "[0,0][440,956]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "children" : [ {
+              "attributes" : {
+                "bounds" : "[0,0][440,956]",
+                "enabled" : "true",
+                "focused" : "false",
+                "selected" : "false",
+                "checked" : "false"
+              },
+              "children" : [ {
+                "attributes" : {
+                  "bounds" : "[0,0][440,956]",
+                  "enabled" : "true",
+                  "focused" : "false",
+                  "selected" : "false",
+                  "checked" : "false"
+                },
+                "enabled" : true,
+                "focused" : false,
+                "checked" : false,
+                "selected" : false
+              } ],
+              "enabled" : true,
+              "focused" : false,
+              "checked" : false,
+              "selected" : false
+            } ],
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,0][0,0]",
+            "enabled" : "false",
+            "focused" : "false",
+            "selected" : "false",
+            "checked" : "false"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,0][440,54]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          }, {
+            "attributes" : {
+              "bounds" : "[0,0][440,54]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "children" : [ {
+              "attributes" : {
+                "bounds" : "[0,0][440,54]",
+                "enabled" : "true",
+                "focused" : "false",
+                "selected" : "false",
+                "checked" : "false"
+              },
+              "children" : [ {
+                "attributes" : {
+                  "bounds" : "[0,0][440,54]",
+                  "enabled" : "true",
+                  "focused" : "false",
+                  "selected" : "false",
+                  "checked" : "false"
+                },
+                "children" : [ {
+                  "attributes" : {
+                    "accessibilityText" : "19:00",
+                    "bounds" : "[59,14][107,36]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "bounds" : "[65,7][102,43]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "bounds" : "[337,14][374,51]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "accessibilityText" : "Cellular",
+                    "value" : "No signal",
+                    "text" : "No signal",
+                    "bounds" : "[312,25][334,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "value" : "SSID, 3 of 3 Wi-Fi bars",
+                    "text" : "SSID, 3 of 3 Wi-Fi bars",
+                    "resource-id" : "3 of 3 Wi-Fi bars",
+                    "bounds" : "[341,25][361,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "accessibilityText" : "100% battery power",
+                    "value" : "Not charging",
+                    "text" : "Not charging",
+                    "bounds" : "[368,25][399,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "accessibilityText" : "Return to FastRoute",
+                    "resource-id" : "breadcrumb",
+                    "bounds" : "[12,37][78,50]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                } ],
+                "enabled" : true,
+                "focused" : false,
+                "checked" : false,
+                "selected" : false
+              } ],
+              "enabled" : true,
+              "focused" : false,
+              "checked" : false,
+              "selected" : false
+            } ],
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "enabled" : false,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "enabled" : false,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      },
+      "debugMessage" : "Assertion '\"EM ANDAMENTO\" is visible' failed. Check the UI hierarchy in debug artifacts to verify the element state and properties.\n\nPossible causes:\n- Element selector may be incorrect - check if there are similar elements with slightly different names/properties.\n- Element may be temporarily unavailable due to loading state\n- This could be a real regression that needs to be addressed",
+      "stackTrace" : [ {
+        "classLoaderName" : "app",
+        "methodName" : "assertConditionCommand",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 430,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeCommand",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 350,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeCommands",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 263,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runFlow",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 181,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runFlow",
+        "fileName" : "TestSuiteInteractor.kt",
+        "lineNumber" : 243,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.runner.TestSuiteInteractor"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runTestSuite",
+        "fileName" : "TestSuiteInteractor.kt",
+        "lineNumber" : 98,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.runner.TestSuiteInteractor"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runMultipleFlows",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 619,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "access$runMultipleFlows",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 80,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "invokeSuspend",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 502,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand$runShardSuite$1$1"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "resumeWith",
+        "fileName" : "ContinuationImpl.kt",
+        "lineNumber" : 34,
+        "nativeMethod" : false,
+        "className" : "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "DispatchedTask.kt",
+        "lineNumber" : 104,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.DispatchedTask"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "processNextEvent",
+        "fileName" : "EventLoop.common.kt",
+        "lineNumber" : 277,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.EventLoopImplBase"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "joinBlocking",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 95,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BlockingCoroutine"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 69,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt__BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking",
+        "lineNumber" : 1,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking$default",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 48,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt__BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking$default",
+        "lineNumber" : 1,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runShardSuite$lambda$10",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 501,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "newSession",
+        "fileName" : "MaestroSessionManager.kt",
+        "lineNumber" : 132,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.session.MaestroSessionManager"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "newSession$default",
+        "fileName" : "MaestroSessionManager.kt",
+        "lineNumber" : 66,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.session.MaestroSessionManager"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runShardSuite",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 476,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "access$runShardSuite",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 80,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "invokeSuspend",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 435,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand$handleSessions$1$results$1$1"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "resumeWith",
+        "fileName" : "ContinuationImpl.kt",
+        "lineNumber" : 34,
+        "nativeMethod" : false,
+        "className" : "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "DispatchedTask.kt",
+        "lineNumber" : 104,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.DispatchedTask"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "LimitedDispatcher.kt",
+        "lineNumber" : 111,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.internal.LimitedDispatcher$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "Tasks.kt",
+        "lineNumber" : 99,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.TaskImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runSafely",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 585,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeTask",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 802,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runWorker",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 706,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 693,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      } ],
+      "localizedMessage" : "Assertion is false: \"EM ANDAMENTO\" is visible"
+    },
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "(?s).*Rota #.*",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737204500,
+    "duration" : 267,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar importação",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737190800,
+    "duration" : 1522,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "(?s).*Rota #.*2 waypoints.*",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737194168,
+    "duration" : 1576,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Senha",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "inputTextCommand" : {
+          "text" : "12345",
+          "optional" : false
+        }
+      }, {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Entrar no Sistema",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Entrar no Sistema",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "SKIPPED",
+    "timestamp" : 1772737174107,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Criar Rota",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737181408,
+    "duration" : 1908,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Rotas da Importação",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772737194047,
+    "duration" : 121,
+    "sequenceNumber" : 0
+  }
+} ]

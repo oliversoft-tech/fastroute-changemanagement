@@ -1,0 +1,690 @@
+{
+  "name": "Chat with Fastroute - unico intake fixo sem llm v8",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "UFaOMe2CYms4BeIm",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/UFaOMe2CYms4BeIm",
+          "cachedResultName": "Impact Analysis"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "problema": "={{$json.problema || ''}}",
+            "mudanca": "={{$json.mudanca || ''}}",
+            "evidencias": "={{$json.evidencias || ''}}",
+            "restricoes": "={{$json.restricoes || ''}}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        32
+      ],
+      "id": "1e6104d1-fb80-41bb-a70a-a02bd60189c1",
+      "name": "Call 'Impact Analysis'"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "showWelcomeScreen": true,
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "578ae8fc-af6b-4d6a-8e8f-e2ef9a6ebad2",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -928,
+        416
+      ],
+      "webhookId": "a9d43452-7c4c-4d5b-89f1-199d337586ff"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true
+      },
+      "id": "f8fc247f-79e5-4a62-9e65-5f914d645826",
+      "name": "Load Repos Table (Correction)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nconst raw = toStr(\n  $json.text ||\n  $json.response?.text ||\n  $json.choices?.[0]?.message?.content ||\n  ''\n);\nif (!raw) throw new Error('[Parse Correction Proposal] resposta vazia do LLM.');\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (_e) {\n  const s = raw.indexOf('{');\n  const e = raw.lastIndexOf('}');\n  if (s >= 0 && e > s) {\n    try {\n      parsed = JSON.parse(raw.slice(s, e + 1));\n    } catch (__e) {\n      throw new Error('[Parse Correction Proposal] JSON invalido: ' + raw.slice(0, 1000));\n    }\n  } else {\n    throw new Error('[Parse Correction Proposal] JSON invalido: ' + raw.slice(0, 1000));\n  }\n}\n\nconst payload = parsed.impact_payload || {};\nconst problema = toStr(payload.problema);\nconst mudanca = toStr(payload.mudanca);\nconst evidencias = toStr(payload.evidencias);\nconst restricoes = toStr(payload.restricoes || 'Nenhuma restricao informada');\n\nif (!problema || !mudanca || !evidencias) {\n  throw new Error('[Parse Correction Proposal] impact_payload incompleto.');\n}\n\nreturn [{\n  json: {\n    status: toStr(parsed.status || 'SEM_EVIDENCIA'),\n    diagnostico: toStr(parsed.diagnostico || ''),\n    evidencias_lista: Array.isArray(parsed.evidencias) ? parsed.evidencias : [],\n    impact_payload: {\n      problema,\n      mudanca,\n      evidencias,\n      restricoes\n    }\n  }\n}];"
+      },
+      "id": "07a76f89-05c1-461a-8792-d593655284c3",
+      "name": "Parse Correction Proposal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        384
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\nconst wf = toStr($json.impact_workflow_id || getEnv('IMPACT_WORKFLOW_ID') || '');\nif (!wf) throw new Error('[Prepare Impact Inputs] IMPACT_WORKFLOW_ID ausente no environment.');\n\nconst payload = $json.impact_payload || {};\n\nreturn [{\n  json: {\n    impact_workflow_id: wf,\n    problema: toStr(payload.problema || ''),\n    mudanca: toStr(payload.mudanca || ''),\n    evidencias: toStr(payload.evidencias || ''),\n    restricoes: toStr(payload.restricoes || ''),\n    status: toStr($json.status || ''),\n    diagnostico: toStr($json.diagnostico || ''),\n    evidencias_lista: Array.isArray($json.evidencias_lista) ? $json.evidencias_lista : []\n  }\n}];"
+      },
+      "id": "3ef84317-5388-461b-84d1-0581f9370e6b",
+      "name": "Prepare Impact Inputs (Correction)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        384
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nconst fromPrepare = (() => {\n  try {\n    return $items('Prepare Impact Inputs (Correction)', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\n\nconst evid = Array.isArray(fromPrepare.evidencias_lista) ? fromPrepare.evidencias_lista : [];\n\nreturn [{\n  json: {\n    output: [\n      'Correcao proposta e enviada para o fluxo normal de Impact Analysis.',\n      '',\n      'Status diagnostico: ' + toStr(fromPrepare.status || ''),\n      'Diagnostico: ' + toStr(fromPrepare.diagnostico || ''),\n      '',\n      'Payload enviado:',\n      '- problema: ' + toStr(fromPrepare.problema || ''),\n      '- mudanca: ' + toStr(fromPrepare.mudanca || ''),\n      '- evidencias: ' + toStr(fromPrepare.evidencias || ''),\n      '- restricoes: ' + toStr(fromPrepare.restricoes || ''),\n      '',\n      'Evidencias utilizadas: ' + String(evid.length)\n    ].join('\\n')\n  }\n}];"
+      },
+      "id": "127a774f-104b-4731-9f0c-584d0333559d",
+      "name": "Build Auto Correction Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        384
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true
+      },
+      "id": "2cf8efae-600b-44b2-9a3a-d23a424baee6",
+      "name": "Load Repos Table (PR QA)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        784
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        512
+      ],
+      "id": "64df1ceb-fb08-45e0-a172-0e0b42f0e2c0",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "a6UWJsfSoa22tcvq",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        1008
+      ],
+      "id": "da150b58-a1b5-42f9-93de-80bb2864156b",
+      "name": "Anthropic Chat Model1",
+      "credentials": {
+        "anthropicApi": {
+          "id": "a6UWJsfSoa22tcvq",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "UFaOMe2CYms4BeIm",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/UFaOMe2CYms4BeIm",
+          "cachedResultName": "Impact Analysis"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1600,
+        384
+      ],
+      "id": "f8ebf67d-d6e7-4a8f-9d7a-34b1a1026da7",
+      "name": "Call 'Impact Analysis'1"
+    },
+    {
+      "parameters": {
+        "content": "## PR Correction",
+        "height": 368,
+        "width": 1792
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        272
+      ],
+      "typeVersion": 1,
+      "id": "bc55876b-273d-474f-b682-9bff890a565f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Questions about changes",
+        "height": 432,
+        "width": 1040
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        704
+      ],
+      "typeVersion": 1,
+      "id": "aeb7e1a8-db13-4c84-b940-889cbacd7bc9",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\nconst encodePath = (p) => toStr(p).split('/').map(encodeURIComponent).join('/');\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst reqFromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input2', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\n\nconst req = {\n  ...($json || {}),\n  ...reqFromNormalize,\n};\n\nconst question = toStr(req.question || '');\nconst owner = toStr(req.owner || getEnv('GITHUB_OWNER') || 'oliversoft-tech');\nconst token = toStr(req.github_token || getEnv('GITHUB_TOKEN') || '');\nif (!token) {\n  throw new Error('[Fetch PR + Code Context] GITHUB_TOKEN ausente. Defina em env (GITHUB_TOKEN) ou no Normalize Chat Input.');\n}\n\nconst rows = $input.all().map((i) => i.json || {});\nlet repos = rows\n  .map((r) => toStr(r.repo_name || r.name || r.repository || r.slug || ''))\n  .filter(Boolean)\n  .filter((n) => n.includes('fastroute-'));\nif (repos.length === 0) repos = ['fastroute-domain', 'fastroute-api', 'fastroute-mobile-hybrid', 'fastroute-changemanagement'];\nrepos = [...new Set(repos)];\n\nconst gh = async (url) => this.helpers.httpRequest({\n  method: 'GET',\n  url,\n  headers: {\n    Authorization: 'Bearer ' + token,\n    Accept: 'application/vnd.github+json',\n    'X-GitHub-Api-Version': '2022-11-28'\n  },\n  json: true\n});\n\nconst queryTerms = question\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s]/g, ' ')\n  .split(/\\s+/)\n  .filter((t) => t.length >= 4)\n  .slice(0, 10);\n\nconst allPrs = [];\nfor (const repo of repos) {\n  const list = await gh('https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=all&sort=updated&direction=desc&per_page=100');\n  for (const pr of (Array.isArray(list) ? list : [])) {\n    const title = toStr(pr.title);\n    const headRef = toStr(pr.head?.ref || '');\n    const governanceLike = title.toLowerCase().includes('governance: impact analysis') || headRef.startsWith('codex/governance-');\n    if (!governanceLike) continue;\n\n    allPrs.push({\n      repo,\n      number: pr.number,\n      title,\n      state: pr.state,\n      draft: !!pr.draft,\n      created_at: pr.created_at,\n      updated_at: pr.updated_at,\n      merged_at: pr.merged_at,\n      user: toStr(pr.user?.login || ''),\n      url: toStr(pr.html_url || ''),\n      body: toStr(pr.body || '').slice(0, 7000),\n      head: toStr(pr.head?.ref || ''),\n      base: toStr(pr.base?.ref || '')\n    });\n  }\n}\n\nallPrs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());\nconst selected = allPrs.slice(0, 25);\n\nconst fileIndex = [];\nconst commitHits = [];\nfor (const pr of selected) {\n  try {\n    const files = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/files?per_page=100');\n    pr.files = (Array.isArray(files) ? files : []).map((f) => ({\n      filename: toStr(f.filename),\n      status: toStr(f.status),\n      additions: toNum(f.additions) || 0,\n      deletions: toNum(f.deletions) || 0,\n      raw_url: toStr(f.raw_url || ''),\n      blob_url: toStr(f.blob_url || '')\n    }));\n\n    for (const f of pr.files) {\n      fileIndex.push({\n        repo: pr.repo,\n        pr_number: pr.number,\n        filename: f.filename,\n        raw_url: f.raw_url,\n        blob_url: f.blob_url,\n        pr_url: pr.url,\n      });\n    }\n  } catch (_e) {\n    pr.files = [];\n  }\n\n  try {\n    const commits = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/commits?per_page=100');\n    pr.commits = (Array.isArray(commits) ? commits : []).map((c) => {\n      const msg = toStr(c?.commit?.message || '');\n      return {\n        sha: toStr(c?.sha || '').slice(0, 10),\n        message: msg.slice(0, 900),\n        author: toStr(c?.commit?.author?.name || c?.author?.login || ''),\n      };\n    });\n\n    if (queryTerms.length > 0) {\n      const text = pr.commits.map((c) => c.message).join(' \\n ').toLowerCase();\n      const matched = queryTerms.filter((t) => text.includes(t));\n      if (matched.length > 0) {\n        commitHits.push({\n          repo: pr.repo,\n          pr_number: pr.number,\n          url: pr.url,\n          matched_terms: [...new Set(matched)],\n          commit_messages: pr.commits.map((c) => c.message).slice(0, 10),\n        });\n      }\n    }\n  } catch (_e) {\n    pr.commits = [];\n  }\n}\n\nconst matches = fileIndex.filter((f) => {\n  if (queryTerms.length === 0) return false;\n  const hay = (f.filename + ' ' + f.blob_url).toLowerCase();\n  return queryTerms.some((t) => hay.includes(t));\n}).slice(0, 20);\n\nconst codeSnippets = [];\nfor (const m of matches) {\n  try {\n    const content = await gh('https://api.github.com/repos/' + owner + '/' + m.repo + '/contents/' + encodePath(m.filename) + '?ref=main');\n    let decoded = '';\n    if (content && content.content) {\n      decoded = Buffer.from(String(content.content).replace(/\\n/g, ''), 'base64').toString('utf8');\n    }\n    codeSnippets.push({\n      repo: m.repo,\n      pr_number: m.pr_number,\n      filename: m.filename,\n      pr_url: m.pr_url,\n      code: toStr(decoded).slice(0, 2500)\n    });\n  } catch (_e) {\n    // ignore fetch errors\n  }\n}\n\nconst fastrouteModeloDados = {\n  fonte: 'skill:fastroute/references/modelo-dados.md',\n  tabelas_chave: [\n    'orders', 'addresses', 'routes', 'route_waypoints', 'waypoint_delivery_photo',\n    'change_log', 'mutations_applied', 'users', 'clients', 'orders_import'\n  ],\n  relacionamentos_relevantes: [\n    'addresses.order_id -> orders.id',\n    'routes.import_id -> orders_import.id',\n    'routes.driver_id -> users.id',\n    'orders.import_id -> orders_import.id'\n  ],\n  pontos_atencao: [\n    'route_waypoints e routes usam status/version para ciclo de entrega',\n    'change_log e mutations_applied suportam trilha e idempotencia offline-first',\n    'dados de latitude/longitude aparecem em ordens e enderecos e impactam clustering/roteirizacao',\n    'fotos de comprovacao em waypoint_delivery_photo vinculam rota, waypoint e usuario'\n  ]\n};\n\nreturn [{\n  json: {\n    route: req.route,\n    session_id: req.session_id || 'default',\n    chat_history: Array.isArray(req.chat_history) ? req.chat_history : [],\n    question,\n    owner,\n    impact_workflow_id: req.impact_workflow_id,\n    pr_context: {\n      owner,\n      repos,\n      total_found: allPrs.length,\n      selected_count: selected.length,\n      query_terms: queryTerms,\n      prs: selected,\n      commit_text_hits: commitHits,\n      code_snippets: codeSnippets,\n      fastroute_modelo_dados: fastrouteModeloDados\n    }\n  }\n}];"
+      },
+      "id": "4ddbda31-7d2a-4075-8cbc-696fa80568e3",
+      "name": "Fetch PR + Code Context (Correction)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        384
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\nconst encodePath = (p) => toStr(p).split('/').map(encodeURIComponent).join('/');\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst reqFromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input2', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\n\nconst req = {\n  ...($json || {}),\n  ...reqFromNormalize,\n};\n\nconst question = toStr(req.question || '');\nconst owner = toStr(req.owner || getEnv('GITHUB_OWNER') || 'oliversoft-tech');\nconst token = toStr(req.github_token || getEnv('GITHUB_TOKEN') || '');\nif (!token) {\n  throw new Error('[Fetch PR + Code Context] GITHUB_TOKEN ausente. Defina em env (GITHUB_TOKEN) ou no Normalize Chat Input.');\n}\n\nconst rows = $input.all().map((i) => i.json || {});\nlet repos = rows\n  .map((r) => toStr(r.repo_name || r.name || r.repository || r.slug || ''))\n  .filter(Boolean)\n  .filter((n) => n.includes('fastroute-'));\nif (repos.length === 0) repos = ['fastroute-domain', 'fastroute-api', 'fastroute-mobile-hybrid', 'fastroute-changemanagement'];\nrepos = [...new Set(repos)];\n\nconst gh = async (url) => this.helpers.httpRequest({\n  method: 'GET',\n  url,\n  headers: {\n    Authorization: 'Bearer ' + token,\n    Accept: 'application/vnd.github+json',\n    'X-GitHub-Api-Version': '2022-11-28'\n  },\n  json: true\n});\n\nconst queryTerms = question\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s]/g, ' ')\n  .split(/\\s+/)\n  .filter((t) => t.length >= 4)\n  .slice(0, 10);\n\nconst allPrs = [];\nfor (const repo of repos) {\n  const list = await gh('https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=all&sort=updated&direction=desc&per_page=100');\n  for (const pr of (Array.isArray(list) ? list : [])) {\n    const title = toStr(pr.title);\n    const headRef = toStr(pr.head?.ref || '');\n    const governanceLike = title.toLowerCase().includes('governance: impact analysis') || headRef.startsWith('codex/governance-');\n    if (!governanceLike) continue;\n\n    allPrs.push({\n      repo,\n      number: pr.number,\n      title,\n      state: pr.state,\n      draft: !!pr.draft,\n      created_at: pr.created_at,\n      updated_at: pr.updated_at,\n      merged_at: pr.merged_at,\n      user: toStr(pr.user?.login || ''),\n      url: toStr(pr.html_url || ''),\n      body: toStr(pr.body || '').slice(0, 7000),\n      head: toStr(pr.head?.ref || ''),\n      base: toStr(pr.base?.ref || '')\n    });\n  }\n}\n\nallPrs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());\nconst selected = allPrs.slice(0, 25);\n\nconst fileIndex = [];\nconst commitHits = [];\nfor (const pr of selected) {\n  try {\n    const files = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/files?per_page=100');\n    pr.files = (Array.isArray(files) ? files : []).map((f) => ({\n      filename: toStr(f.filename),\n      status: toStr(f.status),\n      additions: toNum(f.additions) || 0,\n      deletions: toNum(f.deletions) || 0,\n      raw_url: toStr(f.raw_url || ''),\n      blob_url: toStr(f.blob_url || '')\n    }));\n\n    for (const f of pr.files) {\n      fileIndex.push({\n        repo: pr.repo,\n        pr_number: pr.number,\n        filename: f.filename,\n        raw_url: f.raw_url,\n        blob_url: f.blob_url,\n        pr_url: pr.url,\n      });\n    }\n  } catch (_e) {\n    pr.files = [];\n  }\n\n  try {\n    const commits = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/commits?per_page=100');\n    pr.commits = (Array.isArray(commits) ? commits : []).map((c) => {\n      const msg = toStr(c?.commit?.message || '');\n      return {\n        sha: toStr(c?.sha || '').slice(0, 10),\n        message: msg.slice(0, 900),\n        author: toStr(c?.commit?.author?.name || c?.author?.login || ''),\n      };\n    });\n\n    if (queryTerms.length > 0) {\n      const text = pr.commits.map((c) => c.message).join(' \\n ').toLowerCase();\n      const matched = queryTerms.filter((t) => text.includes(t));\n      if (matched.length > 0) {\n        commitHits.push({\n          repo: pr.repo,\n          pr_number: pr.number,\n          url: pr.url,\n          matched_terms: [...new Set(matched)],\n          commit_messages: pr.commits.map((c) => c.message).slice(0, 10),\n        });\n      }\n    }\n  } catch (_e) {\n    pr.commits = [];\n  }\n}\n\nconst matches = fileIndex.filter((f) => {\n  if (queryTerms.length === 0) return false;\n  const hay = (f.filename + ' ' + f.blob_url).toLowerCase();\n  return queryTerms.some((t) => hay.includes(t));\n}).slice(0, 20);\n\nconst codeSnippets = [];\nfor (const m of matches) {\n  try {\n    const content = await gh('https://api.github.com/repos/' + owner + '/' + m.repo + '/contents/' + encodePath(m.filename) + '?ref=main');\n    let decoded = '';\n    if (content && content.content) {\n      decoded = Buffer.from(String(content.content).replace(/\\n/g, ''), 'base64').toString('utf8');\n    }\n    codeSnippets.push({\n      repo: m.repo,\n      pr_number: m.pr_number,\n      filename: m.filename,\n      pr_url: m.pr_url,\n      code: toStr(decoded).slice(0, 2500)\n    });\n  } catch (_e) {\n    // ignore fetch errors\n  }\n}\n\nconst fastrouteModeloDados = {\n  fonte: 'skill:fastroute/references/modelo-dados.md',\n  tabelas_chave: [\n    'orders', 'addresses', 'routes', 'route_waypoints', 'waypoint_delivery_photo',\n    'change_log', 'mutations_applied', 'users', 'clients', 'orders_import'\n  ],\n  relacionamentos_relevantes: [\n    'addresses.order_id -> orders.id',\n    'routes.import_id -> orders_import.id',\n    'routes.driver_id -> users.id',\n    'orders.import_id -> orders_import.id'\n  ],\n  pontos_atencao: [\n    'route_waypoints e routes usam status/version para ciclo de entrega',\n    'change_log e mutations_applied suportam trilha e idempotencia offline-first',\n    'dados de latitude/longitude aparecem em ordens e enderecos e impactam clustering/roteirizacao',\n    'fotos de comprovacao em waypoint_delivery_photo vinculam rota, waypoint e usuario'\n  ]\n};\n\nreturn [{\n  json: {\n    route: req.route,\n    session_id: req.session_id || 'default',\n    chat_history: Array.isArray(req.chat_history) ? req.chat_history : [],\n    question,\n    owner,\n    impact_workflow_id: req.impact_workflow_id,\n    pr_context: {\n      owner,\n      repos,\n      total_found: allPrs.length,\n      selected_count: selected.length,\n      query_terms: queryTerms,\n      prs: selected,\n      commit_text_hits: commitHits,\n      code_snippets: codeSnippets,\n      fastroute_modelo_dados: fastrouteModeloDados\n    }\n  }\n}];"
+      },
+      "id": "0c0cd26c-ea1d-4322-a061-751c249d5d67",
+      "name": "Fetch PR + Code Context (PR QA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        784
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nconst fromPrepare = (() => {\n  try {\n    return $items('Prepare Impact Inputs (Manual)', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\nconst fromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input2', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\nconst sessionId = toStr(fromNormalize.session_id || 'default');\n\nconst output = [\n  'Impact Analysis disparado com sucesso (fluxo normal).',\n  '',\n  'Dados enviados:',\n  '- problema: ' + toStr(fromPrepare.problema || ''),\n  '- mudanca: ' + toStr(fromPrepare.mudanca || ''),\n  '- evidencias: ' + toStr(fromPrepare.evidencias || ''),\n  '- restricoes: ' + toStr(fromPrepare.restricoes || '')\n].join('\\n');\n\ntry {\n  const store = this.getWorkflowStaticData('global');\n  if (!store.chatMemory) store.chatMemory = {};\n  if (!Array.isArray(store.chatMemory[sessionId])) store.chatMemory[sessionId] = [];\n  store.chatMemory[sessionId].push({ role: 'assistant', content: output, at: new Date().toISOString() });\n  if (store.chatMemory[sessionId].length > 40) {\n    store.chatMemory[sessionId] = store.chatMemory[sessionId].slice(-40);\n  }\n} catch (_e) {}\n\nreturn [{ json: { output } }];"
+      },
+      "id": "354d32fe-3a14-4d89-8424-bc48dd9780c9",
+      "name": "Build Impact Chat Reply1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        32
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Historico recente da conversa (JSON):',\n  JSON.stringify($json.chat_history || [], null, 2),\n  '',\n  'Pedido de correcao em linguagem natural:',\n  $json.question || '',\n  '',\n  'Contexto de PRs e codigo (JSON):',\n  JSON.stringify($json.pr_context || {}, null, 2)\n].join('\\n')}}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce e um arquiteto de mudancas e deve propor uma correcao a partir de PRs abertas existentes.\n\nRetorne SOMENTE JSON valido sem markdown, no formato:\n{\n  \"status\": \"SIM\nPARCIAL\nNAO\nSEM_EVIDENCIA\",\n  \"diagnostico\": \"string\",\n  \"impact_payload\": {\n    \"problema\": \"string\",\n    \"mudanca\": \"string\",\n    \"evidencias\": \"string\",\n    \"restricoes\": \"string\"\n  },\n  \"evidencias\": [\n    { \"repo\": \"string\", \"pr_number\": number, \"url\": \"string\", \"arquivos\": [\"string\"], \"commits\": [\"string\"] }\n  ]\n}\n\nRegras:\n1) impact_payload deve ser preenchido para acionar Impact Analysis.\n2) Se faltar evidencia, use status=SEM_EVIDENCIA e descreva lacunas em diagnostico.\n3) Nao invente PRs.\n 4)Use apenas PRs abertas como escopo de pesquisa. Desconsidere PRs merged,closed ou qualquer outro status."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      },
+      "id": "58f06fbc-da7d-44a8-89c1-0a8a4cd47848",
+      "name": "Basic LLM Chain (Correction Proposal)1",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        800,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Historico recente da conversa (JSON):',\n  JSON.stringify($json.chat_history || [], null, 2),\n  '',\n  'Pergunta do usuario:',\n  $json.question || '',\n  '',\n  'Contexto de PRs e codigo (JSON):',\n  JSON.stringify($json.pr_context || {}, null, 2)\n].join('\\n')}}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce responde perguntas sobre implementacao de necessidades com base em PRs de governance,  textos de commits e trechos de codigo.\n\nQuando a pergunta for algo como \"essa necessidade ja foi implementada?\",  responda com:\n- Status: SIM \n PARCIAL \n NAO \n SEM_EVIDENCIA\n- Justificativa tecnica\n-  Evidencias com links de PR, arquivos e/ou commits\n- Gaps encontrados\n\nRegras:\n 1) Use somente o contexto recebido (prs, commit_text_hits, code_snippets, fastroute_modelo_dados). \n2) Nao invente evidencias. \n3) Seja objetivo e tecnico em portugues. \n4) Use apenas PRs merged, arquivos arquivos e/ou commits dos repositórios."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      },
+      "id": "7953119d-2831-4632-a3b2-c8c079aa677b",
+      "name": "Basic LLM Chain (PR Questions)1",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        800,
+        784
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst text = toStr($json.text || $json.response?.text || '');\nif (!text) throw new Error('[Build PR Chat Reply] LLM retornou texto vazio.');\n\nconst fromNormalize = (() => {\n  try { return $items('Normalize Chat Input', 0, 0)[0]?.json || {}; } catch (_e) { return {}; }\n})();\nconst fromFetch = (() => {\n  try { return $items('Fetch PR + Code Context (PR QA)', 0, 0)[0]?.json || {}; } catch (_e) { return {}; }\n})();\n\nconst sessionId = toStr($json.session_id || fromFetch.session_id || fromNormalize.session_id || 'default');\nconst route = toStr($json.route || fromFetch.route || fromNormalize.route || 'pr_qa');\nconst precheckOriginal = toStr(fromFetch.precheck_original_message || fromNormalize.precheck_original_message || fromFetch.question || fromNormalize.question || '');\n\nconst normalizeStatus = (s) => {\n  const v = toStr(s)\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toUpperCase()\n    .replace(/\\s+/g, '_')\n    .replace(/-/g, '_');\n\n  if (v === 'SIM') return 'SIM';\n  if (v === 'PARCIAL') return 'PARCIAL';\n  if (v === 'NAO' || v === 'N') return 'NAO';\n  if (v === 'SEM_EVIDENCIA' || v === 'SEMEVIDENCIA') return 'SEM_EVIDENCIA';\n  return '';\n};\n\nconst tryParseJsonStatus = (raw) => {\n  const txt = toStr(raw);\n  const candidates = [txt];\n  const fenced = txt.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  if (fenced && fenced[1]) candidates.push(toStr(fenced[1]));\n\n  for (const c of candidates) {\n    try {\n      const obj = JSON.parse(c);\n      if (obj && typeof obj === 'object' && 'status' in obj) {\n        const st = normalizeStatus(obj.status);\n        if (st) return st;\n      }\n    } catch (_e) {}\n  }\n  return '';\n};\n\nconst parseStatus = (raw) => {\n  const txt = toStr(raw);\n  const jsonStatus = tryParseJsonStatus(txt);\n  if (jsonStatus) return jsonStatus;\n\n  const patterns = [\n    /(?:^|\\n)\\s*[-*]?\\s*[*_`\"]?status[*_`\"]?\\s*[:=]\\s*[*_`\"]?(SIM|PARCIAL|NAO|NÃO|SEM[ _-]?EVIDENCIA)\\b/i,\n    /\"status\"\\s*:\\s*\"(SIM|PARCIAL|NAO|NÃO|SEM[ _-]?EVIDENCIA)\"/i,\n    /\\bstatus\\b[^\\n]{0,80}\\b(SIM|PARCIAL|NAO|NÃO|SEM[ _-]?EVIDENCIA)\\b/i,\n  ];\n\n  for (const re of patterns) {\n    const m = txt.match(re);\n    if (m && m[1]) {\n      const st = normalizeStatus(m[1]);\n      if (st) return st;\n    }\n  }\n  return '';\n};\n\nlet output = text;\n\nconst getStore = () => {\n  if (typeof $getWorkflowStaticData === 'function') return $getWorkflowStaticData('global');\n  if (this && typeof this.getWorkflowStaticData === 'function') return this.getWorkflowStaticData('global');\n  throw new Error('[Build PR Chat Reply] static data indisponivel no Code node.');\n};\n\nconst store = getStore();\nif (!store.chatMemory) store.chatMemory = {};\nif (!store.chatModes) store.chatModes = {};\nif (!store.impactDrafts) store.impactDrafts = {};\nif (!store.impactPrecheck) store.impactPrecheck = {};\nif (!store.pendingImpactProceed) store.pendingImpactProceed = {};\nif (!store.lastSuggestedImpactPayload) store.lastSuggestedImpactPayload = {};\nif (!Array.isArray(store.chatMemory[sessionId])) store.chatMemory[sessionId] = [];\nif (!('chatModeGlobal' in store)) store.chatModeGlobal = '';\nif (!('impactDraftGlobal' in store)) store.impactDraftGlobal = null;\nif (!('impactPrecheckGlobal' in store)) store.impactPrecheckGlobal = { done: false, checked_at: null, status: '' };\nif (!('pendingImpactProceedGlobal' in store)) store.pendingImpactProceedGlobal = { awaiting: false };\nif (!('lastSuggestedImpactPayloadGlobal' in store)) store.lastSuggestedImpactPayloadGlobal = null;\n\nif (route === 'pr_qa_precheck') {\n  let status = parseStatus(text);\n  const statusFromFallback = !status;\n  if (!status) status = 'SEM_EVIDENCIA';\n\n  const precheckPayload = { done: true, status, checked_at: new Date().toISOString() };\n  store.impactPrecheck[sessionId] = precheckPayload;\n  store.impactPrecheckGlobal = precheckPayload;\n\n  if (status === 'SIM') {\n    delete store.impactDrafts[sessionId];\n    store.impactDraftGlobal = null;\n    delete store.pendingImpactProceed[sessionId];\n    store.pendingImpactProceedGlobal = { awaiting: false };\n    delete store.lastSuggestedImpactPayload[sessionId];\n    store.lastSuggestedImpactPayloadGlobal = null;\n    delete store.chatModes[sessionId];\n    store.chatModeGlobal = '';\n\n    output = [\n      'Verificacao previa concluida: a necessidade ja existe (status SIM).',\n      'Nao vou prosseguir com Impact Analysis.',\n      '',\n      text,\n      '',\n      'Se quiser iniciar uma nova solicitacao, envie /menu.'\n    ].join('\\n');\n  } else {\n    const suggestedPayload = {\n      problema: precheckOriginal || 'Necessidade identificada via analise de PRs',\n      mudanca: [\n        'Prosseguir com implementacao/correcao da necessidade com base na analise de PRs.',\n        'Status da analise: ' + status + '.',\n        precheckOriginal ? ('Necessidade original: ' + precheckOriginal) : ''\n      ].filter(Boolean).join(' '),\n      evidencias: [\n        'Resultado da analise de PRs: status=' + status + '.',\n        text\n      ].join('\\n\\n'),\n      restricoes: 'Manter compatibilidade com PRs existentes e evitar regressao funcional.'\n    };\n\n    store.lastSuggestedImpactPayload[sessionId] = suggestedPayload;\n    store.lastSuggestedImpactPayloadGlobal = suggestedPayload;\n\n    const pending = {\n      awaiting: true,\n      status,\n      analysis_text: text,\n      suggested_payload: suggestedPayload,\n      created_at: new Date().toISOString()\n    };\n\n    store.pendingImpactProceed[sessionId] = pending;\n    store.pendingImpactProceedGlobal = pending;\n\n    const header = statusFromFallback\n      ? 'Resultado da analise de PRs: SEM_EVIDENCIA (fallback aplicado: Status nao identificado no retorno do LLM).'\n      : 'Resultado da analise de PRs: ' + status + '.';\n\n    output = [\n      header,\n      '',\n      text,\n      '',\n      'Deseja prosseguir com a implementacao?',\n      'Se responder SIM, vou acionar o fluxo Impact Analysis com Impact Inputs preenchidos a partir desta analise.',\n      'Responda apenas: SIM ou NAO.'\n    ].join('\\n');\n  }\n}\n\nstore.chatMemory[sessionId].push({ role: 'assistant', content: output, at: new Date().toISOString() });\nif (store.chatMemory[sessionId].length > 40) {\n  store.chatMemory[sessionId] = store.chatMemory[sessionId].slice(-40);\n}\n\nreturn [{ json: { output } }];\n"
+      },
+      "id": "248ac0fc-cf41-40b2-a437-5ca224b5aed8",
+      "name": "Build PR Chat Reply1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        784
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "## New Change",
+        "height": 272,
+        "width": 1792
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        -48
+      ],
+      "typeVersion": 1,
+      "id": "8e1cf20b-f4f1-4de2-9b4e-42174913b1f0",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "impact_ready",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-impact-ready"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "correction_propose",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-correction"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.route}}",
+                    "rightValue": "pr_qa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "route-prqa"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        400
+      ],
+      "id": "058ea3ed-4642-45d4-9b64-81c49bbef181",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst getStore = () => {\n  if (typeof $getWorkflowStaticData === 'function') return $getWorkflowStaticData('global');\n  if (this && typeof this.getWorkflowStaticData === 'function') return this.getWorkflowStaticData('global');\n  return {};\n};\n\nconst raw = $json || {};\n\nconst deepFindMessage = (obj) => {\n  const exactKeys = new Set(['chatInput', 'message', 'text', 'input']);\n\n  const direct = [\n    obj?.chatInput,\n    obj?.message,\n    obj?.text,\n    obj?.input,\n    obj?.body?.chatInput,\n    obj?.body?.message,\n    obj?.body?.text,\n    obj?.body?.input,\n    obj?.payload?.chatInput,\n    obj?.payload?.message,\n    obj?.payload?.text,\n    obj?.payload?.input,\n    obj?.data?.chatInput,\n    obj?.data?.message,\n    obj?.data?.text,\n    obj?.data?.input,\n  ];\n  for (const c of direct) {\n    const s = toStr(c);\n    if (s) return s;\n  }\n\n  const queue = [obj];\n  const seen = new Set();\n  while (queue.length) {\n    const cur = queue.shift();\n    if (!cur || typeof cur !== 'object') continue;\n    if (seen.has(cur)) continue;\n    seen.add(cur);\n    for (const [k, v] of Object.entries(cur)) {\n      if (typeof v === 'string' && exactKeys.has(String(k))) {\n        const s = toStr(v);\n        if (s) return s;\n      } else if (v && typeof v === 'object') {\n        queue.push(v);\n      }\n    }\n  }\n\n  // Last-resort fallback for n8n hosted chat payload variants:\n  // collect all string leaves and pick the last user-like short text.\n  const strings = [];\n  const q = [obj];\n  const seen2 = new Set();\n  while (q.length) {\n    const cur = q.shift();\n    if (!cur || typeof cur !== 'object') continue;\n    if (seen2.has(cur)) continue;\n    seen2.add(cur);\n    for (const v of Object.values(cur)) {\n      if (typeof v === 'string') strings.push(v);\n      else if (v && typeof v === 'object') q.push(v);\n    }\n  }\n  const isUiBoilerplate = (s) => {\n    const t = norm(s);\n    return (\n      t.includes('escolha uma opcao para continuar') ||\n      t.includes('nova analise de impacto') ||\n      t.includes('duvida sobre funcionalidade') ||\n      t.includes('correcao de prs abertas') ||\n      t.includes('qual problema ou oportunidade essa alteracao resolve') ||\n      t.includes('descreva a mudanca como voce espera ver no produto') ||\n      t.includes('quais evidencias/criterios de aceite comprovam') ||\n      t.includes('limites de prazo, compliance')\n    );\n  };\n  for (let i = strings.length - 1; i >= 0; i--) {\n    const s = toStr(strings[i]);\n    if (!s) continue;\n    if (s.length > 400) continue;\n    if (isUiBoilerplate(s)) continue;\n    return s;\n  }\n\n  return '';\n};\n\nconst message = deepFindMessage(raw);\nconst sessionId = toStr(raw.sessionId || raw.session_id || raw.chatSessionId || raw.metadata?.sessionId || raw.chatId || 'default');\n\nconst runtimeRoot = (typeof globalThis !== 'undefined') ? globalThis : {};\nif (!runtimeRoot.__fastrouteChatState) runtimeRoot.__fastrouteChatState = {};\nif (!runtimeRoot.__fastrouteChatState.chat) {\n  runtimeRoot.__fastrouteChatState.chat = {\n    chatModeGlobal: '',\n    menuShownGlobal: false,\n    impactIntakeGlobal: null,\n    chatMemory: {},\n  };\n}\nconst runtime = runtimeRoot.__fastrouteChatState.chat;\n\nconst store = getStore();\nif (!store.chatMemory) store.chatMemory = {};\n\nconst readState = (k, fallback) => {\n  const s = store[k];\n  if (s !== undefined && s !== null) return s;\n  const r = runtime[k];\n  if (r !== undefined && r !== null) return r;\n  return fallback;\n};\nconst writeState = (k, v) => {\n  try { store[k] = v; } catch (_e) {}\n  runtime[k] = v;\n};\n\nconst chatModeGlobal = () => toStr(readState('chatModeGlobal', ''));\nconst menuShownGlobal = () => !!readState('menuShownGlobal', false);\nconst impactIntakeGlobal = () => readState('impactIntakeGlobal', null);\n\nconst getMemory = () => {\n  const memStore = store.chatMemory || {};\n  const memRun = runtime.chatMemory || {};\n  const arr = Array.isArray(memStore[sessionId]) ? memStore[sessionId] : (Array.isArray(memRun[sessionId]) ? memRun[sessionId] : []);\n  if (!Array.isArray(memStore[sessionId])) memStore[sessionId] = [...arr];\n  if (!Array.isArray(memRun[sessionId])) memRun[sessionId] = [...arr];\n  store.chatMemory = memStore;\n  runtime.chatMemory = memRun;\n  return { memStore, memRun };\n};\n\nconst pushMemory = (role, content) => {\n  const text = toStr(content);\n  if (!text) return;\n  const { memStore, memRun } = getMemory();\n  memStore[sessionId].push({ role, content: text, at: new Date().toISOString() });\n  memRun[sessionId].push({ role, content: text, at: new Date().toISOString() });\n  if (memStore[sessionId].length > 40) memStore[sessionId] = memStore[sessionId].slice(-40);\n  if (memRun[sessionId].length > 40) memRun[sessionId] = memRun[sessionId].slice(-40);\n};\n\nconst chatHistory = () => {\n  const { memStore } = getMemory();\n  return memStore[sessionId].slice(-12).map((t) => ({ role: t.role, content: toStr(t.content) }));\n};\n\nconst menuText = [\n  'Escolha uma opcao para continuar (envie apenas 1, 2 ou 3):',\n  '1) Nova analise de Impacto',\n  '2) Duvida sobre funcionalidade ja implementada',\n  '3) Correcao de PRs abertas',\n  '',\n  'Comandos uteis:',\n  '/menu: voltar ao menu',\n  '/reset: limpar estado da conversa'\n].join('\\n');\n\nconst encodeState = (state) => {\n  try { return encodeURIComponent(JSON.stringify(state || {})); } catch (_e) { return ''; }\n};\nconst decodeState = (token) => {\n  try { return JSON.parse(decodeURIComponent(String(token || ''))); } catch (_e) { return null; }\n};\nconst Z0 = '\\u200B';\nconst Z1 = '\\u200C';\nconst ZS = '\\u200D';\nconst ZP = '\\u2063\\u2063';\nconst ZE = '\\u2064\\u2064';\nconst toZW = (str) => String(str || '')\n  .split('')\n  .map((ch) => ch.charCodeAt(0).toString(2).padStart(16, '0').replace(/0/g, Z0).replace(/1/g, Z1))\n  .join(ZS);\nconst fromZW = (zw) => {\n  try {\n    if (!zw) return '';\n    return String(zw)\n      .split(ZS)\n      .map((bits) => String.fromCharCode(parseInt(bits.replace(new RegExp(Z0, 'g'), '0').replace(new RegExp(Z1, 'g'), '1'), 2)))\n      .join('');\n  } catch (_e) {\n    return '';\n  }\n};\nconst withState = (text, state) => {\n  const tok = encodeState(state);\n  if (!tok) return text;\n  return `${text}${ZP}${toZW(tok)}${ZE}`;\n};\nconst recoverStateFromRaw = (obj) => {\n  let blob = '';\n  try { blob = JSON.stringify(obj || {}); } catch (_e) { blob = ''; }\n  if (!blob) return null;\n  // Backward compatibility: old visible HTML marker.\n  const oldRe = /<!--FR_STATE:([\\\\s\\\\S]*?)-->/g;\n  let oldM;\n  let oldLast = null;\n  while ((oldM = oldRe.exec(blob)) !== null) {\n    if (oldM[1]) oldLast = oldM[1];\n  }\n  if (oldLast) return decodeState(oldLast);\n\n  // Invisible marker mode.\n  const start = blob.lastIndexOf(ZP);\n  if (start < 0) return null;\n  const end = blob.indexOf(ZE, start + ZP.length);\n  if (end < 0) return null;\n  const zw = blob.slice(start + ZP.length, end);\n  const token = fromZW(zw);\n  if (!token) return null;\n  return decodeState(token);\n};\n\nconst questions = [\n  { field: 'problema', text: 'Qual problema ou oportunidade essa alteracao resolve?' },\n  { field: 'mudanca', text: 'Descreva a mudanca como voce espera ver no produto.' },\n  { field: 'evidencias', text: 'Quais evidencias/criterios de aceite comprovam que a entrega esta pronta? (lista: uma por linha, ou separadas por \";\")' },\n  { field: 'restricoes', text: 'Limites de prazo, compliance, integracoes proibidas, etc. (lista: uma por linha, ou separadas por \";\")' },\n];\n\nconst emptyIntake = () => ({\n  step: 0,\n  problema: '',\n  mudanca: '',\n  evidencias: [],\n  restricoes: [],\n  status: '',\n  diagnostico: '',\n  evidencias_lista: [],\n});\n\nconst parseList = (input) =>\n  toStr(input)\n    .split(/\\n|;|\\|/g)\n    .map((s) => toStr(s).replace(/^[-*\\d.)\\s]+/, ''))\n    .filter(Boolean);\n\nconst askQuestion = (step) => {\n  const idx = Math.max(0, Math.min(Number(step || 0), questions.length - 1));\n  return questions[idx].text;\n};\n\nconst isGreeting = (v) => {\n  const t = norm(v);\n  return ['oi', 'ola', 'olá', 'hello', 'hey', 'bom dia', 'boa tarde', 'boa noite'].includes(t);\n};\n\nif (!message) {\n  // If parser failed but intake mode is active, keep the flow progressing\n  // instead of sending user back to menu.\n  if (chatModeGlobal() === 'impact_intake') {\n    const state = impactIntakeGlobal() || emptyIntake();\n    return [{ json: { option: '1', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output: askQuestion(state.step) } }];\n  }\n  writeState('menuShownGlobal', true);\n  return [{ json: { option: 'invalid', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output: menuText } }];\n}\n\nconst lower = norm(message);\nif (lower === '/reset') {\n  writeState('chatModeGlobal', '');\n  writeState('impactIntakeGlobal', null);\n  writeState('menuShownGlobal', false);\n  return [{ json: { option: 'invalid', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output: menuText } }];\n}\n\nif (lower === '/menu') {\n  writeState('chatModeGlobal', '');\n  writeState('impactIntakeGlobal', null);\n  writeState('menuShownGlobal', true);\n  return [{ json: { option: 'invalid', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output: menuText } }];\n}\n\npushMemory('user', message);\n\nconst optionMatch = lower.match(/^([123])\\s*[\\).:-]?\\s*$/);\nif (optionMatch) {\n  const opt = optionMatch[1];\n  writeState('menuShownGlobal', true);\n\n  if (opt === '1') {\n    writeState('chatModeGlobal', 'impact_intake');\n    const st = emptyIntake();\n    writeState('impactIntakeGlobal', st);\n    return [{ json: { option: '1', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output: withState(askQuestion(0), st) } }];\n  }\n\n  if (opt === '2') {\n    writeState('chatModeGlobal', 'pr_qa');\n    return [{ json: { option: '2', route: 'pr_qa', session_id: sessionId, chat_history: chatHistory(), output: 'Opcao 2 selecionada. Agora descreva sua duvida sobre funcionalidade ja implementada.' } }];\n  }\n\n  writeState('chatModeGlobal', 'correction_propose');\n  return [{ json: { option: '3', route: 'correction_propose', session_id: sessionId, chat_history: chatHistory(), output: 'Opcao 3 selecionada. Agora descreva a correcao desejada nas PRs abertas.' } }];\n}\n\nif (!menuShownGlobal()) {\n  writeState('menuShownGlobal', true);\n}\n\nif (chatModeGlobal() === 'impact_intake') {\n  const state = impactIntakeGlobal() || emptyIntake();\n  const idx = Math.max(0, Math.min(Number(state.step || 0), questions.length - 1));\n  const field = questions[idx].field;\n\n  if (field === 'evidencias' || field === 'restricoes') state[field] = parseList(message);\n  else state[field] = toStr(message);\n\n  state.step = idx + 1;\n\n  if (state.step >= questions.length) {\n    const evidenciasLista = Array.isArray(state.evidencias) ? state.evidencias : [];\n    const restricoesLista = Array.isArray(state.restricoes) ? state.restricoes : [];\n\n    writeState('chatModeGlobal', '');\n    writeState('impactIntakeGlobal', null);\n\n    return [{\n      json: {\n        option: '1',\n        route: 'impact_ready',\n        ready_for_impact: true,\n        session_id: sessionId,\n        chat_history: chatHistory(),\n        problema: toStr(state.problema),\n        mudanca: toStr(state.mudanca),\n        evidencias: evidenciasLista.join('; '),\n        restricoes: restricoesLista.join('; '),\n        status: toStr(state.status),\n        diagnostico: toStr(state.diagnostico),\n        evidencias_lista: evidenciasLista,\n        restricoes_lista: restricoesLista,\n      }\n    }];\n  }\n\n  writeState('impactIntakeGlobal', state);\n  return [{ json: { option: '1', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output: withState(askQuestion(state.step), state) } }];\n}\n\nif (chatModeGlobal() === 'pr_qa') {\n  return [{\n    json: {\n      option: '2',\n      route: 'pr_qa',\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      question: message,\n      owner: toStr(getEnv('GITHUB_OWNER') || 'oliversoft-tech'),\n      github_token: toStr(getEnv('GITHUB_TOKEN') || ''),\n      llm_model: toStr(getEnv('LLM_MODEL') || 'claude-3-5-sonnet-20241022')\n    }\n  }];\n}\n\nif (chatModeGlobal() === 'correction_propose') {\n  return [{\n    json: {\n      option: '3',\n      route: 'correction_propose',\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      question: message,\n      owner: toStr(getEnv('GITHUB_OWNER') || 'oliversoft-tech'),\n      github_token: toStr(getEnv('GITHUB_TOKEN') || ''),\n      llm_model: toStr(getEnv('LLM_MODEL') || 'claude-3-5-sonnet-20241022')\n    }\n  }];\n}\n\n// Recovery branch: if no mode and user sends non-option text, assume intake option 1.\nif (!isGreeting(message)) {\n  let state = recoverStateFromRaw(raw);\n  if (!state || typeof state !== 'object') state = emptyIntake();\n  if (!Number.isFinite(Number(state.step))) state.step = 0;\n\n  const idx = Math.max(0, Math.min(Number(state.step || 0), questions.length - 1));\n  const field = questions[idx].field;\n  if (field === 'evidencias' || field === 'restricoes') state[field] = parseList(message);\n  else state[field] = toStr(message);\n\n  state.step = idx + 1;\n\n  if (state.step >= questions.length) {\n    const evidenciasLista = Array.isArray(state.evidencias) ? state.evidencias : [];\n    const restricoesLista = Array.isArray(state.restricoes) ? state.restricoes : [];\n    writeState('chatModeGlobal', '');\n    writeState('impactIntakeGlobal', null);\n    return [{\n      json: {\n        option: '1',\n        route: 'impact_ready',\n        ready_for_impact: true,\n        session_id: sessionId,\n        chat_history: chatHistory(),\n        problema: toStr(state.problema),\n        mudanca: toStr(state.mudanca),\n        evidencias: evidenciasLista.join('; '),\n        restricoes: restricoesLista.join('; '),\n        status: toStr(state.status),\n        diagnostico: toStr(state.diagnostico),\n        evidencias_lista: evidenciasLista,\n        restricoes_lista: restricoesLista,\n      }\n    }];\n  }\n\n  writeState('chatModeGlobal', 'impact_intake');\n  writeState('impactIntakeGlobal', state);\n  return [{ json: { option: '1', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output: withState(askQuestion(state.step), state) } }];\n}\n\nreturn [{ json: { option: 'invalid', route: 'impact_collect_question', session_id: sessionId, chat_history: chatHistory(), output: menuText } }];\n"
+      },
+      "id": "d31c28c9-05c1-4e3e-bed1-618828f89cd9",
+      "name": "Normalize Chat Input1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        416
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "id": "4e495a54-0a95-4b7d-9ad8-7ecee3bcb6a2",
+      "name": "Menu Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        220
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const out = String($json.output ?? '').trim();\nreturn [{ json: { output: out || 'Escolha uma opcao para continuar (envie apenas 1, 2 ou 3):\\n1) Nova analise de Impacto\\n2) Duvida sobre funcionalidade ja implementada\\n3) Correcao de PRs abertas' } }];"
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Call 'Impact Analysis'": {
+      "main": [
+        [
+          {
+            "node": "Build Impact Chat Reply1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chat Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table (Correction)": {
+      "main": [
+        [
+          {
+            "node": "Fetch PR + Code Context (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Correction Proposal": {
+      "main": [
+        [
+          {
+            "node": "Prepare Impact Inputs (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Impact Inputs (Correction)": {
+      "main": [
+        [
+          {
+            "node": "Call 'Impact Analysis'1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table (PR QA)": {
+      "main": [
+        [
+          {
+            "node": "Fetch PR + Code Context (PR QA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain (Correction Proposal)1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain (PR Questions)1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Impact Analysis'1": {
+      "main": [
+        [
+          {
+            "node": "Build Auto Correction Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (Correction Proposal)1": {
+      "main": [
+        [
+          {
+            "node": "Parse Correction Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch PR + Code Context (Correction)": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (Correction Proposal)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch PR + Code Context (PR QA)": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (PR Questions)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (PR Questions)1": {
+      "main": [
+        [
+          {
+            "node": "Build PR Chat Reply1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Call 'Impact Analysis'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table (PR QA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Menu Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Chat Input1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7de3dd8c-9185-42cf-9b3e-0c6e0ac0f211",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b15d2f9dadc602f505ca578537ed904ecbf800de7137cb254d171d6c08ec868"
+  },
+  "id": "l9DUjAKeWChA8OCs",
+  "tags": [
+    {
+      "updatedAt": "2026-03-08T00:08:16.851Z",
+      "createdAt": "2026-03-08T00:08:16.851Z",
+      "id": "79JXPHAmOEnUIEML",
+      "name": "fastroute"
+    }
+  ]
+}

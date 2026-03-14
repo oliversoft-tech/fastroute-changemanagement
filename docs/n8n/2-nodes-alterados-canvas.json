@@ -1,0 +1,36 @@
+[
+  {
+    "parameters": {
+      "jsCode": "const firstFromNode = (names) => {\n  for (const name of names) {\n    try {\n      const rows = $items(name, 0, 0);\n      if (Array.isArray(rows) && rows.length > 0) return rows[0].json || {};\n    } catch (_e) {}\n  }\n  return null;\n};\n\nconst base = firstFromNode(['Normalize']) || (typeof $json === 'object' && $json ? $json : {});\nconst raw =\n  $json?.text ||\n  $json?.response?.text ||\n  $json?.choices?.[0]?.message?.content ||\n  '';\n\nconst fail = (reason, extra = {}) => {\n  const details = {\n    stage: 'Parse LLM JSON',\n    reason,\n    raw_type: typeof raw,\n    raw_length: typeof raw === 'string' ? raw.length : 0,\n    ...extra,\n  };\n  console.error('[Parse LLM JSON] ' + JSON.stringify(details));\n  throw new Error('[Parse LLM JSON] ' + reason + ' | ' + JSON.stringify(details));\n};\n\nif (!raw || typeof raw !== 'string' || !raw.trim()) {\n  fail('empty_llm_response', {\n    available_keys: Object.keys($json || {}),\n  });\n}\n\nconst stripFences = (value) => {\n  let txt = String(value || '').replace(/^\\uFEFF/, '').trim();\n  if (txt.startsWith('```json')) txt = txt.slice(7);\n  else if (txt.startsWith('```')) txt = txt.slice(3);\n  if (txt.endsWith('```')) txt = txt.slice(0, -3);\n  return txt.trim();\n};\n\nconst cleaned = stripFences(raw);\nconst parseStrict = (txt) => {\n  try {\n    return JSON.parse(txt);\n  } catch (_e) {\n    return null;\n  }\n};\n\nlet parsed = parseStrict(cleaned);\nif (!parsed) {\n  const firstObj = cleaned.indexOf('{');\n  const lastObj = cleaned.lastIndexOf('}');\n  if (firstObj >= 0 && lastObj > firstObj) {\n    parsed = parseStrict(cleaned.slice(firstObj, lastObj + 1));\n  }\n}\n\nif (!parsed) {\n  const openCurly = (cleaned.match(/\\{/g) || []).length;\n  const closeCurly = (cleaned.match(/\\}/g) || []).length;\n  const openSquare = (cleaned.match(/\\[/g) || []).length;\n  const closeSquare = (cleaned.match(/\\]/g) || []).length;\n  fail('invalid_json_from_llm', {\n    braces_balance: { openCurly, closeCurly, openSquare, closeSquare },\n    starts_with: cleaned.slice(0, 220),\n    ends_with: cleaned.slice(Math.max(0, cleaned.length - 220)),\n  });\n}\n\nconst first = (...values) => values.find((v) => v !== undefined && v !== null);\nconst asArray = (value) => {\n  if (Array.isArray(value)) return value;\n  if (value === undefined || value === null || value === '') return [];\n  return [value];\n};\nconst asObject = (value) => (value && typeof value === 'object' && !Array.isArray(value) ? value : {});\nconst asText = (value) => String(value ?? '').trim();\n\nconst normalizeChange = (change) => {\n  if (typeof change === 'string') {\n    return {\n      descricao: asText(change),\n      testes: [],\n      criterios_aceite: []\n    };\n  }\n\n  const c = asObject(change);\n  const descricao = asText(first(c.descricao, c.desc, c.description, ''));\n  if (!descricao) {\n    fail('change_without_descricao', { change_preview: JSON.stringify(c).slice(0, 250) });\n  }\n\n  return {\n    descricao,\n    testes: asArray(first(c.testes, c.tests, c.test_steps, [])).map((x) => asText(x)).filter(Boolean),\n    criterios_aceite: asArray(first(c.criterios_aceite, c.acceptance_criterias, c.acceptance_criteria, [])).map((x) => asText(x)).filter(Boolean)\n  };\n};\n\nconst normalizeImpactRepo = (repoImpact) => {\n  const i = asObject(repoImpact);\n  const mudancas = asArray(first(i.mudancas, i.changes, [])).map(normalizeChange);\n  return {\n    impacto: i.impacto === true || i.has_impact === true || i.impact === true,\n    mudancas,\n    riscos: asArray(first(i.riscos, i.risks, [])).map((x) => asText(x)).filter(Boolean),\n    duvidas: asArray(first(i.duvidas, i.doubts, i.questions, [])).map((x) => asText(x)).filter(Boolean),\n    itens: asArray(first(i.itens, i.items, [])).map((x) => asText(x)).filter(Boolean)\n  };\n};\n\nconst rawImpacts = asObject(first(parsed?.impactos, parsed?.impacts, parsed?.impact, {}));\nif (Object.keys(rawImpacts).length === 0) {\n  fail('missing_impacts_object', {\n    parsed_keys: Object.keys(asObject(parsed)),\n    cleaned_starts_with: cleaned.slice(0, 220),\n  });\n}\n\nconst impacts = {};\nfor (const [key, value] of Object.entries(rawImpacts)) {\n  impacts[key] = normalizeImpactRepo(value);\n}\n\nconst criteriaMapped = [];\nconst repoRisks = [];\nconst repoDoubts = [];\nfor (const [repoName, info] of Object.entries(impacts)) {\n  const impactInfo = asObject(info);\n  const changes = asArray(impactInfo.mudancas);\n  const riscos = asArray(impactInfo.riscos);\n  const duvidas = asArray(impactInfo.duvidas);\n\n  for (const r of riscos) {\n    if (r) repoRisks.push(String(r));\n  }\n\n  for (const d of duvidas) {\n    if (d) repoDoubts.push(String(d));\n  }\n\n  for (const change of changes) {\n    const c = asObject(change);\n    const criterios = asArray(c.criterios_aceite);\n    const testes = asArray(c.testes);\n    for (const criterio of criterios) {\n      criteriaMapped.push({\n        criterio: asText(criterio),\n        repos: [repoName],\n        teste_sugerido: asText(testes[0] || '')\n      });\n    }\n  }\n}\n\nconst resumo = asText(first(parsed?.resumo, parsed?.summary, parsed?.executive_summary, parsed?.overview, ''));\nif (!resumo) {\n  fail('missing_resumo', {\n    parsed_keys: Object.keys(asObject(parsed)),\n  });\n}\n\nconst normalized = {\n  resumo,\n  viabilidade: asObject(first(parsed?.viabilidade, parsed?.viability, parsed?.feasibility, {})),\n  impactos: impacts,\n  criterios_aceite_mapeados: asArray(\n    first(\n      parsed?.criterios_aceite_mapeados,\n      parsed?.acceptance_criteria_mapped,\n      parsed?.mapped_acceptance_criteria,\n      parsed?.acceptanceCriteriaMapped,\n      criteriaMapped\n    )\n  ),\n  riscos: asArray(first(parsed?.riscos, parsed?.risks, parsed?.main_risks, repoRisks)).map((x) => asText(x)).filter(Boolean),\n  duvidas: asArray(first(parsed?.duvidas, parsed?.questions, parsed?.open_questions, parsed?.openQuestions, repoDoubts)).map((x) => asText(x)).filter(Boolean)\n};\n\nreturn [{\n  ...base,\n  analysis: normalized,\n  analysis_raw: asObject(parsed),\n  llm_raw_text: cleaned\n}];\n"
+    },
+    "id": "parse-llm",
+    "name": "Parse LLM JSON",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      -930,
+      60
+    ]
+  },
+  {
+    "parameters": {
+      "model": {
+        "__rl": true,
+        "mode": "list",
+        "value": "claude-3-5-sonnet-20241022"
+      },
+      "options": {
+        "temperature": 0,
+        "maxTokens": 4000
+      }
+    },
+    "id": "openai-chat-model",
+    "name": "Anthropic Chat Model",
+    "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+    "typeVersion": 1.2,
+    "position": [
+      -1210,
+      260
+    ]
+  }
+]

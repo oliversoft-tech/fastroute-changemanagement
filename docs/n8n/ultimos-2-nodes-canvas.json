@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const ctx = $items('Finalize Analysis Context', 0, 0)?.[0]?.json || {};\nconst analysisId = Number(ctx.impact_analysis_id);\nconst analysis = (ctx.analysis && typeof ctx.analysis === 'object') ? ctx.analysis : {};\nconst impacts = analysis.impactos || analysis.impacts || {};\n\nconst impactedRepos = Object.entries(impacts)\n  .filter(([, info]) => info && (info.impacto === true || info.impact === true || info.has_impact === true))\n  .map(([repoName, info]) => {\n    const changes = Array.isArray(info.mudancas) ? info.mudancas : [];\n    return {\n      repositorio: repoName,\n      mudancas: changes\n        .map((c) => String((c && (c.descricao || c.description)) || '').trim())\n        .filter(Boolean),\n      testes_sugeridos: changes\n        .flatMap((c) => Array.isArray(c?.testes) ? c.testes : [])\n        .map((t) => String(t || '').trim())\n        .filter(Boolean)\n    };\n  });\n\nconst artifacts = impactedRepos.map((r) => ({\n  repositorio: r.repositorio,\n  artefatos: [\n    'PR de implementacao no repositorio',\n    'Diff real de codigo no PR',\n    'Checklist de testes no corpo/arquivos da PR'\n  ]\n}));\n\nconst owner = String(ctx.owner || 'oliversoft-tech');\nconst repo = String(ctx.repo || 'fastroute-changemanagement');\n\nreturn [{\n  analysis_id: Number.isFinite(analysisId) ? analysisId : null,\n  dispatch_status: 'queued',\n  repos_impactados: impactedRepos.map((r) => r.repositorio),\n  artefatos_previstos: artifacts,\n  mudancas_previstas: impactedRepos,\n  revisar_em: `https://github.com/${owner}/${repo}/actions`,\n  mensagem: 'Governance disparado para gerar PRs por repositorio impactado. Revise os diffs reais nas PRs antes de aprovar.'\n}];"
+      },
+      "id": "build-links",
+      "name": "Build Decision Links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -670,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{$json.owner || \"oliversoft-tech\"}}/{{$json.repo || \"fastroute-changemanagement\"}}/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + String($json.github_token || '').replace(/^Bearer\\s+/i, '').replace(/[\\r\\n\\t]/g, '').replace(/[^\\x20-\\x7E]/g, '').trim()}}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (() => {\n  const analysis = ($json.analysis && typeof $json.analysis === 'object') ? $json.analysis : {};\n  const rawSummary = String(analysis.resumo || analysis.summary || 'Sem resumo').trim();\n  const safeSummary = rawSummary\n    .replace(/[\"'`]/g, '')\n    .replace(/[()]/g, '')\n    .replace(/\\s+/g, ' ')\n    .slice(0, 450);\n\n  const payloadAnalysis = {\n    ...analysis,\n    resumo: safeSummary,\n  };\n\n  return JSON.stringify({\n    event_type: 'governance-release',\n    client_payload: {\n      source_repo: 'fastroute-changemanagement',\n      source_ref: 'main',\n      domain_ref: $json.domain_ref || 'main',\n      api_ref: $json.api_ref || 'main',\n      mobile_ref: $json.mobile_ref || 'main',\n      mobile_profile: $json.mobile_profile || 'preview',\n      run_release: false,\n      deploy_api: false,\n      auto_implement: true,\n      impact_analysis: payloadAnalysis\n    }\n  });\n})() }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "autodetect",
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "dispatch-governance-pr",
+      "name": "Dispatch Governance PR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -930,
+        60
+      ],
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {},
+  "pinData": {}
+}

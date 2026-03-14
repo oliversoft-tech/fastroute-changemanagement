@@ -1,0 +1,1695 @@
+[ {
+  "command" : {
+    "waitForAnimationToEndCommand" : {
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736848661,
+    "duration" : 473,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "launchAppCommand" : {
+      "appId" : "com.oliverbill.fastroutemobile",
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736866372,
+    "duration" : 1525,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "swipeCommand" : {
+      "startRelative" : "50%,43%",
+      "endRelative" : "62%,34%",
+      "duration" : 400,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736853258,
+    "duration" : 1477,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Rotas da Importação",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736838000,
+    "duration" : 107,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Paradas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736846673,
+    "duration" : 103,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar ordem",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736854735,
+    "duration" : 1506,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "(?s).*Entrega #.*",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "FAILED",
+    "timestamp" : 1772736871334,
+    "duration" : 17335,
+    "error" : {
+      "message" : "Assertion is false: \"(?s).*Entrega #.*\" is visible",
+      "hierarchyRoot" : {
+        "attributes" : {
+          "bounds" : "[0,0][0,0]",
+          "enabled" : "false",
+          "focused" : "false",
+          "selected" : "false",
+          "checked" : "false"
+        },
+        "children" : [ {
+          "attributes" : {
+            "accessibilityText" : "FastRoute",
+            "bounds" : "[0,0][440,956]",
+            "enabled" : "true",
+            "focused" : "false",
+            "selected" : "false",
+            "checked" : "false"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,0][440,956]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "children" : [ {
+              "attributes" : {
+                "bounds" : "[0,0][440,956]",
+                "enabled" : "true",
+                "focused" : "false",
+                "selected" : "false",
+                "checked" : "false"
+              },
+              "children" : [ {
+                "attributes" : {
+                  "bounds" : "[0,0][440,956]",
+                  "enabled" : "true",
+                  "focused" : "false",
+                  "selected" : "false",
+                  "checked" : "false"
+                },
+                "children" : [ {
+                  "attributes" : {
+                    "bounds" : "[0,0][440,956]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "children" : [ {
+                    "attributes" : {
+                      "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar Paradas #1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE #2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Rota #731",
+                      "bounds" : "[0,0][440,956]",
+                      "enabled" : "true",
+                      "focused" : "false",
+                      "selected" : "false",
+                      "checked" : "false"
+                    },
+                    "children" : [ {
+                      "attributes" : {
+                        "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar Paradas #1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE #2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Rota #731",
+                        "bounds" : "[0,0][440,956]",
+                        "enabled" : "true",
+                        "focused" : "false",
+                        "selected" : "false",
+                        "checked" : "false"
+                      },
+                      "children" : [ {
+                        "attributes" : {
+                          "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar Paradas #1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE #2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Rota #731",
+                          "bounds" : "[0,0][440,956]",
+                          "enabled" : "true",
+                          "focused" : "false",
+                          "selected" : "false",
+                          "checked" : "false"
+                        },
+                        "children" : [ {
+                          "attributes" : {
+                            "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar Paradas #1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE #2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE Vertical scroll bar, 1 page Horizontal scroll bar, 1 page Rota #731",
+                            "bounds" : "[0,0][440,956]",
+                            "enabled" : "true",
+                            "focused" : "false",
+                            "selected" : "false",
+                            "checked" : "false"
+                          },
+                          "children" : [ {
+                            "attributes" : {
+                              "bounds" : "[0,0][440,956]",
+                              "enabled" : "true",
+                              "focused" : "false",
+                              "selected" : "false",
+                              "checked" : "false"
+                            },
+                            "children" : [ {
+                              "attributes" : {
+                                "bounds" : "[0,0][440,956]",
+                                "enabled" : "true",
+                                "focused" : "false",
+                                "selected" : "false",
+                                "checked" : "false"
+                              },
+                              "children" : [ {
+                                "attributes" : {
+                                  "resource-id" : "Rota #731",
+                                  "bounds" : "[0,62][440,116]",
+                                  "enabled" : "true",
+                                  "focused" : "false",
+                                  "selected" : "false",
+                                  "checked" : "false"
+                                },
+                                "children" : [ {
+                                  "attributes" : {
+                                    "accessibilityText" : "Minhas Rotas",
+                                    "resource-id" : "BackButton",
+                                    "bounds" : "[20,62][64,106]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                }, {
+                                  "attributes" : {
+                                    "accessibilityText" : "Rota #731",
+                                    "bounds" : "[180,73][259,94]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                } ],
+                                "enabled" : true,
+                                "focused" : false,
+                                "checked" : false,
+                                "selected" : false
+                              }, {
+                                "attributes" : {
+                                  "bounds" : "[0,0][440,956]",
+                                  "enabled" : "true",
+                                  "focused" : "false",
+                                  "selected" : "false",
+                                  "checked" : "false"
+                                },
+                                "children" : [ {
+                                  "attributes" : {
+                                    "bounds" : "[0,0][440,956]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "children" : [ {
+                                    "attributes" : {
+                                      "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar Paradas #1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE #2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE Vertical scroll bar, 1 page Horizontal scroll bar, 1 page",
+                                      "bounds" : "[0,116][440,956]",
+                                      "enabled" : "true",
+                                      "focused" : "false",
+                                      "selected" : "false",
+                                      "checked" : "false"
+                                    },
+                                    "children" : [ {
+                                      "attributes" : {
+                                        "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar Paradas #1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE #2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE Vertical scroll bar, 1 page Horizontal scroll bar, 1 page",
+                                        "bounds" : "[0,116][440,956]",
+                                        "enabled" : "true",
+                                        "focused" : "false",
+                                        "selected" : "false",
+                                        "checked" : "false"
+                                      },
+                                      "children" : [ {
+                                        "attributes" : {
+                                          "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar Paradas #1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE #2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE Vertical scroll bar, 1 page Horizontal scroll bar, 1 page",
+                                          "bounds" : "[0,116][440,956]",
+                                          "enabled" : "true",
+                                          "focused" : "false",
+                                          "selected" : "false",
+                                          "checked" : "false"
+                                        },
+                                        "children" : [ {
+                                          "attributes" : {
+                                            "bounds" : "[0,116][440,956]",
+                                            "enabled" : "true",
+                                            "focused" : "false",
+                                            "selected" : "false",
+                                            "checked" : "false"
+                                          },
+                                          "children" : [ {
+                                            "attributes" : {
+                                              "bounds" : "[0,86][440,146]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar Paradas #1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE #2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE",
+                                              "bounds" : "[0,116][440,526]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "accessibilityText" : "Rota #731 CRIADA Entregas 2 Criada em 05/03/2026 Ver no mapa Iniciar",
+                                                "bounds" : "[16,132][424,311]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "children" : [ {
+                                                "attributes" : {
+                                                  "accessibilityText" : "Rota #731 CRIADA",
+                                                  "bounds" : "[31,147][409,169]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Rota #731",
+                                                    "bounds" : "[31,147][120,169]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                }, {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "CRIADA",
+                                                    "bounds" : "[348,147][409,169]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "CRIADA",
+                                                      "bounds" : "[358,152][399,164]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              }, {
+                                                "attributes" : {
+                                                  "accessibilityText" : "Entregas 2 Criada em 05/03/2026",
+                                                  "bounds" : "[31,181][409,238]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Entregas 2",
+                                                    "bounds" : "[31,181][215,238]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Entregas",
+                                                      "bounds" : "[44,192][202,206]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "2",
+                                                      "bounds" : "[44,208][202,228]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                }, {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Criada em 05/03/2026",
+                                                    "bounds" : "[225,181][409,238]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "children" : [ {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "Criada em",
+                                                      "bounds" : "[238,192][396,206]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  }, {
+                                                    "attributes" : {
+                                                      "accessibilityText" : "05/03/2026",
+                                                      "bounds" : "[238,208][396,228]",
+                                                      "enabled" : "true",
+                                                      "focused" : "false",
+                                                      "selected" : "false",
+                                                      "checked" : "false"
+                                                    },
+                                                    "enabled" : true,
+                                                    "focused" : false,
+                                                    "checked" : false,
+                                                    "selected" : false
+                                                  } ],
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              }, {
+                                                "attributes" : {
+                                                  "accessibilityText" : "Ver no mapa Iniciar",
+                                                  "bounds" : "[31,250][409,296]",
+                                                  "enabled" : "true",
+                                                  "focused" : "false",
+                                                  "selected" : "false",
+                                                  "checked" : "false"
+                                                },
+                                                "children" : [ {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Ver no mapa",
+                                                    "bounds" : "[31,250][215,296]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                }, {
+                                                  "attributes" : {
+                                                    "accessibilityText" : "Iniciar",
+                                                    "bounds" : "[225,250][409,296]",
+                                                    "enabled" : "true",
+                                                    "focused" : "false",
+                                                    "selected" : "false",
+                                                    "checked" : "false"
+                                                  },
+                                                  "enabled" : true,
+                                                  "focused" : false,
+                                                  "checked" : false,
+                                                  "selected" : false
+                                                } ],
+                                                "enabled" : true,
+                                                "focused" : false,
+                                                "checked" : false,
+                                                "selected" : false
+                                              } ],
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            }, {
+                                              "attributes" : {
+                                                "accessibilityText" : "Paradas",
+                                                "bounds" : "[16,323][424,343]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            }, {
+                                              "attributes" : {
+                                                "accessibilityText" : "#1 Rua Princesa Cindazunda 83 rch c 3030-503 PENDENTE",
+                                                "bounds" : "[16,355][424,414]",
+                                                "enabled" : "false",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : false,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            }, {
+                                              "attributes" : {
+                                                "accessibilityText" : "#2 RUA PRINCESA CINDAZUNDA LOTE 15.4 2D 3030-503 PENDENTE",
+                                                "bounds" : "[16,426][424,498]",
+                                                "enabled" : "false",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : false,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Vertical scroll bar, 1 page",
+                                              "value" : "0%",
+                                              "text" : "0%",
+                                              "bounds" : "[407,144][437,894]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[434,931][437,1035]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Horizontal scroll bar, 1 page",
+                                              "value" : "0%",
+                                              "text" : "0%",
+                                              "bounds" : "[62,889][378,919]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[3,916][437,919]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Vertical scroll bar, 1 page",
+                                              "value" : "0%",
+                                              "text" : "0%",
+                                              "bounds" : "[407,144][437,894]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[434,931][437,1035]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          }, {
+                                            "attributes" : {
+                                              "accessibilityText" : "Horizontal scroll bar, 1 page",
+                                              "value" : "0%",
+                                              "text" : "0%",
+                                              "bounds" : "[62,889][378,919]",
+                                              "enabled" : "true",
+                                              "focused" : "false",
+                                              "selected" : "false",
+                                              "checked" : "false"
+                                            },
+                                            "children" : [ {
+                                              "attributes" : {
+                                                "bounds" : "[3,916][437,919]",
+                                                "enabled" : "true",
+                                                "focused" : "false",
+                                                "selected" : "false",
+                                                "checked" : "false"
+                                              },
+                                              "enabled" : true,
+                                              "focused" : false,
+                                              "checked" : false,
+                                              "selected" : false
+                                            } ],
+                                            "enabled" : true,
+                                            "focused" : false,
+                                            "checked" : false,
+                                            "selected" : false
+                                          } ],
+                                          "enabled" : true,
+                                          "focused" : false,
+                                          "checked" : false,
+                                          "selected" : false
+                                        } ],
+                                        "enabled" : true,
+                                        "focused" : false,
+                                        "checked" : false,
+                                        "selected" : false
+                                      } ],
+                                      "enabled" : true,
+                                      "focused" : false,
+                                      "checked" : false,
+                                      "selected" : false
+                                    } ],
+                                    "enabled" : true,
+                                    "focused" : false,
+                                    "checked" : false,
+                                    "selected" : false
+                                  } ],
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                } ],
+                                "enabled" : true,
+                                "focused" : false,
+                                "checked" : false,
+                                "selected" : false
+                              }, {
+                                "attributes" : {
+                                  "bounds" : "[0,0][440,956]",
+                                  "enabled" : "true",
+                                  "focused" : "false",
+                                  "selected" : "false",
+                                  "checked" : "false"
+                                },
+                                "children" : [ {
+                                  "attributes" : {
+                                    "bounds" : "[0,0][440,956]",
+                                    "enabled" : "true",
+                                    "focused" : "false",
+                                    "selected" : "false",
+                                    "checked" : "false"
+                                  },
+                                  "enabled" : true,
+                                  "focused" : false,
+                                  "checked" : false,
+                                  "selected" : false
+                                } ],
+                                "enabled" : true,
+                                "focused" : false,
+                                "checked" : false,
+                                "selected" : false
+                              } ],
+                              "enabled" : true,
+                              "focused" : false,
+                              "checked" : false,
+                              "selected" : false
+                            } ],
+                            "enabled" : true,
+                            "focused" : false,
+                            "checked" : false,
+                            "selected" : false
+                          } ],
+                          "enabled" : true,
+                          "focused" : false,
+                          "checked" : false,
+                          "selected" : false
+                        } ],
+                        "enabled" : true,
+                        "focused" : false,
+                        "checked" : false,
+                        "selected" : false
+                      } ],
+                      "enabled" : true,
+                      "focused" : false,
+                      "checked" : false,
+                      "selected" : false
+                    } ],
+                    "enabled" : true,
+                    "focused" : false,
+                    "checked" : false,
+                    "selected" : false
+                  } ],
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                } ],
+                "enabled" : true,
+                "focused" : false,
+                "checked" : false,
+                "selected" : false
+              } ],
+              "enabled" : true,
+              "focused" : false,
+              "checked" : false,
+              "selected" : false
+            } ],
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "enabled" : true,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        }, {
+          "attributes" : {
+            "bounds" : "[0,0][0,0]",
+            "enabled" : "false",
+            "focused" : "false",
+            "selected" : "false",
+            "checked" : "false"
+          },
+          "children" : [ {
+            "attributes" : {
+              "bounds" : "[0,0][440,54]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          }, {
+            "attributes" : {
+              "bounds" : "[0,0][440,54]",
+              "enabled" : "true",
+              "focused" : "false",
+              "selected" : "false",
+              "checked" : "false"
+            },
+            "children" : [ {
+              "attributes" : {
+                "bounds" : "[0,0][440,54]",
+                "enabled" : "true",
+                "focused" : "false",
+                "selected" : "false",
+                "checked" : "false"
+              },
+              "children" : [ {
+                "attributes" : {
+                  "bounds" : "[0,0][440,54]",
+                  "enabled" : "true",
+                  "focused" : "false",
+                  "selected" : "false",
+                  "checked" : "false"
+                },
+                "children" : [ {
+                  "attributes" : {
+                    "accessibilityText" : "18:54",
+                    "bounds" : "[59,14][107,36]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "accessibilityText" : "Cellular",
+                    "value" : "No signal",
+                    "text" : "No signal",
+                    "bounds" : "[312,25][334,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "value" : "SSID, 3 of 3 Wi-Fi bars",
+                    "text" : "SSID, 3 of 3 Wi-Fi bars",
+                    "resource-id" : "3 of 3 Wi-Fi bars",
+                    "bounds" : "[341,25][361,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "accessibilityText" : "100% battery power",
+                    "value" : "Not charging",
+                    "text" : "Not charging",
+                    "bounds" : "[368,25][399,39]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                }, {
+                  "attributes" : {
+                    "accessibilityText" : "Return to Safari",
+                    "resource-id" : "breadcrumb",
+                    "bounds" : "[12,37][55,50]",
+                    "enabled" : "true",
+                    "focused" : "false",
+                    "selected" : "false",
+                    "checked" : "false"
+                  },
+                  "enabled" : true,
+                  "focused" : false,
+                  "checked" : false,
+                  "selected" : false
+                } ],
+                "enabled" : true,
+                "focused" : false,
+                "checked" : false,
+                "selected" : false
+              } ],
+              "enabled" : true,
+              "focused" : false,
+              "checked" : false,
+              "selected" : false
+            } ],
+            "enabled" : true,
+            "focused" : false,
+            "checked" : false,
+            "selected" : false
+          } ],
+          "enabled" : false,
+          "focused" : false,
+          "checked" : false,
+          "selected" : false
+        } ],
+        "enabled" : false,
+        "focused" : false,
+        "checked" : false,
+        "selected" : false
+      },
+      "debugMessage" : "Assertion '\"(?s).*Entrega #.*\" is visible' failed. Check the UI hierarchy in debug artifacts to verify the element state and properties.\n\nPossible causes:\n- Element selector may be incorrect - check if there are similar elements with slightly different names/properties.\n- Element may be temporarily unavailable due to loading state\n- This could be a real regression that needs to be addressed",
+      "stackTrace" : [ {
+        "classLoaderName" : "app",
+        "methodName" : "assertConditionCommand",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 430,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeCommand",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 350,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeCommands",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 263,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runFlow",
+        "fileName" : "Orchestra.kt",
+        "lineNumber" : 181,
+        "nativeMethod" : false,
+        "className" : "maestro.orchestra.Orchestra"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runFlow",
+        "fileName" : "TestSuiteInteractor.kt",
+        "lineNumber" : 243,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.runner.TestSuiteInteractor"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runTestSuite",
+        "fileName" : "TestSuiteInteractor.kt",
+        "lineNumber" : 98,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.runner.TestSuiteInteractor"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runMultipleFlows",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 619,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "access$runMultipleFlows",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 80,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "invokeSuspend",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 502,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand$runShardSuite$1$1"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "resumeWith",
+        "fileName" : "ContinuationImpl.kt",
+        "lineNumber" : 34,
+        "nativeMethod" : false,
+        "className" : "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "DispatchedTask.kt",
+        "lineNumber" : 104,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.DispatchedTask"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "processNextEvent",
+        "fileName" : "EventLoop.common.kt",
+        "lineNumber" : 277,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.EventLoopImplBase"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "joinBlocking",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 95,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BlockingCoroutine"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 69,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt__BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking",
+        "lineNumber" : 1,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking$default",
+        "fileName" : "Builders.kt",
+        "lineNumber" : 48,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt__BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runBlocking$default",
+        "lineNumber" : 1,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.BuildersKt"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runShardSuite$lambda$10",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 501,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "newSession",
+        "fileName" : "MaestroSessionManager.kt",
+        "lineNumber" : 132,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.session.MaestroSessionManager"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "newSession$default",
+        "fileName" : "MaestroSessionManager.kt",
+        "lineNumber" : 66,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.session.MaestroSessionManager"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runShardSuite",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 476,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "access$runShardSuite",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 80,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "invokeSuspend",
+        "fileName" : "TestCommand.kt",
+        "lineNumber" : 435,
+        "nativeMethod" : false,
+        "className" : "maestro.cli.command.TestCommand$handleSessions$1$results$1$1"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "resumeWith",
+        "fileName" : "ContinuationImpl.kt",
+        "lineNumber" : 34,
+        "nativeMethod" : false,
+        "className" : "kotlin.coroutines.jvm.internal.BaseContinuationImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "DispatchedTask.kt",
+        "lineNumber" : 104,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.DispatchedTask"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "LimitedDispatcher.kt",
+        "lineNumber" : 111,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.internal.LimitedDispatcher$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "Tasks.kt",
+        "lineNumber" : 99,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.TaskImpl"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runSafely",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 585,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "executeTask",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 802,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "runWorker",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 706,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      }, {
+        "classLoaderName" : "app",
+        "methodName" : "run",
+        "fileName" : "CoroutineScheduler.kt",
+        "lineNumber" : 693,
+        "nativeMethod" : false,
+        "className" : "kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"
+      } ],
+      "localizedMessage" : "Assertion is false: \"(?s).*Entrega #.*\" is visible"
+    },
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "launchAppCommand" : {
+      "appId" : "com.oliverbill.fastroutemobile",
+      "clearState" : true,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736816912,
+    "duration" : 1344,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar ordem",
+        "optional" : true
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : true
+    }
+  },
+  "metadata" : {
+    "status" : "WARNED",
+    "timestamp" : 1772736839616,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Criar Rota",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736825485,
+    "duration" : 1876,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Minhas Rotas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736825380,
+    "duration" : 105,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "(?s).*Rota #.*2 waypoints.*",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736838107,
+    "duration" : 1301,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "inputTextCommand" : {
+      "text" : "120",
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736832696,
+    "duration" : 2215,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Confirmar ordem",
+            "optional" : true
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : true
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Paradas",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "(?s).*Rota #.*",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736839513,
+    "duration" : 7263,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Iniciar",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736856354,
+    "duration" : 2811,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "EPS (METROS)",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736827481,
+    "duration" : 1426,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar importação",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736834911,
+    "duration" : 1395,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Paradas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736839408,
+    "duration" : 105,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnPointV2Command" : {
+      "point" : "50%,43%",
+      "retryIfNoChange" : false,
+      "longPress" : true,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736849135,
+    "duration" : 4121,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Paradas",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736856241,
+    "duration" : 113,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "defineVariablesCommand" : {
+      "env" : {
+        "MAESTRO_FILENAME" : "flow-sync-all-operations",
+        "MAESTRO_DEVICE_UDID" : "269FCCBD-3899-4AAF-B00D-4DE616487ECE",
+        "MAESTRO_SHARD_ID" : "1",
+        "MAESTRO_SHARD_INDEX" : "0"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736816910,
+    "duration" : 2,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "applyConfigurationCommand" : {
+      "config" : {
+        "appId" : "com.oliverbill.fastroutemobile"
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736816912,
+    "duration" : 0,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Confirmar",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Rotas da Importação",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      }, {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "(?s).*Rota #.*2 waypoints.*",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "assertConditionCommand" : {
+          "condition" : {
+            "visible" : {
+              "textRegex" : "Paradas",
+              "optional" : false
+            }
+          },
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "(?s).*Importação.*",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736836306,
+    "duration" : 3207,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnPointV2Command" : {
+      "point" : "18%,61%",
+      "retryIfNoChange" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736869518,
+    "duration" : 1816,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "eraseTextCommand" : {
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736828907,
+    "duration" : 3789,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Importar arquivo de rota",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736827361,
+    "duration" : 120,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Confirmar",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736836425,
+    "duration" : 1575,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "OK",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Erro ao iniciar rota",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "SKIPPED",
+    "timestamp" : 1772736859165,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "tapOnElement" : {
+      "selector" : {
+        "textRegex" : "Ver no mapa",
+        "optional" : false
+      },
+      "retryIfNoChange" : false,
+      "waitUntilVisible" : false,
+      "longPress" : false,
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736846776,
+    "duration" : 1762,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "(?s).*Rota #.*",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736848538,
+    "duration" : 123,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "assertConditionCommand" : {
+      "condition" : {
+        "visible" : {
+          "textRegex" : "(?s).*Rota #.*",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "COMPLETED",
+    "timestamp" : 1772736867897,
+    "duration" : 1621,
+    "sequenceNumber" : 0
+  }
+}, {
+  "command" : {
+    "runFlowCommand" : {
+      "commands" : [ {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Senha",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      }, {
+        "inputTextCommand" : {
+          "text" : "12345",
+          "optional" : false
+        }
+      }, {
+        "tapOnElement" : {
+          "selector" : {
+            "textRegex" : "Entrar no Sistema",
+            "optional" : false
+          },
+          "retryIfNoChange" : false,
+          "waitUntilVisible" : false,
+          "longPress" : false,
+          "optional" : false
+        }
+      } ],
+      "condition" : {
+        "visible" : {
+          "textRegex" : "Entrar no Sistema",
+          "optional" : false
+        }
+      },
+      "optional" : false
+    }
+  },
+  "metadata" : {
+    "status" : "SKIPPED",
+    "timestamp" : 1772736818256,
+    "sequenceNumber" : 0
+  }
+} ]

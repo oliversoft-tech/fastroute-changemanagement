@@ -1,0 +1,398 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "id": "7bc655cc-698b-4ce6-a037-bc9755d588a8",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1860,
+        260
+      ],
+      "webhookId": "feeed435-415c-45b1-b23e-368e129f3ac8",
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "lastNode",
+          "showWelcomeScreen": true
+        }
+      }
+    },
+    {
+      "id": "68745692-5ef7-491e-b38d-0b5abe79d04a",
+      "name": "Normalize Chat Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1620,
+        260
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase();\n\nconst raw = $json || {};\nconst message = toStr(raw.chatInput || raw.message || raw.text || raw.input || '');\nif (!message) throw new Error('[Normalize Chat Input] mensagem vazia.');\n\nconst lower = norm(message);\nconst sessionId = toStr(raw.sessionId || raw.session_id || raw.chatSessionId || raw.metadata?.sessionId || 'default');\n\nlet store;\ntry {\n  store = this.getWorkflowStaticData('global');\n} catch (_e) {\n  store = {};\n}\nif (!store.impactDrafts) store.impactDrafts = {};\n\nconst hasDraft = !!store.impactDrafts[sessionId];\nconst startImpact = lower.startsWith('/impact') || lower === 'impact' || lower.startsWith('impact:') || lower.startsWith('impact ');\nconst cancelImpact = lower === '/cancelar' || lower === 'cancelar' || lower === '/cancel';\n\nif (cancelImpact) {\n  delete store.impactDrafts[sessionId];\n  return [{ json: { route: 'impact_collect_question', output: 'Coleta de Impact Analysis cancelada. Para reiniciar, envie /impact.' } }];\n}\n\nconst parseLabeled = (text, labels) => {\n  for (const label of labels) {\n    const re = new RegExp(label + '\\\\s*[:=]\\\\s*([^|\\\\n]+)', 'i');\n    const m = text.match(re);\n    if (m) return toStr(m[1]);\n  }\n  return '';\n};\n\nconst ensureDraft = () => {\n  if (!store.impactDrafts[sessionId]) {\n    store.impactDrafts[sessionId] = {\n      problema: '',\n      mudanca: '',\n      evidencias: '',\n      restricoes: '',\n      started_at: new Date().toISOString()\n    };\n  }\n  return store.impactDrafts[sessionId];\n};\n\nconst nextQuestion = (draft) => {\n  if (!toStr(draft.problema)) return '1/4 Qual problema ou oportunidade essa alteracao resolve?';\n  if (!toStr(draft.mudanca)) return '2/4 Descreva a mudanca como voce espera ver no produto.';\n  if (!toStr(draft.evidencias)) return '3/4 Quais evidencias comprovam que a entrega esta pronta?';\n  if (!toStr(draft.restricoes)) return '4/4 Restricoes: limites de prazo, compliance, integracoes proibidas, etc.';\n  return '';\n};\n\nconst summaryDraft = (draft) => [\n  '- problema: ' + (toStr(draft.problema) || '(pendente)'),\n  '- mudanca: ' + (toStr(draft.mudanca) || '(pendente)'),\n  '- evidencias: ' + (toStr(draft.evidencias) || '(pendente)'),\n  '- restricoes: ' + (toStr(draft.restricoes) || '(pendente)')\n].join('\\n');\n\nif (startImpact || hasDraft) {\n  const draft = ensureDraft();\n\n  const p = parseLabeled(message, ['problema', 'problem']);\n  const m = parseLabeled(message, ['mudanca', 'mudança', 'expected_change']);\n  const e = parseLabeled(message, ['evidencias', 'evidências', 'evidence']);\n  const r = parseLabeled(message, ['restricoes', 'restrições', 'constraints']);\n\n  if (p) draft.problema = p;\n  if (m) draft.mudanca = m;\n  if (e) draft.evidencias = e;\n  if (r) draft.restricoes = r;\n\n  const notLabeled = !(p || m || e || r);\n  if (notLabeled && !startImpact) {\n    if (!toStr(draft.problema)) draft.problema = message;\n    else if (!toStr(draft.mudanca)) draft.mudanca = message;\n    else if (!toStr(draft.evidencias)) draft.evidencias = message;\n    else if (!toStr(draft.restricoes)) draft.restricoes = message;\n  }\n\n  const next = nextQuestion(draft);\n  if (next) {\n    return [{\n      json: {\n        route: 'impact_collect_question',\n        output: [\n          'Modo Impact Analysis ativo.',\n          '',\n          summaryDraft(draft),\n          '',\n          next,\n          '',\n          'Dica: voce pode responder por partes ou enviar tudo rotulado: problema:, mudanca:, evidencias:, restricoes:.'\n        ].join('\\n')\n      }\n    }];\n  }\n\n  const payload = {\n    problema: toStr(draft.problema),\n    mudanca: toStr(draft.mudanca),\n    evidencias: toStr(draft.evidencias),\n    restricoes: toStr(draft.restricoes)\n  };\n\n  delete store.impactDrafts[sessionId];\n\n  return [{\n    json: {\n      route: 'impact_run',\n      impact_workflow_id: toStr(($env && $env.IMPACT_WORKFLOW_ID) || ''),\n      impact_payload: payload,\n      output: [\n        'Dados coletados. Vou disparar o subflow de Impact Analysis agora.',\n        '',\n        summaryDraft(payload)\n      ].join('\\n')\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    route: 'pr_qa',\n    question: message,\n    owner: toStr(($env && $env.GITHUB_OWNER) || 'oliversoft-tech'),\n    github_token: toStr(($env && $env.GITHUB_TOKEN) || ''),\n    llm_model: toStr(($env && $env.LLM_MODEL) || 'claude-3-5-sonnet-20241022'),\n  }\n}];"
+      }
+    },
+    {
+      "id": "6356a74e-2b10-4913-905a-350cfe34e8d4",
+      "name": "Route Impact Collect",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1380,
+        260
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "d448bd76-5ef5-4bde-9dc0-9cfc4a9c4b0c",
+              "leftValue": "={{$json.route === 'impact_collect_question'}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f587bac1-fbad-4d5f-983e-7e16bdfb66f2",
+      "name": "Impact Collect Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1140,
+        120
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "return [{ json: { output: $json.output || 'Informe os dados para Impact Analysis.' } }];"
+      }
+    },
+    {
+      "id": "283630e6-ac6c-4557-905b-a79669566c8a",
+      "name": "Route Impact Run",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1140,
+        380
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "85629617-0f0c-42a7-8498-92395bb5ed0b",
+              "leftValue": "={{$json.route === 'impact_run'}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "86fcd95b-4f9a-401d-9599-467680516b59",
+      "name": "Prepare Impact Inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        220
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const wf = String($json.impact_workflow_id || '').trim();\nif (!wf) throw new Error('[Prepare Impact Inputs] IMPACT_WORKFLOW_ID ausente no environment.');\nreturn [{\n  json: {\n    impact_workflow_id: wf,\n    problema: $json.impact_payload?.problema || '',\n    mudanca: $json.impact_payload?.mudanca || '',\n    evidencias: $json.impact_payload?.evidencias || '',\n    restricoes: $json.impact_payload?.restricoes || ''\n  }\n}];"
+      }
+    },
+    {
+      "id": "6268fc26-ab9c-4437-8241-74a2b0ff9d53",
+      "name": "Execute Impact Analysis Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -660,
+        220
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{$json.impact_workflow_id}}"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "problema": "={{$json.problema}}",
+            "mudanca": "={{$json.mudanca}}",
+            "evidencias": "={{$json.evidencias}}",
+            "restricoes": "={{$json.restricoes}}"
+          }
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "32bd6b6b-c0cb-47bf-9a30-edd6a516d073",
+      "name": "Build Impact Chat Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        220
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "return [{ json: { output: 'Impact Analysis disparado com sucesso. Acompanhe o workflow principal para resultados e PRs.' } }];"
+      }
+    },
+    {
+      "id": "22c25096-a6c1-4dec-bf08-6a38a2104f2e",
+      "name": "Load Repos Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -900,
+        540
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "f861a184-fef2-4c57-b481-f39c180cd487",
+      "name": "Fetch PR Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -660,
+        540
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\n\nconst req = $json || {};\nconst question = toStr(req.question || '');\nconst owner = toStr(req.owner || 'oliversoft-tech');\nconst token = toStr(req.github_token || '');\nif (!token) throw new Error('[Fetch PR Context] GITHUB_TOKEN ausente no environment.');\n\nconst reposFromTable = $items('Load Repos Table', 0, 0).map((i) => i.json || {});\nlet repos = reposFromTable\n  .map((r) => toStr(r.repo_name || r.name || r.repository || r.slug || ''))\n  .filter(Boolean)\n  .filter((n) => n.includes('fastroute-'));\nif (repos.length === 0) repos = ['fastroute-domain', 'fastroute-api', 'fastroute-mobile-hybrid', 'fastroute-changemanagement'];\nrepos = [...new Set(repos)];\n\nconst gh = async (url) => this.helpers.httpRequest({\n  method: 'GET',\n  url,\n  headers: {\n    Authorization: 'Bearer ' + token,\n    Accept: 'application/vnd.github+json',\n    'X-GitHub-Api-Version': '2022-11-28'\n  },\n  json: true\n});\n\nconst allPrs = [];\nfor (const repo of repos) {\n  const list = await gh('https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=all&sort=updated&direction=desc&per_page=100');\n  for (const pr of (Array.isArray(list) ? list : [])) {\n    const title = toStr(pr.title);\n    const headRef = toStr(pr.head?.ref || '');\n    const governanceLike = title.toLowerCase().includes('governance: impact analysis') || headRef.startsWith('codex/governance-');\n    if (!governanceLike) continue;\n\n    allPrs.push({\n      repo,\n      number: pr.number,\n      title,\n      state: pr.state,\n      draft: !!pr.draft,\n      created_at: pr.created_at,\n      updated_at: pr.updated_at,\n      merged_at: pr.merged_at,\n      user: toStr(pr.user?.login || ''),\n      url: toStr(pr.html_url || ''),\n      body: toStr(pr.body || '').slice(0, 5000),\n      head: toStr(pr.head?.ref || ''),\n      base: toStr(pr.base?.ref || '')\n    });\n  }\n}\n\nallPrs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());\nconst selected = allPrs.slice(0, 30);\n\nfor (const pr of selected) {\n  try {\n    const files = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/files?per_page=100');\n    pr.files = (Array.isArray(files) ? files : []).map((f) => ({\n      filename: toStr(f.filename),\n      status: toStr(f.status),\n      additions: toNum(f.additions) || 0,\n      deletions: toNum(f.deletions) || 0\n    }));\n  } catch (_e) {\n    pr.files = [];\n  }\n}\n\nreturn [{\n  json: {\n    question,\n    pr_context: {\n      owner,\n      repos,\n      total_found: allPrs.length,\n      selected_count: selected.length,\n      prs: selected\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "4a8e7945-0ace-45c1-af71-e926cc096ab7",
+      "name": "Basic LLM Chain (PR Questions)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -420,
+        540
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Pergunta do usuario:',\n  $json.question || '',\n  '',\n  'Contexto de PRs de governance (JSON):',\n  JSON.stringify($json.pr_context || {}, null, 2)\n].join('\\n')}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce responde perguntas sobre PRs de governance do FastRoute.\n\nObjetivo:\n- Se a pergunta for do tipo \"essa necessidade ja foi implementada?\", avalie TODO o contexto de PRs recebido e responda com:\n  - status: \"SIM\" | \"PARCIAL\" | \"NAO\" | \"SEM_EVIDENCIA\"\n  - justificativa tecnica\n  - PRs de evidencia (repo, numero, url)\n\nRegras:\n1) Use apenas o contexto recebido.\n2) Cite PRs especificas como evidencia quando afirmar implementacao.\n3) Se nao houver evidencias suficientes, diga explicitamente SEM_EVIDENCIA.\n4) Responda em portugues, objetiva e tecnica.\n5) Nao invente PR, arquivo ou comportamento.\n\nFormato de saida (texto livre, sem markdown obrigatorio):\n- Status: ...\n- Justificativa: ...\n- Evidencias: ..."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      }
+    },
+    {
+      "id": "067b74a6-3625-492b-822b-7d9695773432",
+      "name": "Anthropic Chat Model - PR Questions",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        -440,
+        700
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-3-5-sonnet-20241022"
+        },
+        "options": {
+          "temperature": 0,
+          "maxTokens": 1200
+        }
+      }
+    },
+    {
+      "id": "a2e1e120-30d2-4912-8461-b697df504135",
+      "name": "Build PR Chat Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        540
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst text = toStr($json.text || $json.response?.text || '');\nif (!text) throw new Error('[Build PR Chat Reply] LLM retornou texto vazio.');\nreturn [{ json: { output: text } }];"
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chat Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Chat Input": {
+      "main": [
+        [
+          {
+            "node": "Route Impact Collect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Impact Collect": {
+      "main": [
+        [
+          {
+            "node": "Impact Collect Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Impact Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Impact Run": {
+      "main": [
+        [
+          {
+            "node": "Prepare Impact Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Impact Inputs": {
+      "main": [
+        [
+          {
+            "node": "Execute Impact Analysis Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Impact Analysis Workflow": {
+      "main": [
+        [
+          {
+            "node": "Build Impact Chat Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table": {
+      "main": [
+        [
+          {
+            "node": "Fetch PR Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch PR Context": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (PR Questions)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (PR Questions)": {
+      "main": [
+        [
+          {
+            "node": "Build PR Chat Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model - PR Questions": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain (PR Questions)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
