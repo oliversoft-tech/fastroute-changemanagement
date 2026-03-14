@@ -1108,13 +1108,15 @@ jobs:
             fi
 
             HEALTH_URLS=(
-              "https://fastroute.oliversoft.tech/health"
-              "http://127.0.0.1/health"
               "http://127.0.0.1:3002/health"
+              "http://127.0.0.1/health"
+              "https://fastroute.oliversoft.tech/health"
             )
             HEALTH_JSON=""
             for url in "${HEALTH_URLS[@]}"; do
-              if HEALTH_JSON=$(curl -fsS --max-time 10 "$url" 2>/dev/null); then
+              RESPONSE="$(curl -fsSL --max-time 10 "$url" 2>/dev/null || true)"
+              if [ -n "$RESPONSE" ] && echo "$RESPONSE" | grep -q '"version"'; then
+                HEALTH_JSON="$RESPONSE"
                 break
               fi
             done
