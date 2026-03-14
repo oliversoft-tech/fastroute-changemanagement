@@ -1,0 +1,87 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "id": "798ddb4b-94e6-4967-a1ab-9bb82a0050ec",
+      "name": "Fetch PR + Code Context (Correction)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -580,
+        520
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\nconst encodePath = (p) => toStr(p).split('/').map(encodeURIComponent).join('/');\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst reqFromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\n\nconst req = {\n  ...($json || {}),\n  ...reqFromNormalize,\n};\n\nconst question = toStr(req.question || '');\nconst owner = toStr(req.owner || getEnv('GITHUB_OWNER') || 'oliversoft-tech');\nconst token = toStr(req.github_token || getEnv('GITHUB_TOKEN') || '');\nif (!token) {\n  throw new Error('[Fetch PR + Code Context] GITHUB_TOKEN ausente. Defina em env (GITHUB_TOKEN) ou no Normalize Chat Input.');\n}\n\nconst rows = $input.all().map((i) => i.json || {});\nlet repos = rows\n  .map((r) => toStr(r.repo_name || r.name || r.repository || r.slug || ''))\n  .filter(Boolean)\n  .filter((n) => n.includes('fastroute-'));\nif (repos.length === 0) repos = ['fastroute-domain', 'fastroute-api', 'fastroute-mobile-hybrid', 'fastroute-changemanagement'];\nrepos = [...new Set(repos)];\n\nconst gh = async (url) => this.helpers.httpRequest({\n  method: 'GET',\n  url,\n  headers: {\n    Authorization: 'Bearer ' + token,\n    Accept: 'application/vnd.github+json',\n    'X-GitHub-Api-Version': '2022-11-28'\n  },\n  json: true\n});\n\nconst queryTerms = question\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s]/g, ' ')\n  .split(/\\s+/)\n  .filter((t) => t.length >= 4)\n  .slice(0, 10);\n\nconst allPrs = [];\nfor (const repo of repos) {\n  const list = await gh('https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=all&sort=updated&direction=desc&per_page=100');\n  for (const pr of (Array.isArray(list) ? list : [])) {\n    const title = toStr(pr.title);\n    const headRef = toStr(pr.head?.ref || '');\n    const governanceLike = title.toLowerCase().includes('governance: impact analysis') || headRef.startsWith('codex/governance-');\n    if (!governanceLike) continue;\n\n    allPrs.push({\n      repo,\n      number: pr.number,\n      title,\n      state: pr.state,\n      draft: !!pr.draft,\n      created_at: pr.created_at,\n      updated_at: pr.updated_at,\n      merged_at: pr.merged_at,\n      user: toStr(pr.user?.login || ''),\n      url: toStr(pr.html_url || ''),\n      body: toStr(pr.body || '').slice(0, 7000),\n      head: toStr(pr.head?.ref || ''),\n      base: toStr(pr.base?.ref || ''),\n    });\n  }\n}\n\nallPrs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());\nconst selected = allPrs.slice(0, 25);\n\nconst fileIndex = [];\nconst commitHits = [];\nfor (const pr of selected) {\n  try {\n    const files = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/files?per_page=100');\n    pr.files = (Array.isArray(files) ? files : []).map((f) => ({\n      filename: toStr(f.filename),\n      status: toStr(f.status),\n      additions: toNum(f.additions) || 0,\n      deletions: toNum(f.deletions) || 0,\n      raw_url: toStr(f.raw_url || ''),\n      blob_url: toStr(f.blob_url || '')\n    }));\n\n    for (const f of pr.files) {\n      fileIndex.push({\n        repo: pr.repo,\n        pr_number: pr.number,\n        filename: f.filename,\n        raw_url: f.raw_url,\n        blob_url: f.blob_url,\n        pr_url: pr.url,\n      });\n    }\n  } catch (_e) {\n    pr.files = [];\n  }\n\n  try {\n    const commits = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/commits?per_page=100');\n    pr.commits = (Array.isArray(commits) ? commits : []).map((c) => {\n      const msg = toStr(c?.commit?.message || '');\n      return {\n        sha: toStr(c?.sha || '').slice(0, 10),\n        message: msg.slice(0, 900),\n        author: toStr(c?.commit?.author?.name || c?.author?.login || ''),\n      };\n    });\n\n    if (queryTerms.length > 0) {\n      const text = pr.commits.map((c) => c.message).join(' \\n ').toLowerCase();\n      const matched = queryTerms.filter((t) => text.includes(t));\n      if (matched.length > 0) {\n        commitHits.push({\n          repo: pr.repo,\n          pr_number: pr.number,\n          url: pr.url,\n          matched_terms: [...new Set(matched)],\n          commit_messages: pr.commits.map((c) => c.message).slice(0, 10),\n        });\n      }\n    }\n  } catch (_e) {\n    pr.commits = [];\n  }\n}\n\nconst matches = fileIndex.filter((f) => {\n  if (queryTerms.length === 0) return false;\n  const hay = (f.filename + ' ' + f.blob_url).toLowerCase();\n  return queryTerms.some((t) => hay.includes(t));\n}).slice(0, 20);\n\nconst codeSnippets = [];\nfor (const m of matches) {\n  try {\n    const content = await gh('https://api.github.com/repos/' + owner + '/' + m.repo + '/contents/' + encodePath(m.filename) + '?ref=main');\n    let decoded = '';\n    if (content && content.content) {\n      decoded = Buffer.from(String(content.content).replace(/\\n/g, ''), 'base64').toString('utf8');\n    }\n    codeSnippets.push({\n      repo: m.repo,\n      pr_number: m.pr_number,\n      filename: m.filename,\n      pr_url: m.pr_url,\n      code: toStr(decoded).slice(0, 2500)\n    });\n  } catch (_e) {\n    // ignore fetch errors\n  }\n}\n\nconst fastrouteModeloDados = {\n  fonte: 'skill:fasterxml/references/modelo-dados.md',\n  tabelas_chave: [\n    'orders', 'addresses', 'routes', 'route_waypoints', 'waypoint_delivery_photo',\n    'change_log', 'mutations_applied', 'users', 'clients', 'orders_import'\n  ],\n  relacionamentos_relevantes: [\n    'addresses.order_id -> orders.id',\n    'routes.import_id -> orders_import.id',\n    'routes.driver_id -> users.id',\n    'orders.import_id -> orders_import.id'\n  ],\n  pontos_atencao: [\n    'route_waypoints e routes usam status/version para ciclo de entrega',\n    'change_log e mutations_applied suportam trilha e idempotencia offline-first',\n    'dados de latitude/longitude aparecem em ordens e enderecos e impactam clustering/roteirizacao',\n    'fotos de comprovacao em waypoint_delivery_photo vinculam rota, waypoint e usuario'\n  ]\n};\n\nreturn [{\n  json: {\n    route: req.route,\n    question,\n    owner,\n    impact_workflow_id: req.impact_workflow_id,\n    pr_context: {\n      owner,\n      repos,\n      total_found: allPrs.length,\n      selected_count: selected.length,\n      query_terms: queryTerms,\n      prs: selected,\n      commit_text_hits: commitHits,\n      code_snippets: codeSnippets,\n      fastroute_modelo_dados: fastrouteModeloDados\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "94a2ed38-2711-451c-bc65-69d8d48c57a7",
+      "name": "Basic LLM Chain (Correction Proposal)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -320,
+        520
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Pedido de correcao em linguagem natural:',\n  $json.question || '',\n  '',\n  'Contexto de PRs e codigo (JSON):',\n  JSON.stringify($json.pr_context || {}, null, 2)\n].join('\\n')}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce e um arquiteto de mudancas e deve propor uma correcao a partir de PRs/codigo/commits existentes.\nConsidere tambem o modelo de dados do FastRoute presente no contexto.\n\nRetorne SOMENTE JSON valido sem markdown, no formato:\n{\n  \"status\": \"SIM|PARCIAL|NAO|SEM_EVIDENCIA\",\n  \"diagnostico\": \"string\",\n  \"impact_payload\": {\n    \"problema\": \"string\",\n    \"mudanca\": \"string\",\n    \"evidencias\": \"string\",\n    \"restricoes\": \"string\"\n  },\n  \"evidencias\": [\n    { \"repo\": \"string\", \"pr_number\": number, \"url\": \"string\", \"arquivos\": [\"string\"], \"commits\": [\"string\"] }\n  ]\n}\n\nRegras:\n1) impact_payload deve ser preenchido para acionar Impact Analysis.\n2) Se faltar evidencia, use status=SEM_EVIDENCIA e descreva lacunas em diagnostico.\n3) Nao invente PRs/arquivos/commits."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      }
+    },
+    {
+      "id": "26d24e09-7dc5-4521-a849-480ee702fc9c",
+      "name": "Fetch PR + Code Context (PR QA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -580,
+        760
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\nconst encodePath = (p) => toStr(p).split('/').map(encodeURIComponent).join('/');\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst reqFromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\n\nconst req = {\n  ...($json || {}),\n  ...reqFromNormalize,\n};\n\nconst question = toStr(req.question || '');\nconst owner = toStr(req.owner || getEnv('GITHUB_OWNER') || 'oliversoft-tech');\nconst token = toStr(req.github_token || getEnv('GITHUB_TOKEN') || '');\nif (!token) {\n  throw new Error('[Fetch PR + Code Context] GITHUB_TOKEN ausente. Defina em env (GITHUB_TOKEN) ou no Normalize Chat Input.');\n}\n\nconst rows = $input.all().map((i) => i.json || {});\nlet repos = rows\n  .map((r) => toStr(r.repo_name || r.name || r.repository || r.slug || ''))\n  .filter(Boolean)\n  .filter((n) => n.includes('fastroute-'));\nif (repos.length === 0) repos = ['fastroute-domain', 'fastroute-api', 'fastroute-mobile-hybrid', 'fastroute-changemanagement'];\nrepos = [...new Set(repos)];\n\nconst gh = async (url) => this.helpers.httpRequest({\n  method: 'GET',\n  url,\n  headers: {\n    Authorization: 'Bearer ' + token,\n    Accept: 'application/vnd.github+json',\n    'X-GitHub-Api-Version': '2022-11-28'\n  },\n  json: true\n});\n\nconst queryTerms = question\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s]/g, ' ')\n  .split(/\\s+/)\n  .filter((t) => t.length >= 4)\n  .slice(0, 10);\n\nconst allPrs = [];\nfor (const repo of repos) {\n  const list = await gh('https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=all&sort=updated&direction=desc&per_page=100');\n  for (const pr of (Array.isArray(list) ? list : [])) {\n    const title = toStr(pr.title);\n    const headRef = toStr(pr.head?.ref || '');\n    const governanceLike = title.toLowerCase().includes('governance: impact analysis') || headRef.startsWith('codex/governance-');\n    if (!governanceLike) continue;\n\n    allPrs.push({\n      repo,\n      number: pr.number,\n      title,\n      state: pr.state,\n      draft: !!pr.draft,\n      created_at: pr.created_at,\n      updated_at: pr.updated_at,\n      merged_at: pr.merged_at,\n      user: toStr(pr.user?.login || ''),\n      url: toStr(pr.html_url || ''),\n      body: toStr(pr.body || '').slice(0, 7000),\n      head: toStr(pr.head?.ref || ''),\n      base: toStr(pr.base?.ref || ''),\n    });\n  }\n}\n\nallPrs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());\nconst selected = allPrs.slice(0, 25);\n\nconst fileIndex = [];\nconst commitHits = [];\nfor (const pr of selected) {\n  try {\n    const files = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/files?per_page=100');\n    pr.files = (Array.isArray(files) ? files : []).map((f) => ({\n      filename: toStr(f.filename),\n      status: toStr(f.status),\n      additions: toNum(f.additions) || 0,\n      deletions: toNum(f.deletions) || 0,\n      raw_url: toStr(f.raw_url || ''),\n      blob_url: toStr(f.blob_url || '')\n    }));\n\n    for (const f of pr.files) {\n      fileIndex.push({\n        repo: pr.repo,\n        pr_number: pr.number,\n        filename: f.filename,\n        raw_url: f.raw_url,\n        blob_url: f.blob_url,\n        pr_url: pr.url,\n      });\n    }\n  } catch (_e) {\n    pr.files = [];\n  }\n\n  try {\n    const commits = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/commits?per_page=100');\n    pr.commits = (Array.isArray(commits) ? commits : []).map((c) => {\n      const msg = toStr(c?.commit?.message || '');\n      return {\n        sha: toStr(c?.sha || '').slice(0, 10),\n        message: msg.slice(0, 900),\n        author: toStr(c?.commit?.author?.name || c?.author?.login || ''),\n      };\n    });\n\n    if (queryTerms.length > 0) {\n      const text = pr.commits.map((c) => c.message).join(' \\n ').toLowerCase();\n      const matched = queryTerms.filter((t) => text.includes(t));\n      if (matched.length > 0) {\n        commitHits.push({\n          repo: pr.repo,\n          pr_number: pr.number,\n          url: pr.url,\n          matched_terms: [...new Set(matched)],\n          commit_messages: pr.commits.map((c) => c.message).slice(0, 10),\n        });\n      }\n    }\n  } catch (_e) {\n    pr.commits = [];\n  }\n}\n\nconst matches = fileIndex.filter((f) => {\n  if (queryTerms.length === 0) return false;\n  const hay = (f.filename + ' ' + f.blob_url).toLowerCase();\n  return queryTerms.some((t) => hay.includes(t));\n}).slice(0, 20);\n\nconst codeSnippets = [];\nfor (const m of matches) {\n  try {\n    const content = await gh('https://api.github.com/repos/' + owner + '/' + m.repo + '/contents/' + encodePath(m.filename) + '?ref=main');\n    let decoded = '';\n    if (content && content.content) {\n      decoded = Buffer.from(String(content.content).replace(/\\n/g, ''), 'base64').toString('utf8');\n    }\n    codeSnippets.push({\n      repo: m.repo,\n      pr_number: m.pr_number,\n      filename: m.filename,\n      pr_url: m.pr_url,\n      code: toStr(decoded).slice(0, 2500)\n    });\n  } catch (_e) {\n    // ignore fetch errors\n  }\n}\n\nconst fastrouteModeloDados = {\n  fonte: 'skill:fasterxml/references/modelo-dados.md',\n  tabelas_chave: [\n    'orders', 'addresses', 'routes', 'route_waypoints', 'waypoint_delivery_photo',\n    'change_log', 'mutations_applied', 'users', 'clients', 'orders_import'\n  ],\n  relacionamentos_relevantes: [\n    'addresses.order_id -> orders.id',\n    'routes.import_id -> orders_import.id',\n    'routes.driver_id -> users.id',\n    'orders.import_id -> orders_import.id'\n  ],\n  pontos_atencao: [\n    'route_waypoints e routes usam status/version para ciclo de entrega',\n    'change_log e mutations_applied suportam trilha e idempotencia offline-first',\n    'dados de latitude/longitude aparecem em ordens e enderecos e impactam clustering/roteirizacao',\n    'fotos de comprovacao em waypoint_delivery_photo vinculam rota, waypoint e usuario'\n  ]\n};\n\nreturn [{\n  json: {\n    route: req.route,\n    question,\n    owner,\n    impact_workflow_id: req.impact_workflow_id,\n    pr_context: {\n      owner,\n      repos,\n      total_found: allPrs.length,\n      selected_count: selected.length,\n      query_terms: queryTerms,\n      prs: selected,\n      commit_text_hits: commitHits,\n      code_snippets: codeSnippets,\n      fastroute_modelo_dados: fastrouteModeloDados\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "869c3447-aadc-4ca0-846e-d9c4495b8cce",
+      "name": "Basic LLM Chain (PR Questions)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -320,
+        760
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Pergunta do usuario:',\n  $json.question || '',\n  '',\n  'Contexto de PRs e codigo (JSON):',\n  JSON.stringify($json.pr_context || {}, null, 2)\n].join('\\n')}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce responde perguntas sobre implementacao de necessidades com base em PRs de governance, textos de commits e trechos de codigo.\n\nQuando a pergunta for algo como \"essa necessidade ja foi implementada?\", responda com:\n- Status: SIM | PARCIAL | NAO | SEM_EVIDENCIA\n- Justificativa tecnica\n- Evidencias com links de PR, arquivos e/ou commits\n- Gaps encontrados\n\nRegras:\n1) Use somente o contexto recebido (prs, commit_text_hits, code_snippets, fastroute_modelo_dados).\n2) Nao invente evidencias.\n3) Seja objetivo e tecnico em portugues."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      }
+    }
+  ],
+  "connections": {},
+  "pinData": {}
+}

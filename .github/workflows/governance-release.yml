@@ -895,7 +895,21 @@ jobs:
       - name: Install dependencies
         run: |
           cd mobile
-          npm ci
+          set +e
+          npm ci 2>npm-ci-error.log
+          NPM_CI_EXIT_CODE=$?
+          set -e
+
+          if [ "${NPM_CI_EXIT_CODE}" -ne 0 ]; then
+            if grep -q "npm error code EUSAGE" npm-ci-error.log || grep -q "package.json and package-lock.json" npm-ci-error.log; then
+              cat npm-ci-error.log >&2
+              echo "::warning::npm ci falhou por lockfile fora de sincronia. Executando npm install como fallback."
+              npm install --no-audit --no-fund
+            else
+              cat npm-ci-error.log >&2
+              exit "${NPM_CI_EXIT_CODE}"
+            fi
+          fi
 
       - name: Setup EAS CLI
         run: npm install -g eas-cli
@@ -912,7 +926,21 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           cd mobile
-          eas build --platform ios --profile "${{ env.RESOLVED_MOBILE_PROFILE }}" --non-interactive --wait --json > ../ios-build.json
+          set +e
+          eas build --platform ios --profile "${{ env.RESOLVED_MOBILE_PROFILE }}" --non-interactive --wait --json > ../ios-build.json 2> ../ios-build-error.log
+          IOS_BUILD_EXIT_CODE=$?
+          set -e
+
+          if [ "${IOS_BUILD_EXIT_CODE}" -ne 0 ]; then
+            cat ../ios-build-error.log >&2
+
+            if grep -qi "credentials suitable for internal distribution" ../ios-build-error.log && [ "${{ env.RESOLVED_MOBILE_PROFILE }}" = "preview" ]; then
+              echo "::warning::Falha de credenciais iOS para distribuicao interna em non-interactive. Tentando profile preview-simulator."
+              eas build --platform ios --profile "preview-simulator" --non-interactive --wait --json > ../ios-build.json
+            else
+              exit "${IOS_BUILD_EXIT_CODE}"
+            fi
+          fi
 
       - name: Capture artifact URLs
         id: urls

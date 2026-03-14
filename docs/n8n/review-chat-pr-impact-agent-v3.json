@@ -1,0 +1,814 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "id": "54cf6cbe-4eb0-4433-bb83-55f89d16a722",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -2140,
+        320
+      ],
+      "webhookId": "a9d43452-7c4c-4d5b-89f1-199d337586ff",
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "lastNode",
+          "showWelcomeScreen": true
+        },
+        "initialMessages": "Escolha uma opcao para continuar (envie apenas 1, 2 ou 3):\n1) Nova analise de Impacto\n2) Duvida sobre funcionalidade ja implementada\n3) Correcao de PRs abertas\n\nComandos uteis:\n/menu: voltar para este menu\n/reset: limpar modo e reiniciar conversa"
+      }
+    },
+    {
+      "id": "ba48d480-83b8-461a-869c-832413dd226d",
+      "name": "Normalize Chat Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1880,
+        320
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst getStore = () => {\n  if (typeof $getWorkflowStaticData === 'function') return $getWorkflowStaticData('global');\n  if (this && typeof this.getWorkflowStaticData === 'function') return this.getWorkflowStaticData('global');\n  throw new Error('[Normalize Chat Input] static data indisponivel no Code node.');\n};\n\nconst raw = $json || {};\nconst message = toStr(raw.chatInput || raw.message || raw.text || raw.input || '');\nconst sessionId = toStr(raw.sessionId || raw.session_id || raw.chatSessionId || raw.metadata?.sessionId || 'default');\n\nconst store = getStore();\nif (!store.chatMemory) store.chatMemory = {};\nif (!Array.isArray(store.chatMemory[sessionId])) store.chatMemory[sessionId] = [];\nif (!store.selectedOption) store.selectedOption = {};\nif (!store.impactIntakeState) store.impactIntakeState = {};\n\nconst pushMemory = (role, content) => {\n  const text = toStr(content);\n  if (!text) return;\n  store.chatMemory[sessionId].push({ role, content: text, at: new Date().toISOString() });\n  if (store.chatMemory[sessionId].length > 40) {\n    store.chatMemory[sessionId] = store.chatMemory[sessionId].slice(-40);\n  }\n};\n\nconst chatHistory = () => store.chatMemory[sessionId]\n  .slice(-12)\n  .map((t) => ({ role: t.role, content: toStr(t.content) }));\n\nconst menuText = [\n  'Escolha uma opcao para continuar (envie apenas 1, 2 ou 3):',\n  '1) Nova analise de Impacto',\n  '2) Duvida sobre funcionalidade ja implementada',\n  '3) Correcao de PRs abertas'\n].join('\\n');\n\nconst invalidOutput = 'opção inválida! Escolha 1,2 ou 3';\n\nif (!message) {\n  return [{\n    json: {\n      option: 'invalid',\n      route: 'impact_collect_question',\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      output: menuText,\n    }\n  }];\n}\n\nconst lower = norm(message);\nif (lower === '/reset') {\n  delete store.selectedOption[sessionId];\n  delete store.impactIntakeState[sessionId];\n  return [{\n    json: {\n      option: 'invalid',\n      route: 'impact_collect_question',\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      output: menuText,\n    }\n  }];\n}\n\nif (lower === '/menu') {\n  return [{\n    json: {\n      option: 'invalid',\n      route: 'impact_collect_question',\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      output: menuText,\n    }\n  }];\n}\n\npushMemory('user', message);\n\nconst isOption = /^(1|2|3)$/.test(lower);\nif (isOption) {\n  const option = lower;\n  store.selectedOption[sessionId] = option;\n\n  if (option === '1') {\n    const currentState = store.impactIntakeState[sessionId] || {\n      problema: '',\n      mudanca: '',\n      evidencias: '',\n      restricoes: '',\n      status: '',\n      diagnostico: '',\n      evidencias_lista: []\n    };\n    store.impactIntakeState[sessionId] = currentState;\n\n    return [{\n      json: {\n        option: '1',\n        route: 'impact_intake',\n        is_selection: true,\n        session_id: sessionId,\n        chat_history: chatHistory(),\n        user_message: message,\n        question: message,\n        impact_intake_state: currentState,\n      }\n    }];\n  }\n\n  if (option === '2') {\n    return [{\n      json: {\n        option: '2',\n        route: 'pr_qa',\n        is_selection: true,\n        session_id: sessionId,\n        chat_history: chatHistory(),\n        output: 'Opcao 2 selecionada. Agora descreva sua duvida sobre funcionalidade ja implementada.',\n      }\n    }];\n  }\n\n  return [{\n    json: {\n      option: '3',\n      route: 'correction_propose',\n      is_selection: true,\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      output: 'Opcao 3 selecionada. Agora descreva a correcao desejada nas PRs abertas.',\n    }\n  }];\n}\n\nconst selected = toStr(store.selectedOption[sessionId]);\nif (!selected) {\n  return [{\n    json: {\n      option: 'invalid',\n      route: 'impact_collect_question',\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      output: invalidOutput + '\\n\\n' + menuText,\n    }\n  }];\n}\n\nif (selected === '1') {\n  const currentState = store.impactIntakeState[sessionId] || {\n    problema: '',\n    mudanca: '',\n    evidencias: '',\n    restricoes: '',\n    status: '',\n    diagnostico: '',\n    evidencias_lista: []\n  };\n\n  return [{\n    json: {\n      option: '1',\n      route: 'impact_intake',\n      is_selection: false,\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      user_message: message,\n      question: message,\n      impact_intake_state: currentState,\n    }\n  }];\n}\n\nif (selected === '2') {\n  return [{\n    json: {\n      option: '2',\n      route: 'pr_qa',\n      is_selection: false,\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      question: message,\n      owner: toStr(getEnv('GITHUB_OWNER') || 'oliversoft-tech'),\n      github_token: toStr(getEnv('GITHUB_TOKEN') || ''),\n      llm_model: toStr(getEnv('LLM_MODEL') || 'claude-3-5-sonnet-20241022')\n    }\n  }];\n}\n\nif (selected === '3') {\n  return [{\n    json: {\n      option: '3',\n      route: 'correction_propose',\n      is_selection: false,\n      session_id: sessionId,\n      chat_history: chatHistory(),\n      question: message,\n      owner: toStr(getEnv('GITHUB_OWNER') || 'oliversoft-tech'),\n      github_token: toStr(getEnv('GITHUB_TOKEN') || ''),\n      llm_model: toStr(getEnv('LLM_MODEL') || 'claude-3-5-sonnet-20241022')\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    option: 'invalid',\n    route: 'impact_collect_question',\n    session_id: sessionId,\n    chat_history: chatHistory(),\n    output: invalidOutput,\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "87b1f402-f6fe-410c-88ef-a8d478eab8a1",
+      "name": "Impact Collect Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        160
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst sessionId = toStr($json.session_id || 'default');\nconst output = toStr($json.output || 'Informe os dados para Impact Analysis.');\n\ntry {\n  const store = this.getWorkflowStaticData('global');\n  if (!store.chatMemory) store.chatMemory = {};\n  if (!Array.isArray(store.chatMemory[sessionId])) store.chatMemory[sessionId] = [];\n  store.chatMemory[sessionId].push({ role: 'assistant', content: output, at: new Date().toISOString() });\n  if (store.chatMemory[sessionId].length > 40) {\n    store.chatMemory[sessionId] = store.chatMemory[sessionId].slice(-40);\n  }\n} catch (_e) {}\n\nreturn [{ json: { output } }];"
+      }
+    },
+    {
+      "id": "061ac1f6-26f6-4186-91c1-6c37e9a11155",
+      "name": "Prepare Impact Inputs (Manual)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        280
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst payload = $json.impact_payload || {};\n\nreturn [{\n  json: {\n    problema: toStr(payload.problema || ''),\n    mudanca: toStr(payload.mudanca || ''),\n    evidencias: toStr(payload.evidencias || ''),\n    restricoes: toStr(payload.restricoes || ''),\n    status: toStr($json.status || ''),\n    diagnostico: toStr($json.diagnostico || ''),\n    evidencias_lista: Array.isArray($json.evidencias_lista) ? $json.evidencias_lista : []\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "8e0ba1c8-024f-476e-b53c-98cde4235ae8",
+      "name": "Execute Impact Analysis Workflow (Manual)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -840,
+        280
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Impact Analysis",
+          "cachedResultName": "Impact Analysis"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "problema": "={{$json.problema}}",
+            "mudanca": "={{$json.mudanca}}",
+            "evidencias": "={{$json.evidencias}}",
+            "restricoes": "={{$json.restricoes}}"
+          }
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "2be6dccf-926e-4bab-87f9-66ef4bc252ef",
+      "name": "Build Impact Chat Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -580,
+        280
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nconst fromPrepare = (() => {\n  try {\n    return $items('Prepare Impact Inputs (Manual)', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\nconst fromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\nconst sessionId = toStr(fromNormalize.session_id || 'default');\n\nconst output = [\n  'Impact Analysis disparado com sucesso (fluxo normal).',\n  '',\n  'Dados enviados:',\n  '- problema: ' + toStr(fromPrepare.problema || ''),\n  '- mudanca: ' + toStr(fromPrepare.mudanca || ''),\n  '- evidencias: ' + toStr(fromPrepare.evidencias || ''),\n  '- restricoes: ' + toStr(fromPrepare.restricoes || '')\n].join('\\n');\n\ntry {\n  const store = this.getWorkflowStaticData('global');\n  if (!store.chatMemory) store.chatMemory = {};\n  if (!Array.isArray(store.chatMemory[sessionId])) store.chatMemory[sessionId] = [];\n  store.chatMemory[sessionId].push({ role: 'assistant', content: output, at: new Date().toISOString() });\n  if (store.chatMemory[sessionId].length > 40) {\n    store.chatMemory[sessionId] = store.chatMemory[sessionId].slice(-40);\n  }\n} catch (_e) {}\n\nreturn [{ json: { output } }];"
+      }
+    },
+    {
+      "id": "031575eb-26f0-4e13-890d-d6bf9d1e8d6d",
+      "name": "Load Repos Table (Correction)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -840,
+        520
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "798ddb4b-94e6-4967-a1ab-9bb82a0050ec",
+      "name": "Fetch PR + Code Context (Correction)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -580,
+        520
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\nconst encodePath = (p) => toStr(p).split('/').map(encodeURIComponent).join('/');\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst reqFromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\n\nconst req = {\n  ...($json || {}),\n  ...reqFromNormalize,\n};\n\nconst question = toStr(req.question || '');\nconst owner = toStr(req.owner || getEnv('GITHUB_OWNER') || 'oliversoft-tech');\nconst token = toStr(req.github_token || getEnv('GITHUB_TOKEN') || '');\nif (!token) {\n  throw new Error('[Fetch PR + Code Context] GITHUB_TOKEN ausente. Defina em env (GITHUB_TOKEN) ou no Normalize Chat Input.');\n}\n\nconst rows = $input.all().map((i) => i.json || {});\nlet repos = rows\n  .map((r) => toStr(r.repo_name || r.name || r.repository || r.slug || ''))\n  .filter(Boolean)\n  .filter((n) => n.includes('fastroute-'));\nif (repos.length === 0) repos = ['fastroute-domain', 'fastroute-api', 'fastroute-mobile-hybrid', 'fastroute-changemanagement'];\nrepos = [...new Set(repos)];\n\nconst gh = async (url) => this.helpers.httpRequest({\n  method: 'GET',\n  url,\n  headers: {\n    Authorization: 'Bearer ' + token,\n    Accept: 'application/vnd.github+json',\n    'X-GitHub-Api-Version': '2022-11-28'\n  },\n  json: true\n});\n\nconst queryTerms = question\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s]/g, ' ')\n  .split(/\\s+/)\n  .filter((t) => t.length >= 4)\n  .slice(0, 10);\n\nconst allPrs = [];\nfor (const repo of repos) {\n  const list = await gh('https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=all&sort=updated&direction=desc&per_page=100');\n  for (const pr of (Array.isArray(list) ? list : [])) {\n    const title = toStr(pr.title);\n    const headRef = toStr(pr.head?.ref || '');\n    const governanceLike = title.toLowerCase().includes('governance: impact analysis') || headRef.startsWith('codex/governance-');\n    if (!governanceLike) continue;\n\n    allPrs.push({\n      repo,\n      number: pr.number,\n      title,\n      state: pr.state,\n      draft: !!pr.draft,\n      created_at: pr.created_at,\n      updated_at: pr.updated_at,\n      merged_at: pr.merged_at,\n      user: toStr(pr.user?.login || ''),\n      url: toStr(pr.html_url || ''),\n      body: toStr(pr.body || '').slice(0, 7000),\n      head: toStr(pr.head?.ref || ''),\n      base: toStr(pr.base?.ref || '')\n    });\n  }\n}\n\nallPrs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());\nconst selected = allPrs.slice(0, 25);\n\nconst fileIndex = [];\nconst commitHits = [];\nfor (const pr of selected) {\n  try {\n    const files = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/files?per_page=100');\n    pr.files = (Array.isArray(files) ? files : []).map((f) => ({\n      filename: toStr(f.filename),\n      status: toStr(f.status),\n      additions: toNum(f.additions) || 0,\n      deletions: toNum(f.deletions) || 0,\n      raw_url: toStr(f.raw_url || ''),\n      blob_url: toStr(f.blob_url || '')\n    }));\n\n    for (const f of pr.files) {\n      fileIndex.push({\n        repo: pr.repo,\n        pr_number: pr.number,\n        filename: f.filename,\n        raw_url: f.raw_url,\n        blob_url: f.blob_url,\n        pr_url: pr.url,\n      });\n    }\n  } catch (_e) {\n    pr.files = [];\n  }\n\n  try {\n    const commits = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/commits?per_page=100');\n    pr.commits = (Array.isArray(commits) ? commits : []).map((c) => {\n      const msg = toStr(c?.commit?.message || '');\n      return {\n        sha: toStr(c?.sha || '').slice(0, 10),\n        message: msg.slice(0, 900),\n        author: toStr(c?.commit?.author?.name || c?.author?.login || ''),\n      };\n    });\n\n    if (queryTerms.length > 0) {\n      const text = pr.commits.map((c) => c.message).join(' \\n ').toLowerCase();\n      const matched = queryTerms.filter((t) => text.includes(t));\n      if (matched.length > 0) {\n        commitHits.push({\n          repo: pr.repo,\n          pr_number: pr.number,\n          url: pr.url,\n          matched_terms: [...new Set(matched)],\n          commit_messages: pr.commits.map((c) => c.message).slice(0, 10),\n        });\n      }\n    }\n  } catch (_e) {\n    pr.commits = [];\n  }\n}\n\nconst matches = fileIndex.filter((f) => {\n  if (queryTerms.length === 0) return false;\n  const hay = (f.filename + ' ' + f.blob_url).toLowerCase();\n  return queryTerms.some((t) => hay.includes(t));\n}).slice(0, 20);\n\nconst codeSnippets = [];\nfor (const m of matches) {\n  try {\n    const content = await gh('https://api.github.com/repos/' + owner + '/' + m.repo + '/contents/' + encodePath(m.filename) + '?ref=main');\n    let decoded = '';\n    if (content && content.content) {\n      decoded = Buffer.from(String(content.content).replace(/\\n/g, ''), 'base64').toString('utf8');\n    }\n    codeSnippets.push({\n      repo: m.repo,\n      pr_number: m.pr_number,\n      filename: m.filename,\n      pr_url: m.pr_url,\n      code: toStr(decoded).slice(0, 2500)\n    });\n  } catch (_e) {\n    // ignore fetch errors\n  }\n}\n\nconst fastrouteModeloDados = {\n  fonte: 'skill:fastroute/references/modelo-dados.md',\n  tabelas_chave: [\n    'orders', 'addresses', 'routes', 'route_waypoints', 'waypoint_delivery_photo',\n    'change_log', 'mutations_applied', 'users', 'clients', 'orders_import'\n  ],\n  relacionamentos_relevantes: [\n    'addresses.order_id -> orders.id',\n    'routes.import_id -> orders_import.id',\n    'routes.driver_id -> users.id',\n    'orders.import_id -> orders_import.id'\n  ],\n  pontos_atencao: [\n    'route_waypoints e routes usam status/version para ciclo de entrega',\n    'change_log e mutations_applied suportam trilha e idempotencia offline-first',\n    'dados de latitude/longitude aparecem em ordens e enderecos e impactam clustering/roteirizacao',\n    'fotos de comprovacao em waypoint_delivery_photo vinculam rota, waypoint e usuario'\n  ]\n};\n\nreturn [{\n  json: {\n    route: req.route,\n    session_id: req.session_id || 'default',\n    chat_history: Array.isArray(req.chat_history) ? req.chat_history : [],\n    question,\n    owner,\n    pr_context: {\n      owner,\n      repos,\n      total_found: allPrs.length,\n      selected_count: selected.length,\n      query_terms: queryTerms,\n      prs: selected,\n      commit_text_hits: commitHits,\n      code_snippets: codeSnippets,\n      fastroute_modelo_dados: fastrouteModeloDados\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "94a2ed38-2711-451c-bc65-69d8d48c57a7",
+      "name": "Basic LLM Chain (Correction Proposal)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -320,
+        520
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Voce e um arquiteto de mudancas e deve propor uma correcao a partir de PRs abertas existentes.',\n  '',\n  'Retorne SOMENTE JSON valido sem markdown, no formato:',\n  '{',\n  '  \"status\": \"SIM|PARCIAL|NAO|SEM_EVIDENCIA\",',\n  '  \"diagnostico\": \"string\",',\n  '  \"impact_payload\": {',\n  '    \"problema\": \"string\",',\n  '    \"mudanca\": \"string\",',\n  '    \"evidencias\": \"string\",',\n  '    \"restricoes\": \"string\"',\n  '  },',\n  '  \"evidencias\": [',\n  '    { \"repo\": \"string\", \"pr_number\": number, \"url\": \"string\", \"arquivos\": [\"string\"], \"commits\": [\"string\"] }',\n  '  ]',\n  '}',\n  '',\n  'Regras:',\n  '1) impact_payload deve ser preenchido para acionar Impact Analysis.',\n  '2) Se faltar evidencia, use status=SEM_EVIDENCIA e descreva lacunas em diagnostico.',\n  '3) Nao invente PRs.',\n  '4) Use apenas PRs abertas como escopo de pesquisa. Desconsidere PRs merged, closed ou qualquer outro status.',\n  '',\n  'Historico recente da conversa (JSON):',\n  JSON.stringify($json.chat_history || [], null, 2),\n  '',\n  'Pedido de correcao em linguagem natural:',\n  $json.question || '',\n  '',\n  'Contexto de PRs e codigo (JSON):',\n  JSON.stringify($json.pr_context || {}, null, 2)\n].join('\\n')}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce e um arquiteto de mudancas e deve propor uma correcao a partir de PRs/codigo/commits existentes.\nConsidere tambem o modelo de dados do FastRoute presente no contexto.\n\nRetorne SOMENTE JSON valido sem markdown, no formato:\n{\n  \"status\": \"SIM|PARCIAL|NAO|SEM_EVIDENCIA\",\n  \"diagnostico\": \"string\",\n  \"impact_payload\": {\n    \"problema\": \"string\",\n    \"mudanca\": \"string\",\n    \"evidencias\": \"string\",\n    \"restricoes\": \"string\"\n  },\n  \"evidencias\": [\n    { \"repo\": \"string\", \"pr_number\": number, \"url\": \"string\", \"arquivos\": [\"string\"], \"commits\": [\"string\"] }\n  ]\n}\n\nRegras:\n1) impact_payload deve ser preenchido para acionar Impact Analysis.\n2) Se faltar evidencia, use status=SEM_EVIDENCIA e descreva lacunas em diagnostico.\n3) Nao invente PRs/arquivos/commits."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      }
+    },
+    {
+      "id": "1ceef262-8ffe-4cc7-b54a-cba9296d1178",
+      "name": "Anthropic Chat Model - Correction",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        -340,
+        690
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-3-5-sonnet-20241022"
+        },
+        "options": {
+          "temperature": 0,
+          "maxTokens": 1400
+        }
+      }
+    },
+    {
+      "id": "9b4866c0-6779-43fc-a084-495892e638c5",
+      "name": "Parse Correction Proposal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -60,
+        520
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nconst raw = toStr(\n  $json.text ||\n  $json.response?.text ||\n  $json.choices?.[0]?.message?.content ||\n  ''\n);\nif (!raw) throw new Error('[Parse Correction Proposal] resposta vazia do LLM.');\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (_e) {\n  const s = raw.indexOf('{');\n  const e = raw.lastIndexOf('}');\n  if (s >= 0 && e > s) {\n    try {\n      parsed = JSON.parse(raw.slice(s, e + 1));\n    } catch (__e) {\n      throw new Error('[Parse Correction Proposal] JSON invalido: ' + raw.slice(0, 1000));\n    }\n  } else {\n    throw new Error('[Parse Correction Proposal] JSON invalido: ' + raw.slice(0, 1000));\n  }\n}\n\nconst payload = parsed.impact_payload || {};\nconst problema = toStr(payload.problema);\nconst mudanca = toStr(payload.mudanca);\nconst evidencias = toStr(payload.evidencias);\nconst restricoes = toStr(payload.restricoes || 'Nenhuma restricao informada');\n\nif (!problema || !mudanca || !evidencias) {\n  throw new Error('[Parse Correction Proposal] impact_payload incompleto.');\n}\n\nreturn [{\n  json: {\n    status: toStr(parsed.status || 'SEM_EVIDENCIA'),\n    diagnostico: toStr(parsed.diagnostico || ''),\n    evidencias_lista: Array.isArray(parsed.evidencias) ? parsed.evidencias : [],\n    impact_payload: {\n      problema,\n      mudanca,\n      evidencias,\n      restricoes\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "407ce61a-2392-4b6b-bda7-c22c34779710",
+      "name": "Prepare Impact Inputs (Correction)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        520
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst payload = $json.impact_payload || {};\n\nreturn [{\n  json: {\n    problema: toStr(payload.problema || ''),\n    mudanca: toStr(payload.mudanca || ''),\n    evidencias: toStr(payload.evidencias || ''),\n    restricoes: toStr(payload.restricoes || ''),\n    status: toStr($json.status || ''),\n    diagnostico: toStr($json.diagnostico || ''),\n    evidencias_lista: Array.isArray($json.evidencias_lista) ? $json.evidencias_lista : []\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "eb0af9cf-655f-48c0-b937-650b04884e6f",
+      "name": "Execute Impact Analysis Workflow (Correction)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        460,
+        520
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Impact Analysis",
+          "cachedResultName": "Impact Analysis"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "problema": "={{$json.problema}}",
+            "mudanca": "={{$json.mudanca}}",
+            "evidencias": "={{$json.evidencias}}",
+            "restricoes": "={{$json.restricoes}}"
+          }
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "2e5dbaea-272a-4ed7-80c4-523d90e50d96",
+      "name": "Build Auto Correction Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        520
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nconst fromPrepare = (() => {\n  try {\n    return $items('Prepare Impact Inputs (Correction)', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\nconst fromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\nconst sessionId = toStr(fromNormalize.session_id || 'default');\n\nconst evid = Array.isArray(fromPrepare.evidencias_lista) ? fromPrepare.evidencias_lista : [];\n\nconst output = [\n  'Correcao proposta e enviada para o fluxo normal de Impact Analysis.',\n  '',\n  'Status diagnostico: ' + toStr(fromPrepare.status || ''),\n  'Diagnostico: ' + toStr(fromPrepare.diagnostico || ''),\n  '',\n  'Payload enviado:',\n  '- problema: ' + toStr(fromPrepare.problema || ''),\n  '- mudanca: ' + toStr(fromPrepare.mudanca || ''),\n  '- evidencias: ' + toStr(fromPrepare.evidencias || ''),\n  '- restricoes: ' + toStr(fromPrepare.restricoes || ''),\n  '',\n  'Evidencias utilizadas: ' + String(evid.length)\n].join('\\n');\n\ntry {\n  const store = this.getWorkflowStaticData('global');\n  if (!store.chatMemory) store.chatMemory = {};\n  if (!Array.isArray(store.chatMemory[sessionId])) store.chatMemory[sessionId] = [];\n  store.chatMemory[sessionId].push({ role: 'assistant', content: output, at: new Date().toISOString() });\n  if (store.chatMemory[sessionId].length > 40) {\n    store.chatMemory[sessionId] = store.chatMemory[sessionId].slice(-40);\n  }\n} catch (_e) {}\n\nreturn [{ json: { output } }];"
+      }
+    },
+    {
+      "id": "e1d24a02-b50f-4e8e-9e95-454b9261bfcb",
+      "name": "Load Repos Table (PR QA)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -840,
+        760
+      ],
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "26d24e09-7dc5-4521-a849-480ee702fc9c",
+      "name": "Fetch PR + Code Context (PR QA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -580,
+        760
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst toNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };\nconst encodePath = (p) => toStr(p).split('/').map(encodeURIComponent).join('/');\n\nconst getEnv = (key) => {\n  try {\n    if ($env && $env[key]) return String($env[key]).trim();\n  } catch (_e) {}\n  try {\n    const p = (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env)\n      ? globalThis.process.env[key]\n      : '';\n    if (p) return String(p).trim();\n  } catch (_e) {}\n  return '';\n};\n\nconst reqFromNormalize = (() => {\n  try {\n    return $items('Normalize Chat Input', 0, 0)[0]?.json || {};\n  } catch (_e) {\n    return {};\n  }\n})();\n\nconst req = {\n  ...($json || {}),\n  ...reqFromNormalize,\n};\n\nconst question = toStr(req.question || '');\nconst owner = toStr(req.owner || getEnv('GITHUB_OWNER') || 'oliversoft-tech');\nconst token = toStr(req.github_token || getEnv('GITHUB_TOKEN') || '');\nif (!token) {\n  throw new Error('[Fetch PR + Code Context] GITHUB_TOKEN ausente. Defina em env (GITHUB_TOKEN) ou no Normalize Chat Input.');\n}\n\nconst rows = $input.all().map((i) => i.json || {});\nlet repos = rows\n  .map((r) => toStr(r.repo_name || r.name || r.repository || r.slug || ''))\n  .filter(Boolean)\n  .filter((n) => n.includes('fastroute-'));\nif (repos.length === 0) repos = ['fastroute-domain', 'fastroute-api', 'fastroute-mobile-hybrid', 'fastroute-changemanagement'];\nrepos = [...new Set(repos)];\n\nconst gh = async (url) => this.helpers.httpRequest({\n  method: 'GET',\n  url,\n  headers: {\n    Authorization: 'Bearer ' + token,\n    Accept: 'application/vnd.github+json',\n    'X-GitHub-Api-Version': '2022-11-28'\n  },\n  json: true\n});\n\nconst queryTerms = question\n  .toLowerCase()\n  .replace(/[^a-z0-9\\s]/g, ' ')\n  .split(/\\s+/)\n  .filter((t) => t.length >= 4)\n  .slice(0, 10);\n\nconst allPrs = [];\nfor (const repo of repos) {\n  const list = await gh('https://api.github.com/repos/' + owner + '/' + repo + '/pulls?state=all&sort=updated&direction=desc&per_page=100');\n  for (const pr of (Array.isArray(list) ? list : [])) {\n    const title = toStr(pr.title);\n    const headRef = toStr(pr.head?.ref || '');\n    const governanceLike = title.toLowerCase().includes('governance: impact analysis') || headRef.startsWith('codex/governance-');\n    if (!governanceLike) continue;\n\n    allPrs.push({\n      repo,\n      number: pr.number,\n      title,\n      state: pr.state,\n      draft: !!pr.draft,\n      created_at: pr.created_at,\n      updated_at: pr.updated_at,\n      merged_at: pr.merged_at,\n      user: toStr(pr.user?.login || ''),\n      url: toStr(pr.html_url || ''),\n      body: toStr(pr.body || '').slice(0, 7000),\n      head: toStr(pr.head?.ref || ''),\n      base: toStr(pr.base?.ref || '')\n    });\n  }\n}\n\nallPrs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());\nconst selected = allPrs.slice(0, 25);\n\nconst fileIndex = [];\nconst commitHits = [];\nfor (const pr of selected) {\n  try {\n    const files = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/files?per_page=100');\n    pr.files = (Array.isArray(files) ? files : []).map((f) => ({\n      filename: toStr(f.filename),\n      status: toStr(f.status),\n      additions: toNum(f.additions) || 0,\n      deletions: toNum(f.deletions) || 0,\n      raw_url: toStr(f.raw_url || ''),\n      blob_url: toStr(f.blob_url || '')\n    }));\n\n    for (const f of pr.files) {\n      fileIndex.push({\n        repo: pr.repo,\n        pr_number: pr.number,\n        filename: f.filename,\n        raw_url: f.raw_url,\n        blob_url: f.blob_url,\n        pr_url: pr.url,\n      });\n    }\n  } catch (_e) {\n    pr.files = [];\n  }\n\n  try {\n    const commits = await gh('https://api.github.com/repos/' + owner + '/' + pr.repo + '/pulls/' + pr.number + '/commits?per_page=100');\n    pr.commits = (Array.isArray(commits) ? commits : []).map((c) => {\n      const msg = toStr(c?.commit?.message || '');\n      return {\n        sha: toStr(c?.sha || '').slice(0, 10),\n        message: msg.slice(0, 900),\n        author: toStr(c?.commit?.author?.name || c?.author?.login || ''),\n      };\n    });\n\n    if (queryTerms.length > 0) {\n      const text = pr.commits.map((c) => c.message).join(' \\n ').toLowerCase();\n      const matched = queryTerms.filter((t) => text.includes(t));\n      if (matched.length > 0) {\n        commitHits.push({\n          repo: pr.repo,\n          pr_number: pr.number,\n          url: pr.url,\n          matched_terms: [...new Set(matched)],\n          commit_messages: pr.commits.map((c) => c.message).slice(0, 10),\n        });\n      }\n    }\n  } catch (_e) {\n    pr.commits = [];\n  }\n}\n\nconst matches = fileIndex.filter((f) => {\n  if (queryTerms.length === 0) return false;\n  const hay = (f.filename + ' ' + f.blob_url).toLowerCase();\n  return queryTerms.some((t) => hay.includes(t));\n}).slice(0, 20);\n\nconst codeSnippets = [];\nfor (const m of matches) {\n  try {\n    const content = await gh('https://api.github.com/repos/' + owner + '/' + m.repo + '/contents/' + encodePath(m.filename) + '?ref=main');\n    let decoded = '';\n    if (content && content.content) {\n      decoded = Buffer.from(String(content.content).replace(/\\n/g, ''), 'base64').toString('utf8');\n    }\n    codeSnippets.push({\n      repo: m.repo,\n      pr_number: m.pr_number,\n      filename: m.filename,\n      pr_url: m.pr_url,\n      code: toStr(decoded).slice(0, 2500)\n    });\n  } catch (_e) {\n    // ignore fetch errors\n  }\n}\n\nconst fastrouteModeloDados = {\n  fonte: 'skill:fastroute/references/modelo-dados.md',\n  tabelas_chave: [\n    'orders', 'addresses', 'routes', 'route_waypoints', 'waypoint_delivery_photo',\n    'change_log', 'mutations_applied', 'users', 'clients', 'orders_import'\n  ],\n  relacionamentos_relevantes: [\n    'addresses.order_id -> orders.id',\n    'routes.import_id -> orders_import.id',\n    'routes.driver_id -> users.id',\n    'orders.import_id -> orders_import.id'\n  ],\n  pontos_atencao: [\n    'route_waypoints e routes usam status/version para ciclo de entrega',\n    'change_log e mutations_applied suportam trilha e idempotencia offline-first',\n    'dados de latitude/longitude aparecem em ordens e enderecos e impactam clustering/roteirizacao',\n    'fotos de comprovacao em waypoint_delivery_photo vinculam rota, waypoint e usuario'\n  ]\n};\n\nreturn [{\n  json: {\n    route: req.route,\n    session_id: req.session_id || 'default',\n    chat_history: Array.isArray(req.chat_history) ? req.chat_history : [],\n    question,\n    owner,\n    pr_context: {\n      owner,\n      repos,\n      total_found: allPrs.length,\n      selected_count: selected.length,\n      query_terms: queryTerms,\n      prs: selected,\n      commit_text_hits: commitHits,\n      code_snippets: codeSnippets,\n      fastroute_modelo_dados: fastrouteModeloDados\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "869c3447-aadc-4ca0-846e-d9c4495b8cce",
+      "name": "Basic LLM Chain (PR Questions)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -320,
+        760
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Voce responde perguntas sobre implementacao de necessidades com base em PRs de governance, textos de commits e trechos de codigo.',\n  '',\n  'Quando a pergunta for algo como \"essa necessidade ja foi implementada?\", responda com:',\n  '- Status: SIM | PARCIAL | NAO | SEM_EVIDENCIA',\n  '- Justificativa tecnica',\n  '- Evidencias com links de PR, arquivos e/ou commits',\n  '- Gaps encontrados',\n  '',\n  'Regras:',\n  '1) Use somente o contexto recebido (prs, commit_text_hits, code_snippets, fastroute_modelo_dados).',\n  '2) Nao invente evidencias.',\n  '3) Seja objetivo e tecnico em portugues.',\n  '4) Use apenas PRs merged, arquivos e/ou commits dos repositorios.',\n  '',\n  'Historico recente da conversa (JSON):',\n  JSON.stringify($json.chat_history || [], null, 2),\n  '',\n  'Pergunta do usuario:',\n  $json.question || '',\n  '',\n  'Contexto de PRs e codigo (JSON):',\n  JSON.stringify($json.pr_context || {}, null, 2)\n].join('\\n')}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Voce responde perguntas sobre implementacao de necessidades com base em PRs de governance, textos de commits e trechos de codigo.\n\nQuando a pergunta for algo como \"essa necessidade ja foi implementada?\", responda com:\n- Status: SIM | PARCIAL | NAO | SEM_EVIDENCIA\n- Justificativa tecnica\n- Evidencias com links de PR, arquivos e/ou commits\n- Gaps encontrados\n\nRegras:\n1) Use somente o contexto recebido (prs, commit_text_hits, code_snippets, fastroute_modelo_dados).\n2) Nao invente evidencias.\n3) Seja objetivo e tecnico em portugues."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      }
+    },
+    {
+      "id": "ab79fae9-077a-4182-8f3b-11f6404a474a",
+      "name": "Anthropic Chat Model - PR Questions",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        -340,
+        930
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-3-5-sonnet-20241022"
+        },
+        "options": {
+          "temperature": 0,
+          "maxTokens": 1200
+        }
+      }
+    },
+    {
+      "id": "afa8ae3d-11be-4f4e-813b-8aec1f6af1d1",
+      "name": "Build PR Chat Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -60,
+        760
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\nconst norm = (v) => toStr(v)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst text = toStr($json.text || $json.response?.text || '');\nif (!text) throw new Error('[Build PR Chat Reply] LLM retornou texto vazio.');\n\nconst fromNormalize = (() => {\n  try { return $items('Normalize Chat Input', 0, 0)[0]?.json || {}; } catch (_e) { return {}; }\n})();\nconst fromFetch = (() => {\n  try { return $items('Fetch PR + Code Context (PR QA)', 0, 0)[0]?.json || {}; } catch (_e) { return {}; }\n})();\n\nconst sessionId = toStr($json.session_id || fromFetch.session_id || fromNormalize.session_id || 'default');\nconst route = toStr($json.route || fromFetch.route || fromNormalize.route || 'pr_qa');\nconst precheckOriginal = toStr(fromFetch.precheck_original_message || fromNormalize.precheck_original_message || fromFetch.question || fromNormalize.question || '');\nconst qaQuestion = toStr(fromFetch.question || fromNormalize.question || '');\n\nconst normalizeStatus = (s) => {\n  const v = toStr(s)\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toUpperCase()\n    .replace(/\\s+/g, '_')\n    .replace(/-/g, '_');\n\n  if (v === 'SIM') return 'SIM';\n  if (v === 'PARCIAL') return 'PARCIAL';\n  if (v === 'NAO' || v === 'N') return 'NAO';\n  if (v === 'SEM_EVIDENCIA' || v === 'SEMEVIDENCIA') return 'SEM_EVIDENCIA';\n  return '';\n};\n\nconst tryParseJsonStatus = (raw) => {\n  const txt = toStr(raw);\n  const candidates = [txt];\n  const fenced = txt.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  if (fenced && fenced[1]) candidates.push(toStr(fenced[1]));\n\n  for (const c of candidates) {\n    try {\n      const obj = JSON.parse(c);\n      if (obj && typeof obj === 'object' && 'status' in obj) {\n        const st = normalizeStatus(obj.status);\n        if (st) return st;\n      }\n    } catch (_e) {}\n  }\n  return '';\n};\n\nconst parseStatus = (raw) => {\n  const txt = toStr(raw);\n  const jsonStatus = tryParseJsonStatus(txt);\n  if (jsonStatus) return jsonStatus;\n\n  const patterns = [\n    /(?:^|\\n)\\s*[-*]?\\s*[*_`\"]?status[*_`\"]?\\s*[:=]\\s*[*_`\"]?(SIM|PARCIAL|NAO|NÃO|SEM[ _-]?EVIDENCIA)\\b/i,\n    /\"status\"\\s*:\\s*\"(SIM|PARCIAL|NAO|NÃO|SEM[ _-]?EVIDENCIA)\"/i,\n    /\\bstatus\\b[^\\n]{0,80}\\b(SIM|PARCIAL|NAO|NÃO|SEM[ _-]?EVIDENCIA)\\b/i,\n  ];\n\n  for (const re of patterns) {\n    const m = txt.match(re);\n    if (m && m[1]) {\n      const st = normalizeStatus(m[1]);\n      if (st) return st;\n    }\n  }\n  return '';\n};\n\nlet output = text;\n\nconst getStore = () => {\n  if (typeof $getWorkflowStaticData === 'function') return $getWorkflowStaticData('global');\n  if (this && typeof this.getWorkflowStaticData === 'function') return this.getWorkflowStaticData('global');\n  throw new Error('[Build PR Chat Reply] static data indisponivel no Code node.');\n};\n\nconst store = getStore();\nif (!store.chatMemory) store.chatMemory = {};\nif (!store.chatModes) store.chatModes = {};\nif (!store.impactDrafts) store.impactDrafts = {};\nif (!store.impactPrecheck) store.impactPrecheck = {};\nif (!store.pendingImpactProceed) store.pendingImpactProceed = {};\nif (!store.lastSuggestedImpactPayload) store.lastSuggestedImpactPayload = {};\nif (!store.qaCache) store.qaCache = {};\nif (!store.precheckCache) store.precheckCache = {};\nif (!Array.isArray(store.chatMemory[sessionId])) store.chatMemory[sessionId] = [];\nif (!('chatModeGlobal' in store)) store.chatModeGlobal = '';\nif (!('impactDraftGlobal' in store)) store.impactDraftGlobal = null;\nif (!('impactPrecheckGlobal' in store)) store.impactPrecheckGlobal = { done: false, checked_at: null, status: '' };\nif (!('pendingImpactProceedGlobal' in store)) store.pendingImpactProceedGlobal = { awaiting: false };\nif (!('lastSuggestedImpactPayloadGlobal' in store)) store.lastSuggestedImpactPayloadGlobal = null;\n\nif (route === 'pr_qa_precheck') {\n  let status = parseStatus(text);\n  const statusFromFallback = !status;\n  if (!status) status = 'SEM_EVIDENCIA';\n\n  const precheckPayload = { done: true, status, checked_at: new Date().toISOString() };\n  store.impactPrecheck[sessionId] = precheckPayload;\n  store.impactPrecheckGlobal = precheckPayload;\n\n  const suggestedPayload = {\n    problema: precheckOriginal || 'Necessidade identificada via analise de PRs',\n    mudanca: [\n      'Prosseguir com implementacao/correcao da necessidade com base na analise de PRs.',\n      'Status da analise: ' + status + '.',\n      precheckOriginal ? ('Necessidade original: ' + precheckOriginal) : ''\n    ].filter(Boolean).join(' '),\n    evidencias: [\n      'Resultado da analise de PRs: status=' + status + '.',\n      text\n    ].join('\\n\\n'),\n    restricoes: 'Manter compatibilidade com PRs existentes e evitar regressao funcional.'\n  };\n\n  const needKey = norm(precheckOriginal || qaQuestion || '');\n  if (needKey) {\n    store.precheckCache[needKey] = {\n      status,\n      analysis_text: text,\n      suggested_payload: suggestedPayload,\n      updated_at: new Date().toISOString()\n    };\n  }\n\n  if (status === 'SIM') {\n    delete store.impactDrafts[sessionId];\n    store.impactDraftGlobal = null;\n    delete store.pendingImpactProceed[sessionId];\n    store.pendingImpactProceedGlobal = { awaiting: false };\n    delete store.lastSuggestedImpactPayload[sessionId];\n    store.lastSuggestedImpactPayloadGlobal = null;\n    delete store.chatModes[sessionId];\n    store.chatModeGlobal = '';\n\n    output = [\n      'Verificacao previa concluida: a necessidade ja existe (status SIM).',\n      'Nao vou prosseguir com Impact Analysis.',\n      '',\n      text,\n      '',\n      'Se quiser iniciar uma nova solicitacao, envie /menu.'\n    ].join('\\n');\n  } else {\n    store.lastSuggestedImpactPayload[sessionId] = suggestedPayload;\n    store.lastSuggestedImpactPayloadGlobal = suggestedPayload;\n\n    const pending = {\n      awaiting: true,\n      status,\n      analysis_text: text,\n      suggested_payload: suggestedPayload,\n      created_at: new Date().toISOString()\n    };\n\n    store.pendingImpactProceed[sessionId] = pending;\n    store.pendingImpactProceedGlobal = pending;\n\n    const header = statusFromFallback\n      ? 'Resultado da analise de PRs: SEM_EVIDENCIA (fallback aplicado: Status nao identificado no retorno do LLM).'\n      : 'Resultado da analise de PRs: ' + status + '.';\n\n    output = [\n      header,\n      '',\n      text,\n      '',\n      'Deseja prosseguir com a implementacao?',\n      'Se responder SIM, vou acionar o fluxo Impact Analysis com Impact Inputs preenchidos a partir desta analise.',\n      'Responda apenas: SIM ou NAO.'\n    ].join('\\n');\n  }\n}\n\nif (route === 'pr_qa') {\n  const qKey = norm(qaQuestion);\n  if (qKey) {\n    store.qaCache[qKey] = {\n      output: text,\n      updated_at: new Date().toISOString()\n    };\n  }\n}\n\nstore.chatMemory[sessionId].push({ role: 'assistant', content: output, at: new Date().toISOString() });\nif (store.chatMemory[sessionId].length > 40) {\n  store.chatMemory[sessionId] = store.chatMemory[sessionId].slice(-40);\n}\n\nreturn [{ json: { output } }];\n"
+      }
+    },
+    {
+      "id": "1c5326bb-0f6d-4a3b-8e4e-4d4cb53ca111",
+      "name": "Switch Option",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -1620,
+        320
+      ],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.option}}",
+        "rules": [
+          {
+            "operation": "equal",
+            "value2": "1"
+          },
+          {
+            "operation": "equal",
+            "value2": "2"
+          },
+          {
+            "operation": "equal",
+            "value2": "3"
+          },
+          {
+            "operation": "equal",
+            "value2": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "c78b5043-4f88-4d0f-a7e2-f4b7fdc2f2b4",
+      "name": "Switch Option 2 Step",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -1360,
+        900
+      ],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.is_selection ? 'selection' : 'message'}}",
+        "rules": [
+          {
+            "operation": "equal",
+            "value2": "selection"
+          },
+          {
+            "operation": "equal",
+            "value2": "message"
+          }
+        ]
+      }
+    },
+    {
+      "id": "0f52b6cf-ef20-4d4f-8a98-ec1a5ed6e9a4",
+      "name": "Switch Option 3 Step",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -1360,
+        620
+      ],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.is_selection ? 'selection' : 'message'}}",
+        "rules": [
+          {
+            "operation": "equal",
+            "value2": "selection"
+          },
+          {
+            "operation": "equal",
+            "value2": "message"
+          }
+        ]
+      }
+    },
+    {
+      "id": "d8358c60-3476-4bd0-944f-91558e3fd7ef",
+      "name": "Basic LLM Chain (Impact Intake)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -1360,
+        280
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{[\n  'Voce e um assistente de intake para Impact Analysis.',\n  'Seu objetivo e coletar os campos abaixo com exemplos claros:',\n  '- problema',\n  '- mudanca',\n  '- evidencias',\n  '- restricoes',\n  '- status',\n  '- diagnostico',\n  '- evidencias_lista (array de strings)',\n  '',\n  'Retorne SOMENTE JSON valido sem markdown, neste formato exato:',\n  '{',\n  '  \"complete\": true|false,',\n  '  \"reply\": \"string\",',\n  '  \"updates\": {',\n  '    \"problema\": \"string\",',\n  '    \"mudanca\": \"string\",',\n  '    \"evidencias\": \"string\",',\n  '    \"restricoes\": \"string\",',\n  '    \"status\": \"string\",',\n  '    \"diagnostico\": \"string\",',\n  '    \"evidencias_lista\": [\"string\"]',\n  '  }',\n  '}',\n  '',\n  'Regras de comportamento:',\n  '1) Se faltarem campos obrigatorios (problema,mudanca,evidencias,restricoes), reply deve perguntar objetivamente o proximo campo e incluir exemplo.',\n  '2) Se o usuario ja tiver fornecido valor para algum campo, preserve e apenas complemente.',\n  '3) complete=true somente quando os 4 campos obrigatorios estiverem preenchidos.',\n  '4) Nao invente dados fora do que o usuario informou.',\n  '',\n  'Estado atual (JSON):',\n  JSON.stringify($json.impact_intake_state || {}, null, 2),\n  '',\n  'Historico recente (JSON):',\n  JSON.stringify($json.chat_history || [], null, 2),\n  '',\n  'Mensagem atual do usuario:',\n  $json.user_message || $json.question || ''\n].join('\\n')}}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Coletar dados para Impact Analysis de forma objetiva e incremental. Sempre responder em JSON valido conforme schema solicitado."
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 1
+        }
+      }
+    },
+    {
+      "id": "5ea171f9-11eb-4eb8-bcb8-3cc7e9e7a458",
+      "name": "Anthropic Chat Model - Impact Intake",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        -1580,
+        170
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-3-5-sonnet-20241022"
+        },
+        "options": {
+          "temperature": 0,
+          "maxTokens": 900
+        }
+      }
+    },
+    {
+      "id": "44e2ce8e-6a3e-4ba3-a2c6-0b8e93eae382",
+      "name": "Parse Impact Intake Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        280
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "jsCode": "const toStr = (v) => String(v ?? '').trim();\n\nconst rawText = toStr($json.text || $json.response?.text || '');\nif (!rawText) throw new Error('[Parse Impact Intake Response] LLM retornou texto vazio.');\n\nconst tryParse = (txt) => {\n  const candidates = [txt];\n  const fenced = txt.match(/```(?:json)?\\s*([\\s\\S]*?)```/i);\n  if (fenced && fenced[1]) candidates.push(toStr(fenced[1]));\n  for (const c of candidates) {\n    try {\n      return JSON.parse(c);\n    } catch (_e) {}\n  }\n  throw new Error('[Parse Impact Intake Response] JSON invalido no retorno do LLM.');\n};\n\nconst parsed = tryParse(rawText);\nconst updates = parsed && typeof parsed === 'object' ? (parsed.updates || {}) : {};\n\nconst fromNormalize = (() => {\n  try { return $items('Normalize Chat Input', 0, 0)[0]?.json || {}; } catch (_e) { return {}; }\n})();\n\nconst sessionId = toStr(fromNormalize.session_id || 'default');\nconst getStore = () => {\n  if (typeof $getWorkflowStaticData === 'function') return $getWorkflowStaticData('global');\n  if (this && typeof this.getWorkflowStaticData === 'function') return this.getWorkflowStaticData('global');\n  throw new Error('[Parse Impact Intake Response] static data indisponivel no Code node.');\n};\n\nconst store = getStore();\nif (!store.impactIntakeState) store.impactIntakeState = {};\nif (!store.selectedOption) store.selectedOption = {};\n\nconst base = store.impactIntakeState[sessionId] || {\n  problema: '',\n  mudanca: '',\n  evidencias: '',\n  restricoes: '',\n  status: '',\n  diagnostico: '',\n  evidencias_lista: []\n};\n\nconst pickStr = (a, b) => {\n  const x = toStr(a);\n  if (x) return x;\n  return toStr(b);\n};\n\nbase.problema = pickStr(updates.problema, parsed.problema || base.problema);\nbase.mudanca = pickStr(updates.mudanca, parsed.mudanca || base.mudanca);\nbase.evidencias = pickStr(updates.evidencias, parsed.evidencias || base.evidencias);\nbase.restricoes = pickStr(updates.restricoes, parsed.restricoes || base.restricoes);\nbase.status = pickStr(updates.status, parsed.status || base.status);\nbase.diagnostico = pickStr(updates.diagnostico, parsed.diagnostico || base.diagnostico);\n\nconst listA = Array.isArray(base.evidencias_lista) ? base.evidencias_lista : [];\nconst listB = Array.isArray(updates.evidencias_lista) ? updates.evidencias_lista : (Array.isArray(parsed.evidencias_lista) ? parsed.evidencias_lista : []);\nbase.evidencias_lista = [...new Set([...listA, ...listB].map((x) => toStr(x)).filter(Boolean))];\n\nstore.impactIntakeState[sessionId] = base;\n\nconst required = ['problema', 'mudanca', 'evidencias', 'restricoes'];\nconst missing = required.filter((k) => !toStr(base[k]));\nconst complete = missing.length === 0;\n\nif (complete) {\n  delete store.selectedOption[sessionId];\n  delete store.impactIntakeState[sessionId];\n\n  return [{\n    json: {\n      route: 'impact_run_manual',\n      session_id: sessionId,\n      impact_payload: {\n        problema: toStr(base.problema),\n        mudanca: toStr(base.mudanca),\n        evidencias: toStr(base.evidencias),\n        restricoes: toStr(base.restricoes),\n      },\n      status: toStr(base.status),\n      diagnostico: toStr(base.diagnostico),\n      evidencias_lista: base.evidencias_lista,\n      output: 'Dados coletados. Vou disparar o Impact Analysis agora.'\n    }\n  }];\n}\n\nconst firstMissing = missing[0] || 'problema';\nconst examples = {\n  problema: 'Exemplo de problema: Alto indice de insucesso na entrega por ausencia do morador.',\n  mudanca: 'Exemplo de mudanca: Enviar SMS D-1 com opcoes de confirmacao/reagendamento/endereco alternativo.',\n  evidencias: 'Exemplo de evidencias: SMS enviado e resposta recebida/persistida com timestamp.',\n  restricoes: 'Exemplo de restricoes: Sem aumento de custo por mensagem acima de 10%.',\n};\n\nconst llmReply = toStr(parsed.reply || '');\nconst output = llmReply || [\n  'Para continuar, informe o campo: ' + firstMissing,\n  examples[firstMissing] || ''\n].filter(Boolean).join('\\n');\n\nreturn [{\n  json: {\n    route: 'impact_collect_question',\n    session_id: sessionId,\n    output,\n    draft: base,\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "4bc4ec58-079f-4ae0-9fef-c6f21e0f3e10",
+      "name": "Switch Impact Intake Route",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -900,
+        280
+      ],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.route}}",
+        "rules": [
+          {
+            "operation": "equal",
+            "value2": "impact_run_manual"
+          },
+          {
+            "operation": "equal",
+            "value2": "impact_collect_question"
+          }
+        ]
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Normalize Chat Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Chat Input": {
+      "main": [
+        [
+          {
+            "node": "Switch Option",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Option": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (Impact Intake)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch Option 2 Step",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch Option 3 Step",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Impact Collect Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Option 2 Step": {
+      "main": [
+        [
+          {
+            "node": "Impact Collect Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table (PR QA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Option 3 Step": {
+      "main": [
+        [
+          {
+            "node": "Impact Collect Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Repos Table (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (Impact Intake)": {
+      "main": [
+        [
+          {
+            "node": "Parse Impact Intake Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Impact Intake Response": {
+      "main": [
+        [
+          {
+            "node": "Switch Impact Intake Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Impact Intake Route": {
+      "main": [
+        [
+          {
+            "node": "Prepare Impact Inputs (Manual)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Impact Collect Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Impact Collect Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Impact Inputs (Manual)": {
+      "main": [
+        [
+          {
+            "node": "Execute Impact Analysis Workflow (Manual)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Impact Analysis Workflow (Manual)": {
+      "main": [
+        [
+          {
+            "node": "Build Impact Chat Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table (Correction)": {
+      "main": [
+        [
+          {
+            "node": "Fetch PR + Code Context (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch PR + Code Context (Correction)": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (Correction Proposal)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (Correction Proposal)": {
+      "main": [
+        [
+          {
+            "node": "Parse Correction Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Correction Proposal": {
+      "main": [
+        [
+          {
+            "node": "Prepare Impact Inputs (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Impact Inputs (Correction)": {
+      "main": [
+        [
+          {
+            "node": "Execute Impact Analysis Workflow (Correction)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Impact Analysis Workflow (Correction)": {
+      "main": [
+        [
+          {
+            "node": "Build Auto Correction Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Repos Table (PR QA)": {
+      "main": [
+        [
+          {
+            "node": "Fetch PR + Code Context (PR QA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch PR + Code Context (PR QA)": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain (PR Questions)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain (PR Questions)": {
+      "main": [
+        [
+          {
+            "node": "Build PR Chat Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model - PR Questions": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain (PR Questions)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model - Correction": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain (Correction Proposal)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model - Impact Intake": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain (Impact Intake)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

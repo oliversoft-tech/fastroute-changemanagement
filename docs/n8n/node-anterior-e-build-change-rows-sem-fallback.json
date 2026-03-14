@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "instanceId": "manual-export"
+  },
+  "nodes": [
+    {
+      "id": "da807d30-c2a0-4ab6-9d74-8acfb68cf7fb",
+      "name": "Load Repos Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -3180,
+        16
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "repos"
+        },
+        "returnAll": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "1fde8a70-9efb-42bd-84b1-670bc73c1689",
+      "name": "Build Change Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2960,
+        16
+      ],
+      "parameters": {
+        "jsCode": "const firstFromNode = (names) => {\n  for (const name of names) {\n    try {\n      const rows = $items(name, 0, 0);\n      if (Array.isArray(rows) && rows.length > 0) return rows[0].json || {};\n    } catch (_e) {}\n  }\n  return {};\n};\n\nconst base = firstFromNode(['Parse LLM JSON2', 'Parse LLM JSON1', 'Parse LLM JSON']);\nconst impactInsert = firstFromNode(['Insert Impact Analysis2', 'Insert Impact Analysis1', 'Insert Impact Analysis']);\nconst analysis = (base.analysis && typeof base.analysis === 'object') ? base.analysis : base;\nconst impacts = (analysis.impactos && typeof analysis.impactos === 'object' && !Array.isArray(analysis.impactos))\n  ? analysis.impactos\n  : ((analysis.impacts && typeof analysis.impacts === 'object' && !Array.isArray(analysis.impacts)) ? analysis.impacts : {});\nconst analysisId = impactInsert.id || base.impact_analysis_id || null;\n\nconst normalize = (v) => String(v || '')\n  .normalize('NFD')\n  .replace(/[̀-ͯ]/g, '')\n  .toLowerCase()\n  .replace(/[_s]+/g, '-')\n  .trim();\n\nconst asObj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});\nconst toArray = (v) => {\n  if (Array.isArray(v)) return v;\n  if (v === undefined || v === null || v === '') return [];\n  return [v];\n};\nconst toBool = (v) => v === true || String(v || '').toLowerCase() === 'true';\nconst toSafeNumber = (value) => {\n  if (value === undefined || value === null) return NaN;\n  const s = String(value).replace(/^﻿/, '').trim();\n  if (!s) return NaN;\n  const n = Number(s);\n  return Number.isFinite(n) ? n : NaN;\n};\nconst short = (v, n = 240) => String(v || '').replace(/s+/g, ' ').trim().slice(0, n);\n\nconst fail = (reason, extra = {}) => {\n  const details = {\n    stage: 'Build Change Rows',\n    reason,\n    analysis_id: analysisId,\n    impact_keys: Object.keys(impacts || {}),\n    ...extra,\n  };\n  console.error('[Build Change Rows] ' + JSON.stringify(details));\n  throw new Error('[Build Change Rows] ' + reason + ' | ' + JSON.stringify(details));\n};\n\nconst fallbackSignals = [\n  /[fallback]/i,\n  /resposta do llm truncada/i,\n  /modelo nao retornou json valido/i,\n  /falha ao parsear json do llm/i,\n  /executar nova analise/i,\n  /revisar analise/i,\n  /mudanca sem detalhamento/i,\n];\nconst hasFallbackText = (value) => {\n  const txt = String(value || '');\n  return fallbackSignals.some((re) => re.test(txt));\n};\n\nconst normalizeChange = (change, repoName) => {\n  if (typeof change === 'string') {\n    fail('change_string_not_allowed', { repo: repoName, change_preview: short(change) });\n  }\n\n  const c = asObj(change);\n  const descricao = String(c.descricao || c.desc || c.description || '').trim();\n  const testes = toArray(c.testes || c.tests || c.test_steps).map((x) => String(x || '').trim()).filter(Boolean);\n  const criterios = toArray(c.criterios_aceite || c.acceptance_criterias || c.acceptance_criteria).map((x) => String(x || '').trim()).filter(Boolean);\n  const explicitCodes = toArray(c.code_changes || c.codeChanges || c.codes || c.code || c.implementacao || c.codigo)\n    .map((x) => String(x || '').trim())\n    .filter(Boolean);\n\n  if (!descricao) {\n    fail('change_without_descricao', { repo: repoName });\n  }\n  if (hasFallbackText(descricao)) {\n    fail('fallback_detected_in_descricao', { repo: repoName, descricao: short(descricao) });\n  }\n  if (testes.some(hasFallbackText)) {\n    fail('fallback_detected_in_testes', { repo: repoName, test_preview: short(testes[0] || '') });\n  }\n\n  return {\n    descricao,\n    testes,\n    criterios_aceite: criterios,\n    code_changes: explicitCodes,\n  };\n};\n\nif (!impacts || Object.keys(impacts).length === 0) {\n  fail('impacts_empty_from_analysis', {\n    analysis_keys: Object.keys(analysis || {}),\n    llm_raw_len: String(base.llm_raw_text || '').length,\n  });\n}\n\nfor (const [k, v] of Object.entries(impacts)) {\n  const info = asObj(v);\n  const mudancas = toArray(info.mudancas || info.changes);\n  const riscos = toArray(info.riscos || info.risks);\n  const duvidas = toArray(info.duvidas || info.doubts || info.questions);\n\n  if (hasFallbackText(k)) {\n    fail('fallback_detected_in_impact_key', { impact_key: short(k) });\n  }\n  if (mudancas.some((m) => hasFallbackText((m && (m.descricao || m.description)) || ''))) {\n    fail('fallback_detected_in_impacts', { impact_key: short(k) });\n  }\n  if (riscos.some(hasFallbackText) || duvidas.some(hasFallbackText)) {\n    fail('fallback_detected_in_risks_or_doubts', { impact_key: short(k) });\n  }\n}\n\nconst impactEntries = Object.entries(asObj(impacts)).map(([k, v]) => ({ key: k, normKey: normalize(k), info: asObj(v) }));\nconst impactByKey = new Map(impactEntries.map((e) => [e.normKey, e.info]));\n\nconst repoRows = $input\n  .all()\n  .map((i) => i.json || {})\n  .map((r) => {\n    const repoId = [r.repo_id, r.id, r['﻿id']].map(toSafeNumber).find((n) => Number.isFinite(n) && n > 0);\n    const repoName = String(r.name || r.repo_name || r.repository || r.full_name || '').trim();\n    if (!Number.isFinite(repoId) || !repoName) return null;\n    return { ...r, repo_id: repoId, repo_name: repoName, norm_name: normalize(repoName) };\n  })\n  .filter(Boolean);\n\nif (repoRows.length === 0) {\n  fail('repos_table_empty');\n}\n\nconst candidatesForRepoName = (repoName) => {\n  const n = normalize(repoName);\n  const c = [n, n.replaceAll('_', '-'), n.replaceAll('-', '_')];\n  if (n.includes('domain')) c.push('fastroute-domain', 'domain');\n  if (n.includes('api')) c.push('fastroute-api', 'fastroute_api', 'api');\n  if (n.includes('mobile')) c.push('fastroute-mobile-hybrid', 'mobile');\n  return [...new Set(c.map(normalize))];\n};\n\nconst matchImpactForRepo = (repoName) => {\n  for (const key of candidatesForRepoName(repoName)) {\n    const hit = impactByKey.get(key);\n    if (hit) return hit;\n  }\n  return null;\n};\n\nconst rowsFromImpact = (repoId, repoName, impactInfo) => {\n  const impacted = toBool(impactInfo.impacto) || toBool(impactInfo.impact) || toBool(impactInfo.has_impact);\n  if (!impacted) return [];\n\n  const changes = toArray(impactInfo.mudancas || impactInfo.changes).map((c) => normalizeChange(c, repoName));\n  if (changes.length === 0) {\n    fail('impacted_repo_without_changes', { repo_id: repoId, repo_name: repoName });\n  }\n\n  const changeRisks = toArray(impactInfo.riscos || impactInfo.risks).map((x) => String(x || '').trim()).filter(Boolean);\n  const changeDoubts = toArray(impactInfo.duvidas || impactInfo.doubts).map((x) => String(x || '').trim()).filter(Boolean);\n\n  if (changeRisks.some(hasFallbackText) || changeDoubts.some(hasFallbackText)) {\n    fail('fallback_detected_in_repo_risks_or_doubts', {\n      repo_id: repoId,\n      repo_name: repoName,\n      risk_preview: short(changeRisks[0] || ''),\n      doubt_preview: short(changeDoubts[0] || ''),\n    });\n  }\n\n  const out = [];\n  for (const change of changes) {\n    const desc = String(change.descricao || '').trim();\n    const criteria = toArray(change.criterios_aceite).map((x) => String(x || '').trim()).filter(Boolean);\n    const summaryBase = analysisId ? '[impact:' + analysisId + '] ' + desc : desc;\n    const summary = criteria.length > 0\n      ? summaryBase + ' | criterios_aceite: ' + criteria.join(' | ')\n      : summaryBase;\n\n    if (hasFallbackText(summary)) {\n      fail('fallback_detected_in_change_summary', { repo_id: repoId, repo_name: repoName, summary: short(summary) });\n    }\n\n    const normalizedCodeChanges = toArray(change.code_changes).map((x) => String(x || '').trim()).filter(Boolean);\n\n    out.push({\n      repo_id: repoId,\n      repo_name: repoName,\n      change_summary: summary,\n      test_steps: toArray(change.testes).map((x) => String(x || '').trim()).filter(Boolean),\n      code_changes: normalizedCodeChanges,\n      acceptance_criteria: criteria,\n      change_risks: changeRisks,\n      change_doubts: changeDoubts,\n      impact_analysis_id: analysisId,\n    });\n  }\n  return out;\n};\n\nlet out = [];\nfor (const repo of repoRows) {\n  const impactInfo = matchImpactForRepo(repo.repo_name);\n  if (!impactInfo) continue;\n  out.push(...rowsFromImpact(repo.repo_id, repo.repo_name, impactInfo));\n}\n\nif (out.length === 0) {\n  fail('no_impacted_repo_rows_matched', {\n    repos: repoRows.map((r) => r.repo_name),\n  });\n}\n\nreturn out.map((json) => ({ json }));"
+      }
+    }
+  ],
+  "connections": {
+    "Load Repos Table": {
+      "main": [
+        [
+          {
+            "node": "Build Change Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

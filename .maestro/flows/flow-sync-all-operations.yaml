@@ -1,0 +1,128 @@
+appId: com.oliverbill.fastroutemobile
+---
+- launchApp:
+    clearState: true
+
+# Login (quando necessário)
+- runFlow:
+    when:
+      visible: "Entrar no Sistema"
+    commands:
+      - tapOn: "Senha"
+      - inputText: "12345"
+      - tapOn: "Entrar no Sistema"
+
+- assertVisible: "Minhas Rotas"
+
+# IMPORT_ROUTE_FILE
+- tapOn: "Criar Rota"
+- assertVisible: "Importar arquivo de rota"
+- tapOn: "EPS (METROS)"
+- eraseText
+- inputText: "120"
+- tapOn: "Confirmar importação"
+
+# Fluxo 1: múltiplas rotas (preview de importação)
+- runFlow:
+    when:
+      visible: "(?s).*Importação.*"
+    commands:
+      - tapOn: "Confirmar"
+      - assertVisible: "Rotas da Importação"
+      - tapOn: "(?s).*Rota #.*2 waypoints.*"
+      - assertVisible: "Paradas"
+
+# Fluxo 2: rota única (abre mapa da rota direto)
+- runFlow:
+    when:
+      visible: "(?s).*Rota #.*"
+    commands:
+      - tapOn:
+          text: "Confirmar ordem"
+          optional: true
+      - assertVisible: "Paradas"
+
+# REORDER_WAYPOINTS
+- tapOn: "Ver no mapa"
+- assertVisible: "(?s).*Rota #.*"
+- waitForAnimationToEnd
+- longPressOn:
+    point: "50%,43%"
+- swipe:
+    start: "50%,43%"
+    end: "62%,34%"
+- tapOn: "Confirmar ordem"
+- assertVisible: "Paradas"
+
+# START_ROUTE
+- tapOn: "Iniciar"
+- runFlow:
+    when:
+      visible: "Erro ao iniciar rota"
+    commands:
+      - tapOn: "OK"
+- runFlow:
+    when:
+      visible: "CRIADA"
+    commands:
+      - tapOn: "Iniciar"
+      - runFlow:
+          when:
+            visible: "Erro ao iniciar rota"
+          commands:
+            - tapOn: "OK"
+- assertVisible: "EM ANDAMENTO"
+
+# UPDATE_WAYPOINT_STATUS (FALHA)
+- tapOn: "#1"
+- assertVisible: "(?s).*Entrega #.*"
+- tapOn: "Marcar FALHA"
+- assertVisible: "Registrar Falha"
+- tapOn: "Observações da falha (obs_falha)"
+- inputText: "E2E sync - morador ausente"
+- tapOn: "MORADOR AUSENTE"
+- tapOn: "Confirmar"
+- assertVisible: "Confirmação"
+- tapOn: "Confirmar"
+- assertVisible: "Atualização concluída"
+- tapOn: "OK"
+- assertVisible: "(?s).*Rota #.*"
+
+# UPDATE_WAYPOINT_STATUS (ENTREGUE) + FINISH_ROUTE automático
+- tapOn: "#2"
+- assertVisible: "(?s).*Entrega #.*"
+- tapOn: "Marcar como ENTREGUE"
+- assertVisible: "Confirmação"
+- tapOn: "Confirmar"
+- assertVisible: "Não há foto para comprovar a entrega. Deseja prosseguir mesmo assim?"
+- tapOn: "Prosseguir"
+- assertVisible: "Atualização concluída"
+- assertVisible: "(?s).*rota foi concluída automaticamente.*"
+- tapOn: "OK"
+- assertVisible: "(?s).*Rota #.*"
+- assertVisible: "FINALIZADA"
+
+- back
+- runFlow:
+    when:
+      visible: "Rotas da Importação"
+    commands:
+      - back
+- assertVisible: "Minhas Rotas"
+
+# DELETE_ROUTE
+- tapOn: "X"
+- assertVisible: "Excluir rota"
+- tapOn: "Excluir"
+- assertVisible: "Rota excluída"
+- tapOn:
+    text: "OK"
+    optional: true
+
+# SYNC manual
+- tapOn: "Config"
+- assertVisible: "Sincronização"
+- tapOn: "Sincronizar agora"
+- assertVisible: "Sync concluído"
+- tapOn: "OK"
+- assertVisible: "Última sincronização"

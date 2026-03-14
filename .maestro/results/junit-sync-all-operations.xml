@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="iPhone 17 Pro Max - iOS 26.2 - 269FCCBD-3899-4AAF-B00D-4DE616487ECE" tests="1" failures="1" time="60.0">
+    <testcase id="flow-sync-all-operations" name="flow-sync-all-operations" classname="flow-sync-all-operations" time="60.0" status="ERROR">
+      <failure>Assertion is false: "EM ANDAMENTO" is visible</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

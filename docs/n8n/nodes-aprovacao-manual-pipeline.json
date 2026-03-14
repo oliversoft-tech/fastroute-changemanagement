@@ -1,0 +1,47 @@
+{
+  "name": "nodes-aprovacao-manual-pipeline",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-approval-trigger",
+      "name": "Manual Approval Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const owner = 'oliversoft-tech';\nconst repo = 'fastroute-changemanagement';\n\nconst token = String(\n  ($env && $env.GITHUB_TOKEN) ||\n  (typeof process !== 'undefined' && process.env ? process.env.GITHUB_TOKEN : '') ||\n  ''\n).trim();\n\nif (!token) {\n  throw new Error('[Approve Review + Run Full Pipeline] GITHUB_TOKEN ausente no environment.');\n}\n\nconst payload = {\n  event_type: 'governance-release',\n  client_payload: {\n    source_repo: 'fastroute-changemanagement',\n    source_event: 'manual_approval',\n    source_ref: 'main',\n    domain_ref: 'main',\n    api_ref: 'main',\n    mobile_ref: 'main',\n    mobile_profile: 'preview',\n    run_ci: true,\n    run_release: true,\n    deploy_api: true,\n    publish_domain: true,\n    auto_implement: false,\n    approved: true\n  }\n};\n\nconst url = `https://api.github.com/repos/${owner}/${repo}/dispatches`;\n\ntry {\n  await this.helpers.httpRequest({\n    method: 'POST',\n    url,\n    headers: {\n      Authorization: 'Bearer ' + token,\n      Accept: 'application/vnd.github+json',\n      'X-GitHub-Api-Version': '2022-11-28',\n    },\n    body: payload,\n    json: true,\n  });\n\n  return [{\n    json: {\n      status: 'dispatched',\n      workflow_target: `${owner}/${repo}`,\n      event_type: payload.event_type,\n      client_payload: payload.client_payload,\n      dispatched_at: new Date().toISOString(),\n    }\n  }];\n} catch (e) {\n  const body = e?.response?.body || e?.message || e;\n  throw new Error('[Approve Review + Run Full Pipeline] falha no dispatch: ' + (typeof body === 'string' ? body : JSON.stringify(body)));\n}\n"
+      },
+      "id": "approve-review-run-full-pipeline",
+      "name": "Approve Review + Run Full Pipeline",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1030,
+        380
+      ],
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Manual Approval Trigger": {
+      "main": [
+        [
+          {
+            "node": "Approve Review + Run Full Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "",
+  "meta": {}
+}
