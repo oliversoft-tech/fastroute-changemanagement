@@ -472,7 +472,7 @@ jobs:
             commit=$(node -e "const r=JSON.parse(process.argv[1]); process.stdout.write(String(r.commit||''));" "${json}")
 
             if [ "${status}" = "implemented" ]; then
-              local pr_base pr_title pr_body pr_url
+              local pr_base pr_title pr_body pr_url pr_number
               pr_base="${ref}"
               if [[ "${pr_base}" =~ ^codex/ ]]; then
                 pr_base="main"
@@ -482,13 +482,72 @@ jobs:
               fi
 
               pr_title="Governance Auto Implementation (${key}) - run ${RUN_ID}"
-              pr_body="Auto-generated governance implementation. Repo=${repo}, Run=${RUN_ID}, Branch=${branch}, Base=${pr_base}."
+              pr_body="$(RESULT_JSON="${json}" REPO_NAME="${repo}" RUN_ID_VALUE="${RUN_ID}" BRANCH_NAME="${branch}" BASE_NAME="${pr_base}" node - <<'NODE'
+          const result = JSON.parse(process.env.RESULT_JSON || '{}');
+          const repo = String(process.env.REPO_NAME || '');
+          const runId = String(process.env.RUN_ID_VALUE || '');
+          const branch = String(process.env.BRANCH_NAME || '');
+          const base = String(process.env.BASE_NAME || '');
+          const files = Array.isArray(result.files) ? result.files.map((f) => String(f || '').trim()).filter(Boolean) : [];
+          const changeMap = Array.isArray(result.change_map) ? result.change_map : [];
+
+          const lines = [
+            'Auto-generated governance implementation.',
+            '',
+            `- Repo: ${repo}`,
+            `- Run: ${runId}`,
+            `- Branch: ${branch}`,
+            `- Base: ${base}`,
+            `- Arquivos alterados: ${files.length}`,
+            ''
+          ];
+
+          if (changeMap.length > 0) {
+            lines.push('## Mudancas em linguagem natural');
+            for (const item of changeMap) {
+              const summary = String(item?.summary || '').trim();
+              if (summary) lines.push(`- ${summary}`);
+            }
+            lines.push('');
+            lines.push('## Relacao com changes em codigo');
+            lines.push('| Mudanca (natural) | Arquivos alterados |');
+            lines.push('| --- | --- |');
+            for (const item of changeMap) {
+              const summary = String(item?.summary || '').trim();
+              if (!summary) continue;
+              const itemFiles = Array.isArray(item?.files)
+                ? item.files.map((f) => String(f || '').trim()).filter(Boolean)
+                : [];
+              const filesInline = itemFiles.length > 0 ? itemFiles.join('<br>') : '(sem mapeamento)';
+              lines.push(`| ${summary} | ${filesInline} |`);
+            }
+            lines.push('');
+          }
+
+          if (files.length > 0) {
+            lines.push('## Arquivos alterados (detalhe)');
+            for (const filePath of files) {
+              lines.push(`- ${filePath}`);
+            }
+          }
+
+          process.stdout.write(lines.join('\n'));
+          NODE
+              )"
               pr_url=""
+              pr_number=""
 
               if command -v gh >/dev/null 2>&1; then
-                pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls?state=open&head=${OWNER}:${branch}" -q '.[0].html_url' 2>/dev/null || true)"
+                pr_number="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls?state=open&head=${OWNER}:${branch}" -q '.[0].number' 2>/dev/null || true)"
 
-                if [ -z "$pr_url" ]; then
+                if [ -n "$pr_number" ]; then
+                  GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls/${pr_number}" \
+                    -X PATCH \
+                    -f title="${pr_title}" \
+                    -f body="${pr_body}" \
+                    >/dev/null 2>&1 || true
+                  pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls/${pr_number}" -q .html_url 2>/dev/null || true)"
+                else
                   pr_url="$(GH_TOKEN="${TOKEN}" gh api "repos/${OWNER}/${repo}/pulls" \
                     -f title="${pr_title}" \
                     -f head="${OWNER}:${branch}" \
@@ -556,7 +615,7 @@ jobs:
           path: domain
 
       - name: Checkout API
-        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' }}
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' || needs.prepare-implementation.outputs.domain_impacted == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ format('{0}/{1}', github.repository_owner, env.API_REPO) }}
@@ -597,7 +656,7 @@ jobs:
           npm pack
 
       - name: API - lint/typecheck/test/build
-        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' }}
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' || needs.prepare-implementation.outputs.domain_impacted == 'true' }}
         run: |
           cd api
           npm ci
@@ -605,22 +664,211 @@ jobs:
           npm run lint
           npm run typecheck
           npm test
-          node --test test/sync-api.test.js
           npm run build
+
+      - name: API - sync regression tests (governance-ci hard gate)
+        if: ${{ needs.prepare-implementation.outputs.api_impacted == 'true' || needs.prepare-implementation.outputs.domain_impacted == 'true' }}
+        run: |
+          cd api
+          node --test test/sync-api.test.js
 
       - name: Mobile - typecheck/unit tests
         if: ${{ needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
         run: |
           cd mobile
-          npm ci
+          npm install --no-audit --no-fund
           npm install --no-save ../domain/*.tgz
           npm run typecheck
           npm run test:unit
 
+  prepare-mobile-ui-artifacts:
+    name: Prepare Mobile UI Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [prepare-implementation, implement-changes, quality-gates-unit]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
+    env:
+      RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
+
+    outputs:
+      mobile_ui_run_id: ${{ steps.resolve.outputs.mobile_ui_run_id }}
+      mobile_ui_sha: ${{ steps.resolve.outputs.mobile_ui_sha }}
+
+    steps:
+      - name: Resolve artifact run by mobile SHA
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          TARGET_REPO: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          TARGET_REF: ${{ env.RESOLVED_MOBILE_REF }}
+        run: |
+          set -euo pipefail
+
+          WORKFLOW_FILE="mobile-ui-artifacts.yml"
+          MAX_POLLS=6
+          SLEEP_SECONDS=10
+
+          MOBILE_SHA="$(gh api "repos/${TARGET_REPO}/commits/${TARGET_REF}" -q .sha)"
+          echo "Resolved mobile sha: ${MOBILE_SHA}"
+          echo "mobile_ui_sha=${MOBILE_SHA}" >> "$GITHUB_OUTPUT"
+
+          run_id=""
+          run_status=""
+          run_conclusion=""
+
+          for attempt in $(seq 1 "$MAX_POLLS"); do
+            runs_json="$(gh api "repos/${TARGET_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=100")"
+
+            run_id="$(echo "$runs_json" | jq -r --arg sha "$MOBILE_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | sort_by(.created_at) | reverse | .[0].id // empty')"
+
+            if [ -z "$run_id" ]; then
+              echo "Sem run de artefatos para ${MOBILE_SHA} (tentativa ${attempt}/${MAX_POLLS})."
+              sleep "$SLEEP_SECONDS"
+              continue
+            fi
+
+            run_status="$(echo "$runs_json" | jq -r --argjson rid "$run_id" '.workflow_runs[] | select(.id == $rid) | .status')"
+            run_conclusion="$(echo "$runs_json" | jq -r --argjson rid "$run_id" '.workflow_runs[] | select(.id == $rid) | .conclusion')"
+
+            echo "Run ${run_id} status=${run_status} conclusion=${run_conclusion} (attempt ${attempt}/${MAX_POLLS})"
+
+            if [ "$run_status" = "completed" ]; then
+              if [ "$run_conclusion" != "success" ]; then
+                echo "Run de artefatos não teve sucesso para ${MOBILE_SHA}: ${run_conclusion}" >&2
+                exit 1
+              fi
+              break
+            fi
+
+            sleep "$SLEEP_SECONDS"
+          done
+
+          if [ -z "$run_id" ] || [ "$run_status" != "completed" ] || [ "$run_conclusion" != "success" ]; then
+            echo "Não foi possível obter artefatos mobile prontos para ${MOBILE_SHA}." >&2
+            exit 1
+          fi
+
+          echo "mobile_ui_run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          echo "Mobile artifact run: https://github.com/${TARGET_REPO}/actions/runs/${run_id}"
+
+  quality-gates-mobile-ui-android:
+    name: Quality Gates (Mobile UI Android - Firebase Robo)
+    runs-on: ubuntu-latest
+    needs: [prepare-implementation, implement-changes, quality-gates-unit, prepare-mobile-ui-artifacts]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
+    env:
+      MOBILE_UI_RUN_ID: ${{ needs.prepare-mobile-ui-artifacts.outputs.mobile_ui_run_id }}
+
+    steps:
+      - name: Checkout changemanagement
+        uses: actions/checkout@v4
+
+      - name: Download Android APK artifact
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          TARGET_REPO: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+        run: |
+          set -euo pipefail
+          mkdir -p mobile-ui-artifacts/android
+          gh run download "${MOBILE_UI_RUN_ID}" \
+            -R "${TARGET_REPO}" \
+            -n mobile-ui-android-apk \
+            -D mobile-ui-artifacts/android
+          APK_PATH="$(find mobile-ui-artifacts/android -type f -name 'app-debug.apk' | head -n1 || true)"
+          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+            echo "APK não encontrado no artifact do mobile." >&2
+            exit 1
+          fi
+          echo "ANDROID_APP_APK=${GITHUB_WORKSPACE}/${APK_PATH}" >> "$GITHUB_ENV"
+          echo "APK resolved: ${GITHUB_WORKSPACE}/${APK_PATH}"
+
+      - name: Authenticate Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Mobile Android UI (Robo auto-crawl)
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          ANDROID_APP_APK: ${{ env.ANDROID_APP_APK }}
+          ANDROID_ROBO_TIMEOUT: 180s
+          ANDROID_ROBO_RESULTS_DIR: governance-ci/${{ github.run_id }}/android-robo
+          ANDROID_ROBO_RESULTS_BUCKET: ${{ secrets.FIREBASE_TESTLAB_RESULTS_BUCKET }}
+          ANDROID_ROBO_DEVICE_MODEL: Pixel2.arm
+          ANDROID_ROBO_VERSION: "30"
+          ANDROID_ROBO_LOCALE: pt_BR
+          ANDROID_ROBO_ORIENTATION: portrait
+        run: ./scripts/e2e/run-android-robo-testlab.sh
+
+  quality-gates-mobile-ui-ios:
+    name: Quality Gates (Mobile UI iOS - Simulator)
+    runs-on: macos-latest
+    needs: [prepare-implementation, implement-changes, quality-gates-unit, prepare-mobile-ui-artifacts]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.prepare-implementation.outputs.mobile_impacted == 'true' }}
+    env:
+      RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
+      MOBILE_UI_RUN_ID: ${{ needs.prepare-mobile-ui-artifacts.outputs.mobile_ui_run_id }}
+
+    steps:
+      - name: Checkout changemanagement
+        uses: actions/checkout@v4
+
+      - name: Checkout mobile
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+          ref: ${{ env.RESOLVED_MOBILE_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: mobile
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download iOS simulator app artifact
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          TARGET_REPO: ${{ format('{0}/{1}', github.repository_owner, env.MOBILE_REPO) }}
+        run: |
+          set -euo pipefail
+          mkdir -p mobile-ui-artifacts/ios
+          gh run download "${MOBILE_UI_RUN_ID}" \
+            -R "${TARGET_REPO}" \
+            -n mobile-ui-ios-simulator-app \
+            -D mobile-ui-artifacts/ios
+          ZIP_PATH="$(find mobile-ui-artifacts/ios -type f -name 'FastRoute.app.zip' | head -n1 || true)"
+          if [ -z "$ZIP_PATH" ] || [ ! -f "$ZIP_PATH" ]; then
+            echo "Artifact iOS (.zip) não encontrado." >&2
+            exit 1
+          fi
+          mkdir -p mobile-ui-artifacts/ios/unpacked
+          unzip -q "$ZIP_PATH" -d mobile-ui-artifacts/ios/unpacked
+          IOS_APP_PATH="$(find mobile-ui-artifacts/ios/unpacked -type d -name 'FastRoute.app' | head -n1 || true)"
+          if [ -z "$IOS_APP_PATH" ] || [ ! -d "$IOS_APP_PATH" ]; then
+            echo "FastRoute.app não encontrado após extração." >&2
+            exit 1
+          fi
+          echo "IOS_APP_PATH=${GITHUB_WORKSPACE}/${IOS_APP_PATH}" >> "$GITHUB_ENV"
+          echo "iOS app resolved: ${GITHUB_WORKSPACE}/${IOS_APP_PATH}"
+
+      - name: Mobile iOS UI (simulator crawler)
+        env:
+          MOBILE_DIR: ${{ github.workspace }}/mobile
+          IOS_SIMULATOR_NAME: iPhone 15
+          IOS_UI_SCRIPT_NAME: test:ui:ios:crawler
+          IOS_APP_PATH: ${{ env.IOS_APP_PATH }}
+        run: ./scripts/e2e/run-ios-ui-simulator.sh
+
   build-mobile-artifacts:
     name: Build APK + iOS package (internal)
     runs-on: ubuntu-latest
-    needs: [prepare-implementation, quality-gates-unit]
+    needs: [prepare-implementation, quality-gates-unit, quality-gates-mobile-ui-android, quality-gates-mobile-ui-ios]
     if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) && (needs.prepare-implementation.outputs.mobile_ref != 'main' || (github.event_name == 'workflow_dispatch' && inputs.domain_ref == 'main' && inputs.api_ref == 'main' && inputs.mobile_ref == 'main') || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.source_repo == 'fastroute-mobile-hybrid')) }}
     env:
       RESOLVED_MOBILE_REF: ${{ needs.prepare-implementation.outputs.mobile_ref }}
@@ -647,7 +895,21 @@ jobs:
       - name: Install dependencies
         run: |
           cd mobile
-          npm ci
+          set +e
+          npm ci 2>npm-ci-error.log
+          NPM_CI_EXIT_CODE=$?
+          set -e
+
+          if [ "${NPM_CI_EXIT_CODE}" -ne 0 ]; then
+            if grep -q "npm error code EUSAGE" npm-ci-error.log || grep -q "package.json and package-lock.json" npm-ci-error.log; then
+              cat npm-ci-error.log >&2
+              echo "::warning::npm ci falhou por lockfile fora de sincronia. Executando npm install como fallback."
+              npm install --no-audit --no-fund
+            else
+              cat npm-ci-error.log >&2
+              exit "${NPM_CI_EXIT_CODE}"
+            fi
+          fi
 
       - name: Setup EAS CLI
         run: npm install -g eas-cli
@@ -664,7 +926,21 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           cd mobile
-          eas build --platform ios --profile "${{ env.RESOLVED_MOBILE_PROFILE }}" --non-interactive --wait --json > ../ios-build.json
+          set +e
+          eas build --platform ios --profile "${{ env.RESOLVED_MOBILE_PROFILE }}" --non-interactive --wait --json > ../ios-build.json 2> ../ios-build-error.log
+          IOS_BUILD_EXIT_CODE=$?
+          set -e
+
+          if [ "${IOS_BUILD_EXIT_CODE}" -ne 0 ]; then
+            cat ../ios-build-error.log >&2
+
+            if grep -qi "credentials suitable for internal distribution" ../ios-build-error.log && [ "${{ env.RESOLVED_MOBILE_PROFILE }}" = "preview" ]; then
+              echo "::warning::Falha de credenciais iOS para distribuicao interna em non-interactive. Tentando profile preview-simulator."
+              eas build --platform ios --profile "preview-simulator" --non-interactive --wait --json > ../ios-build.json
+            else
+              exit "${IOS_BUILD_EXIT_CODE}"
+            fi
+          fi
 
       - name: Capture artifact URLs
         id: urls
@@ -726,6 +1002,81 @@ jobs:
             ghcr.io/${{ secrets.GHCR_USERNAME }}/fastroute-api:latest
             ghcr.io/${{ secrets.GHCR_USERNAME }}/fastroute-api:${{ steps.meta.outputs.image_tag }}
 
+  publish-domain-npm:
+    name: Publish Domain Package to NPM
+    runs-on: ubuntu-latest
+    needs: [prepare-implementation, quality-gates-unit]
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && ((github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.publish_domain == true) || (github.event_name == 'workflow_dispatch' && false)) }}
+    env:
+      RESOLVED_DOMAIN_REF: ${{ needs.prepare-implementation.outputs.domain_ref }}
+
+    outputs:
+      package_name: ${{ steps.meta.outputs.package_name }}
+      package_version: ${{ steps.meta.outputs.package_version }}
+
+    steps:
+      - name: Checkout domain
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/{1}', github.repository_owner, env.DOMAIN_REPO) }}
+          ref: ${{ env.RESOLVED_DOMAIN_REF }}
+          token: ${{ secrets.CROSS_REPO_PAT }}
+          path: domain
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: domain/package-lock.json
+
+      - name: Install and build domain package
+        run: |
+          cd domain
+          npm ci
+          npm run build
+
+      - name: Package metadata
+        id: meta
+        run: |
+          cd domain
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "package_name=$PKG_NAME" >> "$GITHUB_OUTPUT"
+          echo "package_version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Validate NPM token
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NPM_TOKEN:-}" ]; then
+            echo "NPM_TOKEN não configurado."
+            exit 1
+          fi
+
+      - name: Check version availability
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          PKG="${{ steps.meta.outputs.package_name }}"
+          VER="${{ steps.meta.outputs.package_version }}"
+          if npm view "${PKG}@${VER}" version >/dev/null 2>&1; then
+            echo "Versão já publicada no NPM: ${PKG}@${VER}"
+            exit 1
+          fi
+
+      - name: Publish package
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          cd domain
+          npm publish --access public
+
   deploy-api:
     name: Deploy API to VPS
     runs-on: ubuntu-latest
@@ -785,13 +1136,15 @@ jobs:
             fi
 
             HEALTH_URLS=(
-              "https://fastroute.oliversoft.tech/health"
-              "http://127.0.0.1/health"
               "http://127.0.0.1:3002/health"
+              "http://127.0.0.1/health"
+              "https://fastroute.oliversoft.tech/health"
             )
             HEALTH_JSON=""
             for url in "${HEALTH_URLS[@]}"; do
-              if HEALTH_JSON=$(curl -fsS --max-time 10 "$url" 2>/dev/null); then
+              RESPONSE="$(curl -fsSL --max-time 10 "$url" 2>/dev/null || true)"
+              if [ -n "$RESPONSE" ] && echo "$RESPONSE" | grep -q '"version"'; then
+                HEALTH_JSON="$RESPONSE"
                 break
               fi
             done
@@ -807,10 +1160,78 @@ jobs:
             docker logout ghcr.io || true
             docker image prune -f
 
+  merge-implementation-branches:
+    name: Merge and Delete Auto-Implementation Branches
+    runs-on: ubuntu-latest
+    needs:
+      - prepare-implementation
+      - implement-changes
+      - quality-gates-unit
+      - quality-gates-mobile-ui-android
+      - quality-gates-mobile-ui-ios
+      - build-mobile-artifacts
+      - build-api-image
+      - publish-domain-npm
+      - deploy-api
+    if: ${{ needs.prepare-implementation.outputs.ci_approved == 'true' && needs.implement-changes.result == 'success' && needs.quality-gates-unit.result == 'success' && (needs['quality-gates-mobile-ui-android'].result == 'success' || needs['quality-gates-mobile-ui-android'].result == 'skipped') && (needs['quality-gates-mobile-ui-ios'].result == 'success' || needs['quality-gates-mobile-ui-ios'].result == 'skipped') && (needs['build-mobile-artifacts'].result == 'success' || needs['build-mobile-artifacts'].result == 'skipped') && (needs['build-api-image'].result == 'success' || needs['build-api-image'].result == 'skipped') && (needs['publish-domain-npm'].result == 'success' || needs['publish-domain-npm'].result == 'skipped') && (needs['deploy-api'].result == 'success' || needs['deploy-api'].result == 'skipped') }}
+    steps:
+      - name: Merge open auto-implementation PRs and delete branches
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_PAT }}
+          PREP_IMPLEMENTATION_PRS: ${{ needs.prepare-implementation.outputs.implementation_prs }}
+          IMPLEMENTATION_LOG: ${{ needs.implement-changes.outputs.implementation_log }}
+        run: |
+          set -euo pipefail
+
+          collect_urls() {
+            printf '%s\n%s\n' "${PREP_IMPLEMENTATION_PRS:-}" "${IMPLEMENTATION_LOG:-}" | \
+              rg -o 'https://github.com/[^ )]+' | \
+              sed 's/[),.]$//' | \
+              rg '/pull/[0-9]+' | \
+              sort -u
+          }
+
+          mapfile -t PR_URLS < <(collect_urls || true)
+          if (( ${#PR_URLS[@]} == 0 )); then
+            echo "Nenhum PR de auto-implementação para merge/delete."
+            exit 0
+          fi
+
+          for pr_url in "${PR_URLS[@]}"; do
+            repo="$(echo "$pr_url" | awk -F/ '{print $4 "/" $5}')"
+            pr_number="$(echo "$pr_url" | awk -F/ '{print $7}')"
+
+            echo "Processando ${repo}#${pr_number} (${pr_url})"
+
+            pr_state="$(gh pr view "$pr_number" -R "$repo" --json state --jq '.state')"
+            if [ "$pr_state" = "MERGED" ]; then
+              echo "PR já estava mergeado; seguindo."
+              continue
+            fi
+            if [ "$pr_state" != "OPEN" ]; then
+              echo "PR não está aberto (state=${pr_state}); não é seguro continuar." >&2
+              exit 1
+            fi
+
+            pr_draft="$(gh pr view "$pr_number" -R "$repo" --json isDraft --jq '.isDraft')"
+            if [ "$pr_draft" = "true" ]; then
+              echo "PR está em draft e não pode ser mergeado automaticamente." >&2
+              exit 1
+            fi
+
+            gh pr merge "$pr_number" -R "$repo" --merge --delete-branch
+
+            final_state="$(gh pr view "$pr_number" -R "$repo" --json state --jq '.state')"
+            if [ "$final_state" != "MERGED" ]; then
+              echo "Falha ao confirmar merge do PR ${repo}#${pr_number}." >&2
+              exit 1
+            fi
+          done
+
   governance-summary:
     name: Governance Summary
     runs-on: ubuntu-latest
-    needs: [prepare-implementation, implement-changes, quality-gates-unit]
+    needs: [prepare-implementation, implement-changes, quality-gates-unit, quality-gates-mobile-ui-android, quality-gates-mobile-ui-ios, merge-implementation-branches]
     if: ${{ always() }}
 
     steps:
@@ -827,6 +1248,9 @@ jobs:
           SUMMARY_VIABILITY: ${{ needs.prepare-implementation.outputs.impact_viability }}
           SUMMARY_IMPL_LOG: ${{ needs.implement-changes.outputs.implementation_log }}
           SUMMARY_IMPL_PRS: ${{ needs.prepare-implementation.outputs.implementation_prs }}
+          SUMMARY_UI_ANDROID: ${{ needs['quality-gates-mobile-ui-android'].result }}
+          SUMMARY_UI_IOS: ${{ needs['quality-gates-mobile-ui-ios'].result }}
+          SUMMARY_MERGE_BRANCHES: ${{ needs.merge-implementation-branches.result }}
         run: |
           set -euo pipefail
           {
@@ -859,12 +1283,15 @@ jobs:
             else
               echo "  - none"
             fi
+            echo "- Mobile UI Android (Firebase Robo): ${SUMMARY_UI_ANDROID:-not_run}"
+            echo "- Mobile UI iOS (Simulator crawler): ${SUMMARY_UI_IOS:-not_run}"
+            echo "- Auto-merge branches: ${SUMMARY_MERGE_BRANCHES:-not_run}"
           } >> "$GITHUB_STEP_SUMMARY"
 
   release-summary:
     name: Release Summary
     runs-on: ubuntu-latest
-    needs: [build-mobile-artifacts, build-api-image]
+    needs: [build-mobile-artifacts, build-api-image, publish-domain-npm]
     if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.run_release) || (github.event_name == 'repository_dispatch' && github.event.action == 'governance-release' && github.event.client_payload.run_release != false)) }}
 
     steps:
@@ -875,5 +1302,6 @@ jobs:
             echo "- APK: ${{ needs.build-mobile-artifacts.outputs.android_url || 'N/A (mobile build skipped)' }}";
             echo "- iOS package: ${{ needs.build-mobile-artifacts.outputs.ios_url || 'N/A (mobile build skipped)' }}";
             echo "- API image tag: ${{ needs.build-api-image.outputs.image_tag }}";
+            echo "- Domain package: ${{ needs.publish-domain-npm.outputs.package_name || 'N/A (publish skipped)' }}@${{ needs.publish-domain-npm.outputs.package_version || 'N/A' }}";
             echo "- Deploy API executado: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_api || (github.event.action == 'governance-release' && (github.event.client_payload.deploy_api == true) || false) }}";
           } >> "$GITHUB_STEP_SUMMARY"
